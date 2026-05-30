@@ -113,7 +113,7 @@
             const confirmationCode = Math.floor(100000 + Math.random() * 900000);
 
             // Отправляем код подтверждения на email пользователя
-            emailjs.send('Gmail1', 'YOUR_TEMPLATE_ID', {
+            emailjs.send('Gmail1', '{{message}}', {
                 to_name: name,
                 to_email: email,
                 subject: 'Код подтверждения регистрации',
