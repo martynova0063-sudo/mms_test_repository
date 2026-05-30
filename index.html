@@ -28,46 +28,54 @@
     <div id="message"></div>
 
     <script>
-        document.getElementById('registrationForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+       document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
 
-            // Получаем значения полей
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const messageDiv = document.getElementById('message');
+  const formData = new FormData(this);
+  const messageDiv = document.getElementById('message');
 
-            // Простая валидация
-            if (!name || !email || !password) {
-                showMessage('Пожалуйста, заполните все поля.', 'error');
-                return;
-            }
+  try {
+    // Отправляем данные на Formspree
+    const response = await fetch(this.action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Accept': 'application/json'
+      }
+    });
 
-            if (password.length < 6) {
-                showMessage('Пароль должен содержать минимум 6 символов.', 'error');
-                return;
-            }
+    if (response.ok) {
+      // Генерируем код подтверждения
+      const confirmationCode = Math.floor(100000 + Math.random() * 900000);
 
-            // Генерируем код подтверждения (6 цифр)
-            const confirmationCode = Math.floor(100000 + Math.random() * 900000);
-            
-            emailjs.send("service_id", "template_id", {
-                email: email,
-                name: name,
-                code: confirmationCode})
-            
-            // Здесь обычно отправляется запрос на сервер для отправки кода на email
-            console.log('Код подтверждения для', email, ':', confirmationCode);
+      // Отправляем код на email пользователя (через Formspree)
+      const codeData = new FormData();
+      codeData.append('email', formData.get('email'));
+      codeData.append('subject', 'Код подтверждения регистрации');
+      codeData.append('message', `Ваш код подтверждения: ${confirmationCode}`);
 
-            // Показываем сообщение об успехе
-            showMessage(`Код подтверждения отправлен на ${email}. Проверьте вашу почту.`, 'success');
-        });
-
-        function showMessage(text, type) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${type}`;
+      await fetch('https://formspree.io/f/your-code-form-id', {
+        method: 'POST',
+        body: codeData,
+        headers: {
+          'Accept': 'application/json'
         }
+      });
+
+      showMessage('Код подтверждения отправлен на ваш email.', 'success');
+    } else {
+      throw new Error('Ошибка отправки формы');
+    }
+  } catch (error) {
+    showMessage('Ошибка: ' + error.message, 'error');
+  }
+});
+
+function showMessage(text, type) {
+  const messageDiv = document.getElementById('message');
+  messageDiv.textContent = text;
+  messageDiv.className = `message ${type}`;
+}
     </script>
 </body>
 </html>
