@@ -1,158 +1,115 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <title>ООО "Тестовая компания"</title>
-    <meta name="description" content="Добро пожаловать на сайт ООО &quot;Тестовая компания&quot;!">
-    <link rel="icon" type="image/png" href="logo.png">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 400px;
-            margin: 50px auto;
-            padding: 20px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="text"],
-        input[type="email"],
-        input[type="password"] {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #007bff;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .message {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 4px;
-        }
-        .success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        .error {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-    </style>
-</head>
-<body>
-    <img src="logo.png" alt="Логотип ООО &quot;Тестовая компания&quot;" width="32">
-    <h1>Это тестовая страница ООО "Тестовая компания"</h1>
-    <p>Это простой сайт на GitHub Pages.</p>
-
-    <h2>Регистрация</h2>
-    <form id="registrationForm">
-        <div class="form-group">
-            <label for="name">Имя:</label>
-            <input type="text" id="name" name="name" required>
-        </div>
-        <div class="form-group">
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
-        </div>
-        <div class="form-group">
-            <label for="password">Пароль:</label>
-            <input type="password" id="password" name="password" required>
-        </div>
-        <button type="button" id="sendCodeBtn" disabled style="display: none;">Зарегистрироваться</button> 
-        <!-- Кнопка отправки кода -->
-        <button type="submit">Получить код подтверждения</button>
-        <!-- Поле ввода кода -->
-        <div class="form-group" id="codeField" style="display: none;">
-        <label for="confirmationCode">Код подтверждения:</label>
-        <input type="text" id="confirmationCode" name="confirmationCode" maxlength="6" placeholder="Введите 6‑значный код" required>
-        
+<h2>Регистрация с подтверждением email</h2>
+<form id="registrationForm">
+  <div class="form-group">
+    <label for="name">Имя:</label>
+    <input type="text" id="name" name="name" required>
   </div>
-    </form>
-    <div id="message"></div>
+  <div class="form-group">
+    <label for="email">Email:</label>
+    <input type="email" id="email" name="email" required>
+  </div>
+  <div class="form-group">
+    <label for="password">Пароль:</label>
+    <input type="password" id="password" name="password" required>
+  </div>
 
-    <!-- Подключаем EmailJS SDK -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script type="text/javascript">
-        
-        // Инициализируем EmailJS (замените YOUR_USER_ID на ваш реальный ID из панели EmailJS)
-        emailjs.init('cGeECipVE0nzzgalq');    
-        
-        document.getElementById('confirmationCode').addEventListener('input', function() {
-            const code = this.value.trim();
-            const registerBtn = document.getElementById('sendCodeBtn');
+  <button type="button" id="sendCodeBtn">Получить код подтверждения</button>
+
+  <div class="form-group" id="codeField" style="display: none;">
+    <label for="confirmationCode">Код подтверждения (6 цифр):</label>
+    <input type="text" id="confirmationCode" name="confirmationCode" maxlength="6" placeholder="123456" required>
+  </div>
+
+  <!-- Кнопка изначально отключена -->
+  <button type="submit" id="registerBtn" disabled style="display: none; opacity: 0.6; cursor: not-allowed;">Зарегистрироваться</button>
+</form>
+<div id="message"></div>
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+<script>
+emailjs.init('YOUR_PUBLIC_KEY');
+
+let generatedCode = null;
+
+// Обработчик кнопки «Получить код»
+document.getElementById('sendCodeBtn').addEventListener('click', function() {
+  const email = document.getElementById('email').value;
+  const messageDiv = document.getElementById('message');
 
 
-        // Проверяем: ровно 6 цифр
-        if (/^\d{6}$/.test(code)) {
-         registerBtn.disabled = false; // Активируем кнопку
-         registerBtn.style.opacity = '1';
-         registerBtn.style.cursor = 'pointer';  } else {
-               registerBtn.disabled = true; // Отключаем кнопку
-               registerBtn.style.opacity = '0.6';
-               registerBtn.style.cursor = 'not-allowed';
-                 }
-                    });
+  if (!email) {
+    showMessage('Введите email для получения кода.', 'error');
+    return;
+  }
 
-        document.getElementById('registrationForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+  generatedCode = Math.floor(100000 + Math.random() * 900000);
 
-            const formData = new FormData(this);
-            const name = formData.get('name');
-            const email = formData.get('email');
-            const password = formData.get('password');
-            const messageDiv = document.getElementById('message');
+  emailjs.send(
+    'YOUR_SERVICE_ID',
+    'direct',
+    {
+      to_email: email,
+      subject: 'Код подтверждения регистрации',
+      message: `Здравствуйте! Ваш код подтверждения: ${generatedCode}`
+    }
+  ).then(function(response) {
+    document.getElementById('codeField').style.display = 'block';
+    document.getElementById('registerBtn').style.display = 'block';
+    showMessage('Код отправлен на ваш email.', 'success');
+  }, function(error) {
+    showMessage('Ошибка отправки кода: ' + error.text, 'error');
+    console.error('Ошибка EmailJS:', error);
+  });
+});
 
-            // Валидация данных
-            if (!name || !email || !password) {
-                showMessage('Пожалуйста, заполните все поля.', 'error');
-                return;
-            }
-            if (password.length < 6) {
-                showMessage('Пароль должен содержать минимум 6 символов.', 'error');
-                return;
-            }
-            // Генерируем код подтверждения (6 цифр)
-            const confirmationCode = Math.floor(100000 + Math.random() * 900000);
+// Активируем/деактивируем кнопку при вводе кода
+document.getElementById('confirmationCode').addEventListener('input', function() {
+  const code = this.value.trim();
+  const registerBtn = document.getElementById('registerBtn');
 
-            // Отправляем код подтверждения на email пользователя
-            emailjs.send('Gmail1', 'template_6ra800x', {
-                to_name: name,
-                to_email: email,
-                subject: 'Код подтверждения регистрации',
-                message: `Здравствуйте, ${name}! Ваш код подтверждения: ${confirmationCode}`
-            }).then(function(response) {
-                showMessage('Код подтверждения отправлен на ваш email.', 'success');
-                console.log('Код отправлен:', confirmationCode);
-            }, function(error) {
-                showMessage('Ошибка отправки: ' + error.text, 'error');
-                console.error('Ошибка EmailJS:', error);
-            });
-        });
+  if (/^\d{6}$/.test(code)) {
+    registerBtn.disabled = false;
+    registerBtn.style.opacity = '1';
+    registerBtn.style.cursor = 'pointer';
+  } else {
+    registerBtn.disabled = true;
+    registerBtn.style.opacity = '0.6';
+    registerBtn.style.cursor = 'not-allowed';
+  }
+});
 
-        function showMessage(text, type) {
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = text;
-            messageDiv.className = `message ${type}`;
-        }
-    </script>
-</body>
-</html>
+// Обработчик формы регистрации
+document.getElementById('registrationForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+
+  const formData = new FormData(this);
+  const name = formData.get('name');
+  const email = formData.get('email');
+  const password = formData.get('password');
+  const userCode = formData.get('confirmationCode');
+
+  if (!name || !email || !password || !userCode) {
+    showMessage('Заполните все поля.', 'error');
+    return;
+  }
+
+  if (password.length < 6) {
+    showMessage('Пароль должен быть минимум 6 символов.', 'error');
+    return;
+  }
+
+  if (parseInt(userCode) !== generatedCode) {
+    showMessage('Неверный код подтверждения.', 'error');
+    return;
+  }
+
+  showMessage('Регистрация успешна! Добро пожаловать, ' + name + '!', 'success');
+  console.log('Пользователь зарегистрирован:', { name, email });
+});
+
+function showMessage(text, type) {
+  const messageDiv = document.getElementById('message');
+  messageDiv.textContent = text;
+  messageDiv.className = `message ${type}`;
+}
+</script>
