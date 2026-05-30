@@ -27,7 +27,7 @@
 
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <script>
-emailjs.init('YOUR_PUBLIC_KEY');
+emailjs.init('cGeECipVE0nzzgalq');
 
 let generatedCode = null;
 
@@ -44,9 +44,7 @@ document.getElementById('sendCodeBtn').addEventListener('click', function() {
 
   generatedCode = Math.floor(100000 + Math.random() * 900000);
 
-  emailjs.send(
-    'YOUR_SERVICE_ID',
-    'direct',
+  emailjs.send('Gmail1', 'template_6ra800x',
     {
       to_email: email,
       subject: 'Код подтверждения регистрации',
