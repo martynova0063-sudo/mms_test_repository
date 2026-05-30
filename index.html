@@ -9,6 +9,60 @@
 <body>
     <img src="logo.png" alt="Логотип ООО &quot;Тестовая компания&quot;" width="32">
     <h1>Это тестовая страница ООО "Тестовая компания"</h1>
-    <p>Это простой сайт на GitHub Pages.</p>
+    <h2>Регистрация</h2>
+    <form id="registrationForm">
+        <div class="form-group">
+            <label for="name">Имя:</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Пароль:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit">Зарегистрироваться</button>
+    </form>
+    <div id="message"></div>
+
+    <script>
+        document.getElementById('registrationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Получаем значения полей
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+
+            // Простая валидация
+            if (!name || !email || !password) {
+                showMessage('Пожалуйста, заполните все поля.', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showMessage('Пароль должен содержать минимум 6 символов.', 'error');
+                return;
+            }
+
+            // Генерируем код подтверждения (6 цифр)
+            const confirmationCode = Math.floor(100000 + Math.random() * 900000);
+
+            // Здесь обычно отправляется запрос на сервер для отправки кода на email
+            console.log('Код подтверждения для', email, ':', confirmationCode);
+
+            // Показываем сообщение об успехе
+            showMessage(`Код подтверждения отправлен на ${email}. Проверьте вашу почту.`, 'success');
+        });
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+        }
+    </script>
 </body>
 </html>
