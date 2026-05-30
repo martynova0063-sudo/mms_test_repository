@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>ООО "Тестовая компания"</title>
-    <meta name="description" content="Добро пожаловать на сайт ООО "Тестовая компания"! Здесь я делюсь своими проектами, заметками о программировании и полезными ресурсами.">
+    <meta name="description" content="Добро пожаловать на сайт ООО "Тестовая компания"!">
     <link rel="icon" type="image/png" href="logo.png">
 </head>
 <body>
@@ -26,10 +26,10 @@
     <button type="submit">Зарегистрироваться</button>
     </form>
     <div id="message"></div>
-
     <script>
        document.getElementById('registrationForm').addEventListener('submit', async function(e) {
   e.preventDefault();
+  showMessage('Зашли в скрипт.', 'success');         
 
   const formData = new FormData(this);
   const messageDiv = document.getElementById('message');
