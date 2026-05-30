@@ -81,11 +81,11 @@
         <button type="submit">Получить код подтверждения</button>
         <!-- Поле ввода кода -->
         <div class="form-group" id="codeField" style="display: none;">
-        <label for="confirmationCode">Код подтверждения:</label>
-        <input type="text" id="confirmationCode" name="confirmationCode" maxlength="6" placeholder="Введите 6‑значный код" required>
+            <label for="confirmationCode">Код подтверждения:</label>
+            <input type="text" id="confirmationCode" name="confirmationCode" maxlength="6" placeholder="Введите 6‑значный код" required>
+            <!-- Кнопка изначально отключена -->
+            <button type="button" id="registerBtn" disabled style="display: none; opacity: 0.6; cursor: not-allowed;">Зарегистрироваться</button>
         </div>
-        <!-- Кнопка изначально отключена -->
-        <button type="button" id="registerBtn" disabled style="display: none; opacity: 0.6; cursor: not-allowed;">Зарегистрироваться</button>
   </div>
     </form>
     <div id="message"></div>
