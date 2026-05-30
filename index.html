@@ -27,7 +27,8 @@
     </form>
     <div id="message"></div>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>    
-    <script type="text/javascript">    
+    <script type="text/javascript">   
+       showMessage('Вошли в скрипт ', 'error');
        emailjs.init('cGeECipVE0nzzgalq');
        document.getElementById('registrationForm').addEventListener('submit', function(e) {
               e.preventDefault();
@@ -36,7 +37,7 @@
               const name = formData.get('name');
               const code = Math.floor(100000 + Math.random() * 900000);
 
-  emailjs.send('gmail', 'YOUR_TEMPLATE_ID', {
+  emailjs.send('Gmail', 'YOUR_TEMPLATE_ID', {
     to_email: email,
     from_name: 'ООО Тестовая компания',
     subject: 'Код подтверждения',
