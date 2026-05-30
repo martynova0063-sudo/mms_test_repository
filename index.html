@@ -78,7 +78,13 @@
             <input type="password" id="password" name="password" required>
         </div>
         <!-- Кнопка отправки кода -->
-        <button type="submit">Зарегистрироваться</button>       
+        <button type="submit">Получить код</button> 
+        <!-- Поле ввода кода -->
+        <div class="form-group" id="codeField" style="display: none;">
+        <label for="confirmationCode">Код подтверждения:</label>
+        <input type="text" id="confirmationCode" name="confirmationCode" maxlength="6" placeholder="Введите 6‑значный код" required>
+        </div>
+        
   </div>
     </form>
     <div id="message"></div>
@@ -90,22 +96,6 @@
         // Инициализируем EmailJS (замените YOUR_USER_ID на ваш реальный ID из панели EmailJS)
         emailjs.init('cGeECipVE0nzzgalq');    
         
-        document.getElementById('confirmationCode').addEventListener('input', function() {
-            const code = this.value.trim();
-            const registerBtn = document.getElementById('sendCodeBtn');
-
-
-        // Проверяем: ровно 6 цифр
-        if (/^\d{6}$/.test(code)) {
-         registerBtn.disabled = false; // Активируем кнопку
-         registerBtn.style.opacity = '1';
-         registerBtn.style.cursor = 'pointer';  } else {
-               registerBtn.disabled = true; // Отключаем кнопку
-               registerBtn.style.opacity = '0.6';
-               registerBtn.style.cursor = 'not-allowed';
-                 }
-                    });
-
         document.getElementById('registrationForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
