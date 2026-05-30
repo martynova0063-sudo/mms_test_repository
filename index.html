@@ -108,7 +108,7 @@
             }
             // Генерируем код подтверждения (6 цифр)
             const confirmationCode = Math.floor(100000 + Math.random() * 900000);
-            showMessage('dbgdh.', 'success');
+
             // Отправляем код подтверждения на email пользователя
             emailjs.send('Gmail1', 'template_6ra800x', {
                 to_name: name,
