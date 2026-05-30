@@ -26,56 +26,29 @@
     <button type="submit">Зарегистрироваться</button>
     </form>
     <div id="message"></div>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>    
     <script>
-       document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+    
+emailjs.init('YOUR_USER_ID');    
+    
+document.getElementById('registrationForm').addEventListener('submit', function(e) {
   e.preventDefault();
-  showMessage('Зашли в скрипт.', 'success');         
-
   const formData = new FormData(this);
-  const messageDiv = document.getElementById('message');
+  const email = formData.get('email');
+  const name = formData.get('name');
+  const code = Math.floor(100000 + Math.random() * 900000);
 
-  try {
-    // Отправляем данные на Formspree
-    const response = await fetch(this.action, {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
-
-    if (response.ok) {
-      // Генерируем код подтверждения
-      const confirmationCode = Math.floor(100000 + Math.random() * 900000);
-
-      // Отправляем код на email пользователя (через Formspree)
-      const codeData = new FormData();
-      codeData.append('email', formData.get('email'));
-      codeData.append('subject', 'Код подтверждения регистрации');
-      codeData.append('message', `Ваш код подтверждения: ${confirmationCode}`);
-
-      await fetch('https://formspree.io/f/your-code-form-id', {
-        method: 'POST',
-        body: codeData,
-        headers: {
-          'Accept': 'application/json'
-        }
-      });
-
-      showMessage('Код подтверждения отправлен на ваш email.', 'success');
-    } else {
-      throw new Error('Ошибка отправки формы');
-    }
-  } catch (error) {
-    showMessage('Ошибка: ' + error.message, 'error');
-  }
-});
-
-function showMessage(text, type) {
-  const messageDiv = document.getElementById('message');
-  messageDiv.textContent = text;
-  messageDiv.className = `message ${type}`;
-}
+  emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', {
+    to_email: email,
+    from_name: 'ООО Тестовая компания',
+    subject: 'Код подтверждения',
+    message: `Здравствуйте, ${name}! Ваш код: ${code}`
+  }).then(function(response) {
+    showMessage('Код отправлен на email.', 'success');
+  }, function(error) {
+    showMessage('Ошибка отправки: ' + error.text, 'error');
+  });
+})
     </script>
 </body>
 </html>
