@@ -3,51 +3,133 @@
 <head>
     <meta charset="utf-8">
     <title>ООО "Тестовая компания"</title>
-    <meta name="description" content="Добро пожаловать на сайт ООО "Тестовая компания"!">
+    <meta name="description" content="Добро пожаловать на сайт ООО &quot;Тестовая компания&quot;!">
     <link rel="icon" type="image/png" href="logo.png">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
 </head>
 <body>
     <img src="logo.png" alt="Логотип ООО &quot;Тестовая компания&quot;" width="32">
     <h1>Это тестовая страница ООО "Тестовая компания"</h1>
+    <p>Это простой сайт на GitHub Pages.</p>
+
     <h2>Регистрация</h2>
-    <form id="registrationForm" action="https://formspree.io/f/xaqkkvnp" method="POST">
-    <div class="form-group">
-     <label for="name">Имя:</label>
-     <input type="text" id="name" name="name" required>
-    </div>
-    <div class="form-group">
-     <label for="email">Email:</label>
-     <input type="email" id="email" name="email" required>
-    </div>
-    <div class="form-group">
-     <label for="password">Пароль:</label>
-     <input type="password" id="password" name="password" required>
-    </div>
-    <button type="submit">Зарегистрироваться</button>
+    <form id="registrationForm">
+        <div class="form-group">
+            <label for="name">Имя:</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Пароль:</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit">Зарегистрироваться</button>
     </form>
     <div id="message"></div>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>    
-    <script type="text/javascript">   
-       showMessage('Вошли в скрипт ', 'error');
-       emailjs.init('cGeECipVE0nzzgalq');
-       document.getElementById('registrationForm').addEventListener('submit', function(e) {
-              e.preventDefault();
-              const formData = new FormData(this);
-              const email = formData.get('email');
-              const name = formData.get('name');
-              const code = Math.floor(100000 + Math.random() * 900000);
 
-  emailjs.send('Gmail', 'YOUR_TEMPLATE_ID', {
-    to_email: email,
-    from_name: 'ООО Тестовая компания',
-    subject: 'Код подтверждения',
-    message: `Здравствуйте, ${name}! Ваш код: ${code}`
-  }).then(function(response) {
-    showMessage('Код отправлен на email.', 'success');
-  }, function(error) {
-    showMessage('Ошибка отправки: ' + error.text, 'error');
-  });
-})
+    <!-- Подключаем EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        // Инициализируем EmailJS (замените YOUR_USER_ID на ваш реальный ID из панели EmailJS)
+        emailjs.init('YOUR_USER_ID');
+
+        document.getElementById('registrationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const name = formData.get('name');
+            const email = formData.get('email');
+            const password = formData.get('password');
+            const messageDiv = document.getElementById('message');
+
+            // Валидация данных
+            if (!name || !email || !password) {
+                showMessage('Пожалуйста, заполните все поля.', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showMessage('Пароль должен содержать минимум 6 символов.', 'error');
+                return;
+            }
+
+            // Генерируем код подтверждения (6 цифр)
+            const confirmationCode = Math.floor(100000 + Math.random() * 900000);
+
+            // Отправляем код подтверждения на email пользователя
+            emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', {
+                to_name: name,
+                to_email: email,
+                subject: 'Код подтверждения регистрации',
+                message: `Здравствуйте, ${name}! Ваш код подтверждения: ${confirmationCode}`
+            }).then(function(response) {
+                showMessage('Код подтверждения отправлен на ваш email.', 'success');
+                console.log('Код отправлен:', confirmationCode);
+            }, function(error) {
+                showMessage('Ошибка отправки: ' + error.text, 'error');
+                console.error('Ошибка EmailJS:', error);
+            });
+        });
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+        }
     </script>
 </body>
 </html>
