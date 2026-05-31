@@ -118,18 +118,18 @@
             const confirmationCode = Math.floor(100000 + Math.random() * 900000);
 
             // Отправляем код подтверждения на email пользователя
-            emailjs.send('Gmail1', 'template_6ra800x', {
-                to_name: name,
-                to_email: email,
-                subject: 'Код подтверждения регистрации',
-                message: `Здравствуйте, ${name}! Ваш код подтверждения: ${confirmationCode}`
-            }).then(function(response) {
+           // emailjs.send('Gmail1', 'template_6ra800x', {
+             //   to_name: name,
+            //    to_email: email,
+            //    subject: 'Код подтверждения регистрации',
+            //    message: `Здравствуйте, ${name}! Ваш код подтверждения: ${confirmationCode}`
+           // }).then(function(response) {
                 showMessage('Код подтверждения отправлен на ваш email.', 'success');
                 console.log('Код отправлен:', confirmationCode);
-            }, function(error) {
-                showMessage('Ошибка отправки: ' + error.text, 'error');
-                console.error('Ошибка EmailJS:', error);
-            });
+          //  }, function(error) {
+           //     showMessage('Ошибка отправки: ' + error.text, 'error');
+           //     console.error('Ошибка EmailJS:', error);
+          //  });
         });
 
         function showMessage(text, type) {
