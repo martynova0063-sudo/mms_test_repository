@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Агент регистрации в каталогах</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"], input[type="email"] {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    th {
+      background-color: #f8f9fa;
+    }
+  </style>
+</head>
+<body>
+  <h1>Агент автоматической регистрации в каталогах</h1>
+  <form id="registrationForm">
+    <div class="form-group">
+      <label for="website">Cайт компании:</label>
+      <input type="text" id="website" name="website" required placeholder="https://example.com">
+    </div>
+
+    <div class="form-group">
+      <label for="email">Email для регистрации:</label>
+      <input type="email" id="email" name="email" required placeholder="user@example.com">
+    </div>
+    <button type="submit">Запустить регистрацию</button>
+    
+    <div class="sidebar">
+       <h3>Настройка IMAP</h3>
+       <p>IMAP для автоматического чтения писем.</p>
+       <p><em>Опционально:</em> агент будет автоматически забирать коды подтверждения из почты.</p>
+
+    <div class="form-group">
+       <label for="apppassword">Пароль от почтового ящика:</label>
+       <input type="password" id="apppassword" name="apppassword" placeholder="Введите 16-значный пароль приложения">
+    </div>
+
+  <div class="form-group">
+    <label>Для mail.ru, yandex.ru и gmail.com — хост определяется автоматически</label>
+  </div>
+
+  <div class="form-group">
+    <label for="imapHost">IMAP хост:</label>
+    <input type="text" id="imapHost" name="imapHost" value="imap.gmail.com" readonly>
+  </div>
+
+  <div class="form-group">
+    <label for="port">Порт:</label>
+    <input type="number" id="port" name="port" value="993" readonly>
+  </div>
+</div>
+  </form>
+
+  <div id="results">
+    <h3>Результаты регистрации</h3>
+    <table border="1" style="width:100%; border-collapse: collapse;">
+      <thead>
+        <tr>
+          <th>Сайт</th>
+          <th>Email</th>
+          <th>Статус</th>
+          <th>Ссылка на профиль</th>
+          <th>Дата</th>
+          <th>Компания</th>
+          <th>Адрес</th>
+          <th>Телефон</th>
+        </tr>
+      </thead>
+      <tbody id="results-table-body">
+        <!-- Результаты будут загружаться сюда -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    // Загрузка существующих результатов при открытии страницы
+    async function loadResults() {
+      try {
+        const response = await fetch('/results');
+        const results = await response.json();
+
+        const tbody = document.getElementById('results-table-body');
+        tbody.innerHTML = results.map(item => `
+          <tr>
+            <td>${item.website}</td>
+            <td>${item.email}</td>
+            <td>${item.status}</td>
+            <td><a href="${item.profile_url}" target="_blank">Открыть</a></td>
+            <td>${new Date(item.created_at).toLocaleString()}</td>
+            <td>${item.company}</td>
+            <td>${item.address}</td>
+            <td>${item.phone}</td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        console.error('Ошибка загрузки результатов:', error);
+        document.getElementById('results-table-body').innerHTML =
+          '<tr><td colspan="5">Ошибка загрузки результатов</td></tr>';
+      }
+    }
+
+    // Запуск регистрации и обновление результатов
+    document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData);
+
+      try {
+        const response = await fetch('/start-registration', {
+          method: 'POST',
+          body: JSON.stringify(data),
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await response.json();
+
+        if (result.success) {
+          alert('Регистрация запущена! Проверьте результаты ниже.');
+        } else {
+          alert(`Ошибка: ${result.message}`);
+        }
+      } catch (error) {
+        alert('Ошибка сети: ' + error.message);
+      } finally {
+        loadResults(); // Обновляем таблицу
+      }
+    });
+
+    // Загружаем результаты при загрузке страницы
+    loadResults();
+  </script>
+</body>
+</html>
