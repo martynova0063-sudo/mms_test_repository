@@ -185,30 +185,64 @@ fetchAndExtractCode = (imap, emailId, resolve) => {
     console.log(`Регистрация на ${directoryUrl}...`);
     await this.page.goto(directoryUrl);
     // Заполнение формы регистрации
-    await this.page.fill('input[name="email"]:visible', email);
-    console.log(`Заполнили email успешно ${directoryUrl}...`);
-    //await this.page.click('#submit-registration');
 
-    // Заполнение профиля
-    if (websiteData.name) {
-      await this.page.fill('input[name="name"]:visible', websiteData.name);
-      console.log(`Заполнили имя компании успешно ${directoryUrl}...`);
-    }
-    if (websiteData.address) {
-      await this.page.fill('input[name="address"]:visible', websiteData.address);
-      console.log(`Заполнили адрес компании успешно ${directoryUrl}...`);
-    }
-
-    if (websiteData.phone) {
-      await this.page.fill('input[name="phone"]:visible', websiteData.phone);
-      console.log(`Заполнили телефон компании успешно ${directoryUrl}...`);
-    }
+    try {         
+      await this.page.waitForSelector('input[name="termofuse"]', { timeout: 1000 });
+      await this.page.evaluate(() => {
+      const checkbox = document.querySelector('input[name="termofuse"]');
+      if (checkbox) {
+        checkbox.disabled = false; // снимаем блокировку
+        checkbox.checked = true; } // ставим галочку  
+      });
+      console.log(`Принимаем соглашение`);  
+      } catch (error) {console.log('Отметка о соглашении не найдена - пропускаем');}    
 
     // Сохранение данных
     const profileUrl = this.page.url();
     const login = email;
     const password = Math.random().toString(36).slice(-8); // простой пароль
-    await this.page.fill('input[name="password"]:visible', password);
+
+const selectors = [
+  'input[name="password"]:visible',
+  'input[name="pass"]:visible',
+  'input[name="login"]:visible',
+  'input[name="newlogin"]:visible',
+  'input[name="email"]:visible',
+  'input[name="name"]:visible',
+  'input[name="address"]:visible',
+  'input[name="phone"]:visible'
+];
+
+for (const selector of selectors) {
+  const element = await this.page.$$(selector);
+  if (element.length > 0) {
+    try {
+      if (selector.includes('password') || selector.includes('pass')) {
+        await this.page.fill(selector, password);
+        console.log(`Заполнили password успешно ${password}...`);
+      } else if (selector.includes('login') || selector.includes('newlogin')) {
+        await this.page.fill(selector, password+'login');
+      } else if (selector.includes('email')){
+          await this.page.fill('input[name="email"]:visible', email);
+         // console.log(`Заполнили email успешно ${directoryUrl}...`);
+      } else if (websiteData.name && selector.includes('name')) {
+        await this.page.fill('input[name="name"]:visible', websiteData.name);
+        console.log(`Заполнили имя компании успешно ${directoryUrl}...`);
+      } else if (websiteData.name && selector.includes('name')) {
+        await this.page.fill('input[name="address"]:visible', websiteData.address);
+       // console.log(`Заполнили имя компании успешно ${directoryUrl}...`);
+      } else if (websiteData.name && selector.includes('name')) {
+        await this.page.fill('input[name="phone"]:visible', websiteData.phone);
+       // console.log(`Заполнили имя компании успешно ${directoryUrl}...`);
+      }
+      console.log(`Заполнено поле: ${selector}`);
+    } catch (error) {
+      console.log(`Ошибка при заполнении ${selector}:`, error.message);
+    }
+  } else {
+    console.log(`Элемент ${selector} не найден - пропускаем`);
+  }
+}  
 
     // Нажимаем кнопку «Получить код»
     console.log('Нажимаем кнопку "Получить код"...');
@@ -244,10 +278,20 @@ fetchAndExtractCode = (imap, emailId, resolve) => {
     stmt.finalize();
   }
 
-  async runRegistration(website, email, imapHost, port, apppassword) {
+  async runRegistration(website, email, imapHost, port, apppassword, directories) {
     if (!(await this.initialize())) {
       throw new Error('Не удалось инициализировать Playwright');
     }
+      // Валидация: хотя бы одна директория выбрана
+    if (!directories || directories.length === 0) {
+       return res.status(400).json({
+        success: false,
+        error: 'Необходимо выбрать хотя бы одну директорию'
+      });
+     }
+
+    // Гарантируем, что directories — массив (на случай выбора одного элемента)
+    const directoriesArray = Array.isArray(directories) ? directories : [directories];
 
     try {
       // Парсим данные с сайта
@@ -255,15 +299,15 @@ fetchAndExtractCode = (imap, emailId, resolve) => {
       websiteData.website = website;
 
       // Список каталогов для регистрации, список платформ куда нужно зарегистрировать website
-      const directories = [
+     // const directories = [
        // 'https://www.liveinternet.ru/add_url.html',
       // 'https://top100.rambler.ru/submit/',
-       // 'https://cataloxy.ru/firms_add.htm',
-        'https://martynova0063-sudo.github.io/mms_test_repository/'
-      ];
-
+      //  'https://martynova0063-sudo.github.io/mms_test_repository/', 
+      //  'https://otzovik.com/signup.php'
+     // ];
+  
       const results = [];
-      for (const directory of directories) {
+      for (const directory of directoriesArray) {
         try {
           const result = await this.registerInDirectory(directory, websiteData, email, imapHost, port, apppassword);
           results.push(result);

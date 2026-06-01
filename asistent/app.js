@@ -22,13 +22,13 @@ app.get('/', (req, res) => {
 });
 
 app.post('/start-registration', async (req, res) => {
-  const { website, email, apppassword, imapHost, port} = req.body;
+  const { website, email, apppassword, imapHost, port, directories} = req.body;
 
   console.log('Получены данные:', { website, email, apppassword, imapHost, port });
 
   try {
     const agent = new RegistrationAgent();
-    const result = await agent.runRegistration(website, email, imapHost, port, apppassword);
+    const result = await agent.runRegistration(website, email, imapHost, port, apppassword, directories);
 
     res.json({
       success: true,
