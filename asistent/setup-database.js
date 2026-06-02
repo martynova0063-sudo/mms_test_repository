@@ -15,8 +15,8 @@ db.serialize(() => {
       status TEXT NOT NULL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       company TEXT,
-      address TEXT,
-      phone TEXT 
+      catalog TEXT,
+      error TEXT 
     )
   `);
 

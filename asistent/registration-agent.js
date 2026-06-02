@@ -134,8 +134,8 @@ class RegistrationAgent {
         });
       });
     });
-       // Запускаем подключение
-       imap.connect();
+     // Запускаем подключение
+     imap.connect();   
   });  
  }
 
@@ -187,7 +187,7 @@ fetchAndExtractCode = (imap, emailId, resolve) => {
     // Заполнение формы регистрации
 
     try {         
-      await this.page.waitForSelector('input[name="termofuse"]', { timeout: 1000 });
+      await this.page.waitForSelector('input[name="termofuse"]', { timeout: 10 });
       await this.page.evaluate(() => {
       const checkbox = document.querySelector('input[name="termofuse"]');
       if (checkbox) {
@@ -195,7 +195,20 @@ fetchAndExtractCode = (imap, emailId, resolve) => {
         checkbox.checked = true; } // ставим галочку  
       });
       console.log(`Принимаем соглашение`);  
-      } catch (error) {console.log('Отметка о соглашении не найдена - пропускаем');}    
+      } catch (error) {console.log('Отметка о соглашении не найдена - пропускаем');}   
+
+    await this.page.fill('#CatalogDescription', websiteData.name);
+    await this.page.fill('#FullDescription', websiteData.name);
+
+    await this.page.fill('input[name="cityTitle"]', 'Казан');    
+    await this.page.waitForSelector('.ui-autocomplete .ui-menu-item', { timeout: 1000 });
+    await this.page.click('.ui-autocomplete .ui-menu-item:has-text("Казань")');
+
+    await this.page.fill('input[name="address"]', 'Казань');    
+    //await this.page.waitForSelector('.ui-autocomplete .ui-menu-item', { timeout: 1000 });
+    //await this.page.click('.ui-autocomplete .ui-menu-item:has-text("Казань")');
+    await this.page.fill('input[name="index"]', '495'); // Москва
+    await this.page.fill('input[name="number"]', '1234567');
 
     // Сохранение данных
     const profileUrl = this.page.url();
@@ -210,7 +223,9 @@ const selectors = [
   'input[name="email"]:visible',
   'input[name="name"]:visible',
   'input[name="address"]:visible',
-  'input[name="phone"]:visible'
+  'input[name="phone"]:visible',
+  'input[name="city"]:visible', 
+  'input[name="cityTitle"]:visible', 
 ];
 
 for (const selector of selectors) {
@@ -228,10 +243,11 @@ for (const selector of selectors) {
       } else if (websiteData.name && selector.includes('name')) {
         await this.page.fill('input[name="name"]:visible', websiteData.name);
         console.log(`Заполнили имя компании успешно ${directoryUrl}...`);
-      } else if (websiteData.name && selector.includes('name')) {
-        await this.page.fill('input[name="address"]:visible', websiteData.address);
-       // console.log(`Заполнили имя компании успешно ${directoryUrl}...`);
-      } else if (websiteData.name && selector.includes('name')) {
+      } else if (selector.includes('address')) {
+        console.log(`Зашли в адресс`);        
+        await this.page.fill('input[name="address"]:visible',  'dfthjghk,');
+        console.log(`Заполнили имя компании успешно ${directoryUrl}...`);
+      } else if (websiteData.phone && selector.includes('phone')) {
         await this.page.fill('input[name="phone"]:visible', websiteData.phone);
        // console.log(`Заполнили имя компании успешно ${directoryUrl}...`);
       }
@@ -253,28 +269,41 @@ for (const selector of selectors) {
     await new Promise(resolve => setTimeout(resolve, 10000));
 
     // Получаем код подтверждения из Gmail
-    const confirmationCode = await this.getConfirmationCode(email, imapHost, port, apppassword);
-
-    await this.saveRegistrationData(websiteData.website, 
+    try{
+     const confirmationCode = this.getConfirmationCode(email, imapHost, port, apppassword); 
+     await this.saveRegistrationData(websiteData.website, 
                                     email, 
                                     login, 
                                     password, 
                                     profileUrl, 
                                     'success', 
                                     websiteData.name,
-                                    websiteData.address,
-                                    websiteData.phone);
-
-    console.log(`Регистрация завершена: ${profileUrl}`);
+                                    directoryUrl,
+                                    '');
+      
+     console.log(`Регистрация завершена: ${profileUrl}`);                              
+    } 
+     catch (error) {
+     // Сохраняем ошибку в базу данных
+     this.saveRegistrationData(websiteData.website, 
+                                    email, 
+                                    login, 
+                                    password, 
+                                    profileUrl, 
+                                    'error', 
+                                    websiteData.name,
+                                    directoryUrl,
+                                    error.message);
+    }
     return { success: true, profileUrl };
   }
 
-  async saveRegistrationData(website, email, login, password, profileUrl, status, company, address, phone) {
+  async saveRegistrationData(website, email, login, password, profileUrl, status, company, directoryUrl, error) {
     const stmt = this.db.prepare(`
-      INSERT INTO registrations (website, email, login, password, profile_url, status, company, address, phone)
+      INSERT INTO registrations (website, email, login, password, profile_url, status, company, catalog, error)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    stmt.run(website, email, login, password, profileUrl, status, company, address, phone);
+    stmt.run(website, email, login, password, profileUrl, status, company, directoryUrl, error);
     stmt.finalize();
   }
 
@@ -290,7 +319,6 @@ for (const selector of selectors) {
       });
      }
 
-    // Гарантируем, что directories — массив (на случай выбора одного элемента)
     const directoriesArray = Array.isArray(directories) ? directories : [directories];
 
     try {

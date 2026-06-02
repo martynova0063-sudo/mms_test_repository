@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Агент регистрации в каталогах</title>
+  <link rel="icon" type="image/png" href="Favicon.png">
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -103,10 +104,28 @@ caption {
     </div>  
 <div>
   <label>Выберите директории для регистрации:</label>
-  <select name="directories" multiple size="3" required>
+  <select name="directories" multiple size="8" required>
     <option value="https://martynova0063-sudo.github.io/mms_test_repository/">Тестовая страница</option>
-    <option value="https://otzovik.com/signup.php">Otzovik.com</option>
-    <option value="https://www.orgpage.ru/Cabinet/Create/">www.orgpage.ru Справочник организаций</option>
+    <option value="https://otzovik.com/signup.php">Отзовик</option>
+    <option value="https://www.orgpage.ru/Cabinet/Create/">Orgpage.ru</option>
+    <option value="https://www.cataloxy.ru/reg.htm">Cataloxy.ru</option>
+    <option value="https://www.b2b-center.ru">B2B-Center</option>
+    <option value="https://blizko.ru">Blizko.ru</option>
+    <option value="https://business.ngs.ru">business.ngs.ru</option>
+    <option value="https://www.spravker.ru">Spravker.ru</option>
+    <option value="https://firmika.ru">Firmika.ru</option>
+    <option value="https://www.moneyveo.ru">Moneyveo</option>
+    <option value="https://kompas.ru">Kompas.ru</option>
+    <option value="https://rusprofile.ru">Rusprofile.ru</option>
+    <option value="https://exportbase.ru">Exportbase</option>
+    <option value="https://irecommend.ru">Irecommend.ru</option>
+    <option value="https://flamp.ru">Flamp.ru</option>
+    <option value="https://www.tripadvisor.ru">Tripadvisor</option>
+    <option value="https://www.yell.ru">Yell.ru</option>
+    <option value="https://zoon.ru">Zoon.ru</option>
+    <option value="https://business.google.com">Google Мой бизнес</option>
+    <option value="https://business.yandex.ru">Яндекс Бизнес</option>
+    <option value="https://2gis.ru">2GIS</option>
   </select>
   <p><small>Удерживайте Ctrl/Cmd для выбора нескольких</small></p>
 </div>
@@ -119,7 +138,7 @@ caption {
 
     <div class="form-group">
        <label for="apppassword">Пароль от почтового ящика:</label>
-       <input type="password" id="apppassword" name="apppassword" placeholder="Введите 16-значный пароль приложения">
+       <input type="password" id="apppassword" name="apppassword" value="jwgw bjlm rqzq wlzs" placeholder="Введите 16-значный пароль приложения">
     </div>
 
   <div class="form-group">
@@ -161,12 +180,8 @@ caption {
           <input type="text" id="filter-company" placeholder="Фильтр..." oninput="filterTable()">
         </th>
         <th>
-          Адрес<br>
-          <input type="text" id="filter-address" placeholder="Фильтр..." oninput="filterTable()">
-        </th>
-        <th>
-          Телефон<br>
-          <input type="text" id="filter-phone" placeholder="Фильтр..." oninput="filterTable()">
+          Каталог<br>
+          <input type="text" id="filter-catalog" placeholder="Фильтр..." oninput="filterTable()">
         </th>
       </tr>
       </thead>
@@ -192,8 +207,7 @@ caption {
             <td><a href="${item.profile_url}" target="_blank">Открыть</a></td>
             <td>${new Date(item.created_at).toLocaleString()}</td>
             <td>${item.company}</td>
-            <td>${item.address}</td>
-            <td>${item.phone}</td>
+            <td>${item.catalog}</td>
           </tr>
         `).join('');
       } catch (error) {
@@ -238,8 +252,7 @@ caption {
   const emailFilter = document.getElementById('filter-email').value.toLowerCase();
   const statusFilter = document.getElementById('filter-status').value.toLowerCase();
   const companyFilter = document.getElementById('filter-company').value.toLowerCase();
-  const addressFilter = document.getElementById('filter-address').value.toLowerCase();
-  const phoneFilter = document.getElementById('filter-phone').value.toLowerCase();
+  const addressFilter = document.getElementById('filter-catalog').value.toLowerCase();
 
   // Получаем все строки таблицы (кроме заголовка)
   const rows = document.querySelectorAll('#results-table-body tr');
@@ -251,7 +264,7 @@ caption {
     const status = cells[2].textContent.toLowerCase();
     const company = cells[5].textContent.toLowerCase();
     const address = cells[6].textContent.toLowerCase();
-    const phone = cells[7].textContent.toLowerCase();
+
 
     // Проверяем, соответствует ли строка всем активным фильтрам
     const matchesSite = site.includes(siteFilter);
@@ -276,8 +289,7 @@ function clearAllFilters() {
   document.getElementById('filter-email').value = '';
   document.getElementById('filter-status').value = '';
   document.getElementById('filter-company').value = '';
-  document.getElementById('filter-address').value = '';
-  document.getElementById('filter-phone').value = '';
+  document.getElementById('filter-catalog').value = '';
 
   // Применяем фильтрацию (покажет все строки)
   filterTable();
