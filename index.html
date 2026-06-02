@@ -62,9 +62,11 @@
     <img src="logo.png" alt="Логотип ООО &quot;Тестовая компания&quot;" width="32">
     <h1>Это тестовая страница ООО "Тестовая компания"</h1>
     <p>Это простой сайт на GitHub Pages.</p>
-
     <h2>Регистрация</h2>
     <form id="registrationForm">
+        <div class="form-group" style="margin-bottom: 15px; font-size: 0.9em; color: #666;">
+          <p>Адрес и Телефон компании</p>
+        </div>
         <div class="form-group">
             <label for="name">Имя:</label>
             <input type="text" id="name" name="name" required>
@@ -83,12 +85,10 @@
            <input type="text" id="code" name="confirmationCode" maxlength="6" placeholder="Введите 6‑значный код">
         </div>
         <!-- Кнопка отправки кода -->
-        <button type="button">Зарегистрироваться</button> 
-      
+        <button type="button">Зарегистрироваться</button>       
   </div>
     </form>
     <div id="message"></div>
-
     <!-- Подключаем EmailJS SDK -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
