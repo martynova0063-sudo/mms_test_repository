@@ -186,7 +186,7 @@ fetchAndExtractCode = (imap, emailId, resolve) => {
     await this.page.goto(directoryUrl);
     // Заполнение формы регистрации
 
-    try {         
+   /* try {         
       await this.page.waitForSelector('input[name="termofuse"]', { timeout: 10 });
       await this.page.evaluate(() => {
       const checkbox = document.querySelector('input[name="termofuse"]');
@@ -196,19 +196,19 @@ fetchAndExtractCode = (imap, emailId, resolve) => {
       });
       console.log(`Принимаем соглашение`);  
       } catch (error) {console.log('Отметка о соглашении не найдена - пропускаем');}   
+*/
+    //await this.page.fill('#CatalogDescription', websiteData.name);
+    //await this.page.fill('#FullDescription', websiteData.name);
 
-    await this.page.fill('#CatalogDescription', websiteData.name);
-    await this.page.fill('#FullDescription', websiteData.name);
-
-    await this.page.fill('input[name="cityTitle"]', 'Казан');    
-    await this.page.waitForSelector('.ui-autocomplete .ui-menu-item', { timeout: 1000 });
-    await this.page.click('.ui-autocomplete .ui-menu-item:has-text("Казань")');
-
-    await this.page.fill('input[name="address"]', 'Казань');    
+    //await this.page.fill('input[name="cityTitle"]', 'Казан');    
     //await this.page.waitForSelector('.ui-autocomplete .ui-menu-item', { timeout: 1000 });
     //await this.page.click('.ui-autocomplete .ui-menu-item:has-text("Казань")');
-    await this.page.fill('input[name="index"]', '495'); // Москва
-    await this.page.fill('input[name="number"]', '1234567');
+
+   // await this.page.fill('input[name="address"]', 'Казань');    
+    //await this.page.waitForSelector('.ui-autocomplete .ui-menu-item', { timeout: 1000 });
+    //await this.page.click('.ui-autocomplete .ui-menu-item:has-text("Казань")');
+    //await this.page.fill('input[name="index"]', '495'); // Москва
+    //await this.page.fill('input[name="number"]', '1234567');
 
     // Сохранение данных
     const profileUrl = this.page.url();
