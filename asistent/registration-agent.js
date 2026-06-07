@@ -239,6 +239,10 @@ for (const selector of selectors) {
   const element = await this.page.$$(selector);
   if (element.length > 0) {
     try {
+      if (selector.includes('name')) {
+        await this.page.fill(selector, websiteData.name);
+        console.log(`Заполнили имя компании успешно ${directoryUrl}...`);
+      } 
       if (selector.includes('CatalogDescription')) {
         await this.page.locator('#CatalogDescription').fill(websiteData.name);
       } 
@@ -254,10 +258,6 @@ for (const selector of selectors) {
       } 
       if (selector.includes('email')){
           await this.page.fill(selector, email);
-      } 
-      if (websiteData.name && selector.includes('name')) {
-        await this.page.fill(selector, websiteData.name);
-        console.log(`Заполнили имя компании успешно ${directoryUrl}...`);
       } 
       if (selector.includes('address')) {   
         await this.page.fill(selector,  websiteData.address);
@@ -290,6 +290,7 @@ for (const selector of selectors) {
         checkbox.disabled = false; // снимаем блокировку
         checkbox.checked = true; } // ставим галочку  
       }
+
       console.log(`✅ - Заполнено поле: ${selector}`);
     } catch (error) {
       console.log(`⚠️ - Ошибка при заполнении ${selector}:`, error.message);
