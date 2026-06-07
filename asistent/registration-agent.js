@@ -2,6 +2,7 @@ const { chromium } = require('playwright');
 const sqlite3 = require('sqlite3').verbose();
 const Imap = require('imap');
 const { SimpleParser } = require('mailparser');
+let logs = [];
 
 class RegistrationAgent {
   constructor() {
@@ -14,6 +15,7 @@ class RegistrationAgent {
   async initialize() {
     try {
       console.log('Запуск браузера...');
+      logs.push('Запуск браузера...');
       this.browser = await chromium.launch({
         headless: false,
         slowMo: 100,
@@ -26,6 +28,7 @@ class RegistrationAgent {
 
       this.page = await this.context.newPage();
       console.log('Браузер успешно запущен');
+      logs.push('Браузер успешно запущен');
       return true;
     } catch (error) {
       console.error('Ошибка инициализации Playwright:', error);
@@ -39,7 +42,6 @@ class RegistrationAgent {
     if (this.context) await this.context.close().catch(() => {});
     if (this.browser) await this.browser.close().catch(() => {});
   }
-
 
   async parseWebsiteData(websiteUrl) {
     await this.page.goto(websiteUrl, { waitUntil: 'networkidle', timeout: 60000 });
@@ -64,16 +66,23 @@ class RegistrationAgent {
           logoUrl = element.href || element.src;
           if (logoUrl) break;}
         }
+      console.log(document.querySelector('[id="phone"] p'));
+        
 
       return {
         name: document.querySelector('h1')?.innerText.trim() ||
                document.title || 'Неизвестно',
         description: document.querySelector('meta[name="description"]')
           ?.getAttribute('content') || 'Неизвестно',
-        logoUrl: logoUrl || null // сохраняем URL логотипа
+        logoUrl: logoUrl || null, // сохраняем URL логотипа
+        address:  document.querySelector('meta[name="address"]')
+          ?.getAttribute('content') ||'Казань', 
+        phone: document.querySelector('meta[name="phone"]')
+          ?.getAttribute('content') || '+7(495)222-22-00'
           };
       });
-    console.log('Имя компаниии', data.name);
+    console.log('Имя компаниии', data.phone);
+    //await page.$eval('#phone p', el => el.textContent.trim())
 
     return data;
   }
@@ -88,7 +97,7 @@ class RegistrationAgent {
           host: imapHost,
           port: port,
           tls: true,
-          connTimeout: 15000, // 15 секунд таймаут
+          connTimeout: 20000, // 15 секунд таймаут
           tlsOptions: { rejectUnauthorized: false } // Отключаем проверку сертификата
         });
     
@@ -197,18 +206,10 @@ fetchAndExtractCode = (imap, emailId, resolve) => {
       console.log(`Принимаем соглашение`);  
       } catch (error) {console.log('Отметка о соглашении не найдена - пропускаем');}   
 */
-    //await this.page.fill('#CatalogDescription', websiteData.name);
-    //await this.page.fill('#FullDescription', websiteData.name);
-
-    //await this.page.fill('input[name="cityTitle"]', 'Казан');    
-    //await this.page.waitForSelector('.ui-autocomplete .ui-menu-item', { timeout: 1000 });
-    //await this.page.click('.ui-autocomplete .ui-menu-item:has-text("Казань")');
-
-   // await this.page.fill('input[name="address"]', 'Казань');    
-    //await this.page.waitForSelector('.ui-autocomplete .ui-menu-item', { timeout: 1000 });
-    //await this.page.click('.ui-autocomplete .ui-menu-item:has-text("Казань")');
-    //await this.page.fill('input[name="index"]', '495'); // Москва
-    //await this.page.fill('input[name="number"]', '1234567');
+    
+   // await this.page.fill('input[name="cityTitle"]', websiteData.address);    
+   // await this.page.waitForSelector('.ui-autocomplete .ui-menu-item', { timeout: 10000 });
+   // await this.page.click('.ui-autocomplete .ui-menu-item:has-text(`Регистрация на ${websiteData.address}...`)');
 
     // Сохранение данных
     const profileUrl = this.page.url();
@@ -226,40 +227,78 @@ const selectors = [
   'input[name="phone"]:visible',
   'input[name="city"]:visible', 
   'input[name="cityTitle"]:visible', 
+  'input[name="index"]:visible', 
+  'textarea[name="CatalogDescription"]:visible', 
+  '#CatalogDescription',
+  'textarea[name="FullDescription"]:visible', 
+  '#FullDescription',
+  'input[name="termofuse"]:visible'
 ];
 
 for (const selector of selectors) {
   const element = await this.page.$$(selector);
   if (element.length > 0) {
     try {
+      if (selector.includes('CatalogDescription')) {
+        await this.page.locator('#CatalogDescription').fill(websiteData.name);
+      } 
+      if (selector.includes('FullDescription')) {
+          await this.page.locator('#FullDescription').fill(websiteData.description);
+      }
       if (selector.includes('password') || selector.includes('pass')) {
         await this.page.fill(selector, password);
         console.log(`Заполнили password успешно ${password}...`);
-      } else if (selector.includes('login') || selector.includes('newlogin')) {
+      } 
+      if (selector.includes('login') || selector.includes('newlogin')) {
         await this.page.fill(selector, password+'login');
-      } else if (selector.includes('email')){
-          await this.page.fill('input[name="email"]:visible', email);
-         // console.log(`Заполнили email успешно ${directoryUrl}...`);
-      } else if (websiteData.name && selector.includes('name')) {
-        await this.page.fill('input[name="name"]:visible', websiteData.name);
+      } 
+      if (selector.includes('email')){
+          await this.page.fill(selector, email);
+      } 
+      if (websiteData.name && selector.includes('name')) {
+        await this.page.fill(selector, websiteData.name);
         console.log(`Заполнили имя компании успешно ${directoryUrl}...`);
-      } else if (selector.includes('address')) {
-        console.log(`Зашли в адресс`);        
-        await this.page.fill('input[name="address"]:visible',  'dfthjghk,');
-        console.log(`Заполнили имя компании успешно ${directoryUrl}...`);
-      } else if (websiteData.phone && selector.includes('phone')) {
-        await this.page.fill('input[name="phone"]:visible', websiteData.phone);
-       // console.log(`Заполнили имя компании успешно ${directoryUrl}...`);
+      } 
+      if (selector.includes('address')) {   
+        await this.page.fill(selector,  websiteData.address);
+        console.log(`Заполнили адресс компании успешно ${directoryUrl}...`);
+      } 
+      if (selector.includes('city')) {   
+        await this.page.fill(selector,  websiteData.address);
+        console.log(`Заполнили город компании успешно ${directoryUrl}...`);
+      } 
+      if (websiteData.phone && selector.includes('phone')) {
+        await this.page.fill(selector, websiteData.phone);
+      } 
+      if (selector.includes('index')) {   
+        // 2. Разбираем номер
+        const match = websiteData.phone.match(/\+(\d{1,3})\s*\((\d{3})\)\s*(\d{3}-\d{2}-\d{2})/);
+
+        if (match) {
+          const result = {
+           countryCode: match[1],
+           areaCode: match[2],
+           number: match[3] };
+           await this.page.fill('input[name="index"]', result.areaCode); 
+           await this.page.fill('input[name="number"]', result.number);
+          }
+      } 
+      if (selector.includes('termofuse')) {   
+         console.log(`✅ - Вход.Заполнено поле: termofuse`);
+         const checkbox = document.querySelector('input[name="termofuse"]');
+        if (checkbox) {
+        checkbox.disabled = false; // снимаем блокировку
+        checkbox.checked = true; } // ставим галочку  
       }
-      console.log(`Заполнено поле: ${selector}`);
+      console.log(`✅ - Заполнено поле: ${selector}`);
     } catch (error) {
-      console.log(`Ошибка при заполнении ${selector}:`, error.message);
+      console.log(`⚠️ - Ошибка при заполнении ${selector}:`, error.message);
     }
   } else {
-    console.log(`Элемент ${selector} не найден - пропускаем`);
+    console.log(`ℹ️ - Элемент ${selector} не найден - пропускаем`);
   }
 }  
-
+    await new Promise(resolve => setTimeout(resolve, 20000));
     // Нажимаем кнопку «Получить код»
     console.log('Нажимаем кнопку "Получить код"...');
     await this.page.click('button[type="submit"]');
@@ -326,14 +365,6 @@ for (const selector of selectors) {
       const websiteData = await this.parseWebsiteData(website);
       websiteData.website = website;
 
-      // Список каталогов для регистрации, список платформ куда нужно зарегистрировать website
-     // const directories = [
-       // 'https://www.liveinternet.ru/add_url.html',
-      // 'https://top100.rambler.ru/submit/',
-      //  'https://martynova0063-sudo.github.io/mms_test_repository/', 
-      //  'https://otzovik.com/signup.php'
-     // ];
-  
       const results = [];
       for (const directory of directoriesArray) {
         try {

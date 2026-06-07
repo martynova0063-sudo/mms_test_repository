@@ -23,7 +23,6 @@ app.get('/', (req, res) => {
 
 app.post('/start-registration', async (req, res) => {
   const { website, email, apppassword, imapHost, port, directories} = req.body;
-
   console.log('Получены данные:', { website, email, apppassword, imapHost, port });
 
   try {
