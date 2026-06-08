@@ -44,8 +44,7 @@ class RegistrationAgent {
   }
 
   async parseWebsiteData(websiteUrl) {
-    await this.page.goto(websiteUrl, { waitUntil: 'networkidle', timeout: 60000 });
-
+      await this.page.goto(websiteUrl, { waitUntil: 'networkidle', timeout: 60000 });
       const data = await this.page.evaluate(() => {
      // Поиск логотипа по распространённым селекторам
       const logoSelectors = [
@@ -86,6 +85,72 @@ class RegistrationAgent {
 
     return data;
   }
+
+  async acceptAgreement(page) {
+   console.log('\n⚠️ ВНИМАНИЕ: На странице есть виджет согласия (CDOT/капча).');
+   console.log('🖱️ Пожалуйста, вручную поставьте галочку "Я принимаю соглашение".');
+  
+   // Ждем, пока человек поставит галочку (максимум 2 минуты)
+   const checkboxLocator = page.locator('.cdot-frame'); // Просто проверяем, что фрейм есть
+  
+  await page.waitForFunction(() => {
+    // Здесь ты не можешь проверить состояние чекбокса внутри iframe.
+    // Поэтому мы просим пользователя нажать любую клавишу или просто ждем время.
+     return true; 
+   }, { timeout: 120000 }); // Ждем 2 минуты
+  
+  console.log('✅ Галочка подтверждена пользователем. Продолжаем...\n');
+ }
+
+ /**
+ * Выбирает сферу деятельности в сложном виджете
+ * @param {Page} page - страница Playwright
+ * @param {string} searchText - что ищем (например, "торговля")
+ */
+async selectRubric(page, searchText) {
+  const inputLocator = page.locator('.spheres_category input.category-input');
+  const variantsLocator = page.locator('.rubric-variants');
+  
+  console.log(`🔍 Ищем сферу деятельности: "${searchText}"...`);
+
+  // 1. Кликаем в поле ввода, чтобы активировать виджет
+  await inputLocator.click({ force: true });
+  
+  // 2. Очищаем поле и вводим текст
+  await inputLocator.fill('');
+  await inputLocator.type(searchText);
+
+  // 3. Ждем появления выпадающего списка с вариантами
+  // Таймаут 5000мс, так как список может подгружаться с сервера (AJAX)
+  await variantsLocator.waitFor({ state: 'visible', timeout: 5000 });
+
+  // 4. Ищем элемент в списке, который содержит наш текст
+  // Обычно это <li>, <div> или <a> внутри .rubric-variants
+  const optionLocator = variantsLocator.locator(`:text-is("${searchText}")`);
+  
+  if (await optionLocator.isVisible({ timeout: 2000 })) {
+    await optionLocator.click();
+    console.log(`✅ Выбрана рубрика: "${searchText}"`);
+    
+    // 5. Проверяем, есть ли кнопка "Добавить рубрику". 
+    // Если виджет требует явного подтверждения, нажимаем её.
+    const addBtn = page.locator('.addRubric');
+    if (await addBtn.isVisible({ timeout: 1000 })) {
+      await addBtn.click();
+      console.log('✅ Рубрика добавлена кнопкой подтверждения.');
+    }
+  } else {
+    // Если точного совпадения нет, пробуем кликнуть по ПЕРВОМУ элементу в списке (часто это самый релевантный)
+    const firstOption = variantsLocator.locator('li:first-child, div:first-child');
+    if (await firstOption.isVisible({ timeout: 1000 })) {
+      await firstOption.click();
+      console.log('⚠️ Точного совпадения не найдено. Выбран первый вариант из списка.');
+    } else {
+      throw new Error(`❌ Не удалось найти вариант для "${searchText}" в выпадающем списке.`);
+    }
+  }
+}
+
 
   async getConfirmationCode(email, imapHost, port, apppassword) {
     console.log(`Поиск кода подтверждения в почте: ${email}`);
@@ -191,28 +256,21 @@ fetchAndExtractCode = (imap, emailId, resolve) => {
   return match ? match[0] : null;}
 
   async registerInDirectory(directoryUrl, websiteData, email, imapHost, port, apppassword) {
-    console.log(`Регистрация на ${directoryUrl}...`);
-    await this.page.goto(directoryUrl);
-    // Заполнение формы регистрации
+    console.log(`Регистрация на ${directoryUrl}...`);    
+    try {
+       await this.page.goto(directoryUrl,  { waitUntil: /*'networkidle'*/'domcontentloaded', timeout: 60000 });
 
-   /* try {         
-      await this.page.waitForSelector('input[name="termofuse"]', { timeout: 10 });
-      await this.page.evaluate(() => {
-      const checkbox = document.querySelector('input[name="termofuse"]');
-      if (checkbox) {
-        checkbox.disabled = false; // снимаем блокировку
-        checkbox.checked = true; } // ставим галочку  
-      });
-      console.log(`Принимаем соглашение`);  
-      } catch (error) {console.log('Отметка о соглашении не найдена - пропускаем');}   
-*/
-    
+    // Заполнение формы регистрации
    // await this.page.fill('input[name="cityTitle"]', websiteData.address);    
    // await this.page.waitForSelector('.ui-autocomplete .ui-menu-item', { timeout: 10000 });
    // await this.page.click('.ui-autocomplete .ui-menu-item:has-text(`Регистрация на ${websiteData.address}...`)');
 
     // Сохранение данных
-    const profileUrl = this.page.url();
+    const profileUrlsMap = {
+       'https://otzovik.com/signup.php': 'https://otzovik.com/loginnew.php',   
+       'https://www.orgpage.ru/Cabinet/Create/': 'https://www.orgpage.ru/Cabinet/Create/', 
+       'default':      null};
+    const profileUrl = profileUrlsMap[this.page.url()] || this.page.url();
     const login = email;
     const password = Math.random().toString(36).slice(-8); // простой пароль
 
@@ -232,7 +290,7 @@ const selectors = [
   '#CatalogDescription',
   'textarea[name="FullDescription"]:visible', 
   '#FullDescription',
-  'input[name="termofuse"]:visible'
+  '.spheres_category input.category-input',
 ];
 
 for (const selector of selectors) {
@@ -243,12 +301,6 @@ for (const selector of selectors) {
         await this.page.fill(selector, websiteData.name);
         console.log(`Заполнили имя компании успешно ${directoryUrl}...`);
       } 
-      if (selector.includes('CatalogDescription')) {
-        await this.page.locator('#CatalogDescription').fill(websiteData.name);
-      } 
-      if (selector.includes('FullDescription')) {
-          await this.page.locator('#FullDescription').fill(websiteData.description);
-      }
       if (selector.includes('password') || selector.includes('pass')) {
         await this.page.fill(selector, password);
         console.log(`Заполнили password успешно ${password}...`);
@@ -270,6 +322,15 @@ for (const selector of selectors) {
       if (websiteData.phone && selector.includes('phone')) {
         await this.page.fill(selector, websiteData.phone);
       } 
+      if (selector.includes('CatalogDescription')) {
+        await this.page.locator('#CatalogDescription').fill(websiteData.name);
+      } 
+      if (selector.includes('FullDescription')) {
+          await this.page.locator('#FullDescription').fill(websiteData.description);
+      }
+      /*if (selector.includes('.spheres_category input.category-input')) {
+          this.selectRubric(this.page, 'торговля');
+      }*/
       if (selector.includes('index')) {   
         // 2. Разбираем номер
         const match = websiteData.phone.match(/\+(\d{1,3})\s*\((\d{3})\)\s*(\d{3}-\d{2}-\d{2})/);
@@ -283,14 +344,6 @@ for (const selector of selectors) {
            await this.page.fill('input[name="number"]', result.number);
           }
       } 
-      if (selector.includes('termofuse')) {   
-         console.log(`✅ - Вход.Заполнено поле: termofuse`);
-         const checkbox = document.querySelector('input[name="termofuse"]');
-        if (checkbox) {
-        checkbox.disabled = false; // снимаем блокировку
-        checkbox.checked = true; } // ставим галочку  
-      }
-
       console.log(`✅ - Заполнено поле: ${selector}`);
     } catch (error) {
       console.log(`⚠️ - Ошибка при заполнении ${selector}:`, error.message);
@@ -299,9 +352,10 @@ for (const selector of selectors) {
     console.log(`ℹ️ - Элемент ${selector} не найден - пропускаем`);
   }
 }  
-    await new Promise(resolve => setTimeout(resolve, 20000));
-    // Нажимаем кнопку «Получить код»
-    console.log('Нажимаем кнопку "Получить код"...');
+    this.acceptAgreement(this.page);
+   // await new Promise(resolve => setTimeout(resolve, 20000)); //пауза
+    // Нажимаем кнопку «Зарегистрироваться или Получить код»
+    console.log('Нажимаем кнопку "Зарегистрироваться или Получить код"...');
     await this.page.click('button[type="submit"]');
 
     // Добавляем задержку 10 секунд после нажатия кнопки
@@ -336,6 +390,10 @@ for (const selector of selectors) {
                                     error.message);
     }
     return { success: true, profileUrl };
+           } catch (error) {
+         console.error(`Не удалось открыть страницу для регистрации ${directoryUrl}:`, error.message);
+       }
+    return { success: false, profileUrl };   
   }
 
   async saveRegistrationData(website, email, login, password, profileUrl, status, company, directoryUrl, error) {
