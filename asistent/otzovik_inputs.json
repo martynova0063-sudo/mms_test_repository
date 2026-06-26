@@ -1,0 +1,24 @@
+[
+  {
+    "index": 0,
+    "tag": "INPUT",
+    "type": "hidden",
+    "name": "captcha_url",
+    "id": "",
+    "placeholder": "",
+    "class": "",
+    "visible": false,
+    "xpath": "//*[@name=\"captcha_url\"]"
+  },
+  {
+    "index": 1,
+    "tag": "INPUT",
+    "type": "text",
+    "name": "lllllllllllll",
+    "id": "",
+    "placeholder": "Введите код с картинки",
+    "class": "keystring input2023",
+    "visible": true,
+    "xpath": "//*[@name=\"lllllllllllll\"]"
+  }
+]

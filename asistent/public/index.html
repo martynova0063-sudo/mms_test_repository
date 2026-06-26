@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Агент регистрации в каталогах</title>
-  <link rel="icon" type="image/png" href="Favicon.png">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,6 +12,64 @@
       margin: 0 auto;
       padding: 20px;
     }
+    /* ===== Settings gear button & panel ===== */
+    .settings-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 10px;
+    }
+    .btn-gear {
+      background: none;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+      background: #f8f9fa;
+    }
+    .btn-gear:hover { background: #e9ecef; }
+    .btn-gear svg { width: 18px; height: 18px; fill: #555; }
+    .btn-gear .gear-label { font-weight: bold; color: #333; }
+
+    .settings-panel {
+      display: none;
+      background: #e8f4fd;
+      border: 1px solid #a8d4f0;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .settings-panel.visible { display: block; }
+    .settings-panel h3 { margin-top: 0; }
+
+    /* ===== Modal ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.visible { display: flex; }
+    .modal {
+      background: #fff;
+      border-radius: 8px;
+      padding: 24px;
+      width: 400px;
+      max-width: 90vw;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .modal h3 { margin-top: 0; }
+    .modal .form-group { margin-bottom: 12px; }
+    .modal-buttons { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+    .btn-cancel { background: #6c757d; }
+    .btn-save { background: #28a745; }
     .form-group {
       margin-bottom: 15px;
     }
@@ -87,25 +145,312 @@ caption {
   font-size: 1.2em;
 }
     /* Блок для вывода информации из консоли */
+    .console-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .console-header h4 { margin: 0; }
+
+    .console-controls {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .console-controls label { font-size: 11px; color: #aaa; }
+
+    .console-controls select {
+      padding: 2px 6px;
+      border: 1px solid #555;
+      border-radius: 3px;
+      background: #1a1a2e;
+      color: #ccc;
+      font-size: 11px;
+    }
+
+    .btn-console {
+      padding: 2px 8px;
+      border: 1px solid #555;
+      border-radius: 3px;
+      background: #333;
+      color: #ccc;
+      cursor: pointer;
+      font-size: 11px;
+    }
+
+    .btn-console:hover { background: #555; }
+
     #console-log {
-      margin-top: 20px;
       padding: 10px;
       background-color: #2d3436;
-      color: #00ff00;
-      font-family: monospace;
-      min-height: 100px;
+      font-family: 'Consolas', 'Courier New', monospace;
+      min-height: 150px;
+      max-height: 400px;
       border-radius: 4px;
       overflow-y: auto;
       border: 1px solid #555;
-      font-size: 0.9em;
+      font-size: 0.85em;
+    }
+
+    #console-log::-webkit-scrollbar { width: 6px; }
+    #console-log::-webkit-scrollbar-track { background: #1a1a2e; }
+    #console-log::-webkit-scrollbar-thumb { background: #555; border-radius: 3px; }
+
+    .log-entry {
+      padding: 2px 0;
+      line-height: 1.4;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      animation: fadeIn 0.15s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-2px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .log-time { color: #666; margin-right: 6px; }
+    .log-level { font-weight: 700; margin: 0 4px; padding: 0 4px; border-radius: 2px; font-size: 0.85em; }
+    .log-level.info    { color: #4caf50; }
+    .log-level.debug   { color: #00bcd4; }
+    .log-level.warn    { color: #ff9800; }
+    .log-level.error   { color: #f44336; }
+    .log-message { color: #ddd; }
+    .log-data { color: #888; font-size: 0.85em; margin-left: 20px; }
+
+    .console-status {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 3px;
+    }
+    .console-status.connected { color: #4caf50; }
+    .console-status.disconnected { color: #e94560; }
+
+    /* ===== Экспорт кнопки ===== */
+    .export-btn {
+      padding: 3px 10px;
+      border: 1px solid;
+      border-radius: 4px;
+      font-size: 0.7em;
+      font-weight: 500;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      transition: all 0.25s ease;
+      background: transparent;
+    }
+    .export-btn:hover {
+      transform: translateY(-1px);
+    }
+    .export-btn:active {
+      transform: translateY(0);
+    }
+    .export-btn.csv {
+      border-color: #4472C4;
+      color: #4472C4;
+    }
+    .export-btn.csv:hover {
+      background: #4472C4;
+      color: white;
+      box-shadow: 0 2px 8px rgba(68,114,196,0.3);
+    }
+    .export-btn.xlsx {
+      border-color: #217346;
+      color: #217346;
+    }
+    .export-btn.xlsx:hover {
+      background: #217346;
+      color: white;
+      box-shadow: 0 2px 8px rgba(33,115,70,0.3);
+    }
+    .export-btn.json {
+      border-color: #e67e22;
+      color: #e67e22;
+    }
+    .export-btn.json:hover {
+      background: linear-gradient(135deg, rgba(255,193,7,0.7), rgba(230,168,0,0.7));
+    }
+
+    /* ===== Dashboard Cards ===== */
+    .dashboard-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      border: 1px solid #e9ecef;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .dashboard-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+    .dashboard-card.success {
+      border-left: 4px solid #28a745;
+    }
+    .dashboard-card.error {
+      border-left: 4px solid #dc3545;
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .card-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      object-fit: contain;
+      background: #f8f9fa;
+      padding: 4px;
+    }
+    .card-info {
+      flex: 1;
+    }
+    .card-title {
+      font-size: 1em;
+      font-weight: 600;
+      margin: 0 0 4px 0;
+      color: #212529;
+    }
+    .card-url {
+      font-size: 0.75em;
+      color: #6c757d;
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-stats {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+    .stat-value {
+      font-size: 1.25em;
+      font-weight: 700;
+      color: #212529;
+    }
+    .stat-label {
+      font-size: 0.7em;
+      color: #6c757d;
+      text-transform: uppercase;
+    }
+    .success .stat-value {
+      color: #28a745;
+    }
+    .error .stat-value {
+      color: #dc3545;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: #e9ecef;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+    .progress-fill.success {
+      background: linear-gradient(90deg, #28a745, #20c997);
+    }
+    .progress-fill.error {
+      background: linear-gradient(90deg, #dc3545, #ff6b6b);
+    }
+    .card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: auto;
+    }
+    .card-date {
+      font-size: 0.75em;
+      color: #6c757d;
+    }
+    .card-btn {
+      padding: 6px 12px;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.8em;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    .card-btn:hover {
+      background: #0056b3;
+    }
+    .card-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.7em;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .card-badge.success {
+      background: #d4edda;
+      color: #155724;
+    }
+    .card-badge.error {
+      background: #f8d7da;
+      color: #721c24;
     }
 
   </style>
 </head>
 <body>
   <h1>Агент автоматической регистрации в каталогах</h1>
+
+  <!-- Settings bar -->
+  <div class="settings-bar">
+    <button class="btn-gear" onclick="toggleSettings()">
+      <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.61 3.61 0 0112 15.6z"/></svg>
+      <span class="gear-label">Настройки</span>
+    </button>
+  </div>
+
+  <!-- Settings panel (IMAP) -->
+  <div class="settings-panel" id="settingsPanel">
+    <h3>⚙️ Настройки IMAP</h3>
+    <p><em>Опционально:</em> агент будет автоматически забирать коды подтверждения из почты.</p>
+
+    <div class="form-group">
+      <label for="apppassword">Пароль от почтового ящика:</label>
+      <input type="password" id="apppassword" name="apppassword" placeholder="Введите 16-значный пароль приложения">
+    </div>
+
+    <div class="form-group">
+      <label>Для mail.ru, yandex.ru и gmail.com — хост определяется автоматически</label>
+    </div>
+
+    <div class="form-group">
+      <label for="imapHost">IMAP хост:</label>
+      <input type="text" id="imapHost" name="imapHost" value="imap.gmail.com" readonly>
+    </div>
+
+    <div class="form-group">
+      <label for="port">Порт:</label>
+      <input type="number" id="port" name="port" value="993" readonly>
+    </div>
+  </div>
+
   <form id="registrationForm">
-    <div style="float: right; width: 450px; padding: 10px; background-color: #f5f5f5; border-right: 1px solid #ddd; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+    <div style="float: right; width: 450px; padding: 10px; background-color: #f5f5f5; border: 1px solid #ddd; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
     <div class="form-group" >
       <label for="website">Cайт компании:</label>
       <input type="text" id="website" name="website" required placeholder="https://example.com">
@@ -115,110 +460,327 @@ caption {
       <input type="email" id="email" name="email" required placeholder="user@example.com">
     </div>  
 
-<div>
-  <label>Выберите директории для регистрации:</label>
-  <select name="directories"  multiple size="15" required>
-    <option value="https://martynova0063-sudo.github.io/mms_test_repository/">Тестовая страница</option>
-      <option value="https://otzovik.com/signup.php">Отзовик</option>
-      <option value="https://www.orgpage.ru/Cabinet/Create/">Orgpage.ru</option>
-    <!--<option value="C:/Users/63_ma/Отзовик%20-%20Регистрация%20на%20сайте.html">Отзовик</option>
-    <option value="C:/Users/63_ma/Добавление%20компании.html">Orgpage.ru</option>-->
-    <option value="https://www.cataloxy.ru/reg.htm">Cataloxy.ru</option>
-    <option value="https://www.b2b-center.ru">B2B-Center</option>
-    <option value="https://blizko.ru">Blizko.ru</option>
-    <option value="https://business.ngs.ru">business.ngs.ru</option>
-    <option value="https://www.spravker.ru">Spravker.ru</option>
-    <option value="https://firmika.ru">Firmika.ru</option>
-    <option value="https://www.moneyveo.ru">Moneyveo</option>
-    <option value="https://kompas.ru">Kompas.ru</option>
-    <option value="https://rusprofile.ru">Rusprofile.ru</option>
-    <option value="https://exportbase.ru">Exportbase</option>
-    <option value="https://irecommend.ru">Irecommend.ru</option>
-    <option value="https://flamp.ru">Flamp.ru</option>
-    <option value="https://www.tripadvisor.ru">Tripadvisor</option>
-    <option value="https://www.yell.ru">Yell.ru</option>
-    <option value="https://zoon.ru">Zoon.ru</option>
-    <option value="https://business.google.com">Google Мой бизнес</option>
-    <option value="https://business.yandex.ru">Яндекс Бизнес</option>
-    <option value="https://2gis.ru">2GIS</option>
-  </select>
-  <p><small>Удерживайте Ctrl/Cmd для выбора нескольких</small></p>
-</div>
-    <button type="submit">Запустить регистрацию</button> 
-  </div>
-    <div class="sidebar" style="float: left; width: 450px; padding: 10px; background-color: #f5f5f5; border-right: 1px solid #ddd; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-       <h3>Настройка IMAP</h3>
-       <p><em>Опционально:</em> агент будет автоматически забирать коды подтверждения из почты.</p>
-
     <div class="form-group">
-       <label for="apppassword">Пароль от почтового ящика:</label>
-       <input type="password" id="apppassword" name="apppassword" placeholder="Введите 16-значный пароль приложения">
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <label style="margin-bottom: 0;">Выберите каталоги для регистрации:</label>
+        <button type="button" onclick="toggleAllDirectories()" style="background: #6c757d; padding: 4px 10px; font-size: 0.85em; border-radius: 4px;">Выбрать все</button>
+        <span id="selected-count" style="font-size: 0.85em; color: #007bff; font-weight: 600;">Выбрано: 0</span>
+      </div>
+      <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 8px;">
+        <div id="directories-list">Загрузка каталогов...</div>
+      </div>
     </div>
-
-  <div class="form-group">
-    <label>Для mail.ru, yandex.ru и gmail.com — хост определяется автоматически</label>
+    <button type="submit">Запустить регистрацию</button> 
+    <button type="button" onclick="openAddDirectoryModal()" style="margin-top: 8px; background: #4ea562;">➕ Добавить</button>
   </div>
-
-  <div class="form-group">
-    <label for="imapHost">IMAP хост:</label>
-    <input type="text" id="imapHost" name="imapHost" value="imap.gmail.com" readonly>
-  </div>
-
-     <div class="form-group">
-       <label for="port">Порт:</label>
-       <input type="number" id="port" name="port" value="993" readonly>
-     </div>
+    <div class="sidebar" style="float: left; width: 450px; padding: 10px; background-color: #f5f5f5; border: 1px solid #ddd; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
     <!-- Сюда будем выводить логи из консоли -->
-    <h4 style="margin-top: 30px;">Лог работы (Console)</h4>
-    <div id="console-log">Ожидание действий...</div> 
+    <div class="console-header">
+      <h4 style="margin-top: 0;">Лог работы (Console)</h4>
+      <div class="console-controls">
+        <span class="console-status disconnected" id="consoleStatus">● Отключено</span>
+        <label>Фильтр:</label>
+        <select id="logFilter" onchange="filterConsoleLogs()">
+          <option value="all">Все</option>
+          <option value="info">ℹ️ Info</option>
+          <option value="debug">🐛 Debug</option>
+          <option value="warn">⚠️ Warn</option>
+          <option value="error">❌ Error</option>
+        </select>
+        <button class="btn-console" onclick="clearConsole()">🗑️</button>
+      </div>
+    </div>
+    <div id="console-log">Ожидание логов...</div> 
    </div>     
   </form>
-  <div id="results" >
-    <table border="1" style="max-width:75%; max-width: 1000px; margin: 25px auto;  border-collapse: collapse; font-size: 0.9em; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
-      <caption><h3>Результаты регистрации</h3></caption>
-      <thead>
-      <tr>
-        <th>
-          Сайт<br>
-          <input type="text" id="filter-site" placeholder="Фильтр..." oninput="filterTable()">
-        </th>
-        <th>
-          Email<br>
-          <input type="text" id="filter-email" placeholder="Фильтр..." oninput="filterTable()">
-        </th>
-        <th>
-          Статус<br>
-          <input type="text" id="filter-status" placeholder="Фильтр..." oninput="filterTable()">
-        </th>
-        <th>Ссылка на профиль</th>
-        <th>Дата</th>
-        <th>
-          Компания<br>
-          <input type="text" id="filter-company" placeholder="Фильтр..." oninput="filterTable()">
-        </th>
-        <th>
-          Каталог<br>
-          <input type="text" id="filter-catalog" placeholder="Фильтр..." oninput="filterTable()">
-        </th>
-        <th>
-          Логин<br>          
-        </th>
-      </tr>
-      </thead>
-      <tbody id="results-table-body">
-        <!-- Результаты будут загружаться сюда -->
-      </tbody>
-    </table>
+  
+  <!-- Clear fix -->
+  <div style="clear: both;"></div>
+  
+  <div id="results" style="clear: both; padding-top: 30px; position: relative; z-index: 1;">
+    <div style="max-width: 1200px; margin: 0 auto; padding: 20px; background: #f8f9fa; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; gap: 6px; align-items: center;">
+          <span style="font-size: 0.8em; color: #6c757d; margin-right: 4px;">Экспорт:</span>
+          <button onclick="exportData('csv')" class="export-btn csv" title="Экспорт в CSV">CSV</button>
+          <button onclick="exportData('xlsx')" class="export-btn xlsx" title="Экспорт в Excel">XLSX</button>
+          <button onclick="exportData('json')" class="export-btn json" title="Экспорт в JSON">JSON</button>
+        </div>
+      </div>
+      
+      <!-- Статистика -->
+      <div id="dashboard-stats" style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; overflow: hidden;"></div>
+      
+      <!-- Сетка карточек -->
+      <div id="dashboard-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; min-height: 200px;"></div>
+      
+    </div>
   </div>
 
   <script>
-    // Функция для вывода текста в нашу "консоль" вместо реальной консоли браузера
-    function logToConsole(message) {
-      const consoleDiv = document.getElementById('console-log');
-      const timestamp = new Date().toLocaleTimeString();
-      consoleDiv.innerHTML += `[${timestamp}] ${message}<br>`;
-      consoleDiv.scrollTop = consoleDiv.scrollHeight; // Прокрутка вниз
+    // ===== SETTINGS TOGGLE =====
+    function toggleSettings() {
+      const panel = document.getElementById('settingsPanel');
+      panel.classList.toggle('visible');
     }
+
+    // ===== MODAL FOR ADDING DIRECTORY =====
+    function openAddDirectoryModal() {
+      document.getElementById('addDirectoryModal').classList.add('visible');
+    }
+
+    function closeAddDirectoryModal() {
+      document.getElementById('addDirectoryModal').classList.remove('visible');
+      document.getElementById('newDirName').value = '';
+      document.getElementById('newDirUrl').value = '';
+      document.getElementById('newDirCaptcha').value = 'Не проверен';
+      document.getElementById('newDirActive').checked = true;
+    }
+
+    async function saveNewDirectory() {
+      const name = document.getElementById('newDirName').value.trim();
+      const url = document.getElementById('newDirUrl').value.trim();
+      const captcha = document.getElementById('newDirCaptcha').value;
+      const active = document.getElementById('newDirActive').checked;
+
+      if (!name || !url) {
+        alert('Заполните название и URL');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/directories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, url, captcha_status: captcha, is_active: active })
+        });
+        const data = await res.json();
+        if (data.error) {
+          alert('Ошибка: ' + data.error);
+          return;
+        }
+        logToConsole('➕ Каталог добавлен: ' + name);
+        closeAddDirectoryModal();
+        loadDirectories(); // Перезагрузить список
+      } catch (e) {
+        alert('Ошибка сохранения: ' + e.message);
+      }
+    }
+
+    // ===== LOAD DIRECTORIES =====
+    async function loadDirectories() {
+      try {
+        const res = await fetch('/api/directories');
+        const dirs = await res.json();
+        const container = document.getElementById('directories-list');
+        
+        if (dirs.length === 0) {
+          container.innerHTML = '<p>Нет каталогов</p>';
+          return;
+        }
+
+        container.innerHTML = dirs.map(dir => {
+          const favicon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(dir.url)}&sz=32`;
+          const statusBadge = {
+            'Капча': '🟡 Капча',
+            'Без капчи': '🟢 Без капчи',
+            'Не проверен': '⚪ Не проверен'
+          }[dir.captcha_status] || dir.captcha_status;
+          
+          const activeIcon = dir.is_active ? '✅' : '⛔';
+          
+          return `
+            <label style="display: flex; align-items: center; padding: 6px 8px; border-bottom: 1px solid #eee; cursor: pointer;">
+              <input type="checkbox" name="directory" value="${dir.url}" style="margin-right: 10px; width: 16px; height: 16px;" onchange="updateSelectedCount()">
+              <img src="${favicon}" style="width: 16px; height: 16px; margin-right: 8px;" onerror="this.style.display='none'">
+              <span style="flex: 1;">${dir.name}</span>
+              <span style="margin-right: 8px; font-size: 0.85em; color: #666;">${statusBadge}</span>
+              <span style="font-size: 0.85em;">${activeIcon}</span>
+            </label>
+          `;
+        }).join('');
+        
+        // Обновляем счётчик после загрузки
+        updateSelectedCount();
+      } catch (e) {
+        document.getElementById('directories-list').innerHTML = '<p style="color: red;">Ошибка загрузки каталогов</p>';
+      }
+    }
+
+    // ===== ВЫБРАТЬ ВСЕ / СНЯТЬ ВСЕ =====
+    function toggleAllDirectories() {
+      const checkboxes = document.querySelectorAll('input[name="directory"]');
+      if (checkboxes.length === 0) return;
+      
+      // Проверяем, все ли уже выбраны
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+      
+      // Инвертируем состояние
+      checkboxes.forEach(cb => {
+        cb.checked = !allChecked;
+      });
+      
+      logToConsole(allChecked ? '❌ Сняты все каталоги' : '✅ Выбраны все каталоги');
+      updateSelectedCount();
+    }
+
+    // ===== ОБНОВЛЕНИЕ СЧЁТЧИКА ВЫБРАННЫХ КАТАЛОГОВ =====
+    function updateSelectedCount() {
+      const checkboxes = document.querySelectorAll('input[name="directory"]:checked');
+      const countSpan = document.getElementById('selected-count');
+      if (countSpan) {
+        countSpan.textContent = `Выбрано: ${checkboxes.length}`;
+      }
+    }
+
+    // ===== STATE =====
+    let currentLogFilter = 'all';
+    let consoleLogEntries = [];
+
+    const consoleDiv = document.getElementById('console-log');
+    const statusEl = document.getElementById('consoleStatus');
+
+    // ===== OLD COMPATIBILITY =====
+    function logToConsole(message) {
+      addLogEntry({
+        timeShort: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+        level: 'info',
+        message: message,
+        data: null
+      });
+    }
+
+    // ===== POLLING LOGS (каждые 2 секунды) =====
+    let lastLogId = 0;
+
+    async function pollLogs() {
+      try {
+        const res = await fetch('/api/logs');
+        const data = await res.json();
+        
+        if (data.logs && data.logs.length > 0) {
+          // Находим новые логи
+          const newLogs = data.logs.filter(log => log.id > lastLogId);
+          lastLogId = data.logs[data.logs.length - 1].id;
+          
+          // Добавляем новые логи
+          newLogs.forEach(entry => addLogEntry(entry));
+        }
+        
+        // Обновляем статус
+        statusEl.textContent = '● Обновлено';
+        statusEl.className = 'console-status connected';
+      } catch (e) {
+        statusEl.textContent = '● Ошибка';
+        statusEl.className = 'console-status disconnected';
+      }
+    }
+
+    // Запускаем опрос каждые 2 секунды
+    setInterval(pollLogs, 2000);
+
+    // ===== ADD LOG ENTRY =====
+    function addLogEntry(entry) {
+      consoleLogEntries.push(entry);
+      if (consoleLogEntries.length > 300) consoleLogEntries.shift();
+
+      // Hide "waiting" text
+      if (consoleDiv.textContent.includes('Ожидание')) {
+        consoleDiv.innerHTML = '';
+      }
+
+      // Check filter
+      if (currentLogFilter !== 'all' && entry.level !== currentLogFilter) return;
+
+      // Create log line
+      const el = document.createElement('div');
+      el.className = 'log-entry';
+      el.dataset.level = entry.level;
+
+      const emoji = { info: 'ℹ️', debug: '🐛', warn: '⚠️', error: '❌' };
+      el.innerHTML = `
+        <span class="log-time">[${entry.timeShort || ''}]</span>
+        <span class="log-level ${entry.level}">${entry.level.toUpperCase()}</span>
+        <span class="log-message">${escapeHtml(entry.message)}</span>
+      `;
+
+      consoleDiv.appendChild(el);
+
+      // Add data if exists
+      if (entry.data) {
+        const dataEl = document.createElement('div');
+        dataEl.className = 'log-data';
+        const dataText = typeof entry.data === 'string'
+          ? entry.data
+          : JSON.stringify(entry.data);
+        dataEl.textContent = `   └─ ${dataText}`;
+        consoleDiv.appendChild(dataEl);
+      }
+
+      // Auto scroll
+      consoleDiv.scrollTop = consoleDiv.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ===== FILTER =====
+    function filterConsoleLogs() {
+      currentLogFilter = document.getElementById('logFilter').value;
+
+      document.querySelectorAll('.log-entry').forEach(el => {
+        if (currentLogFilter === 'all') {
+          el.style.display = '';
+        } else {
+          el.style.display = el.dataset.level === currentLogFilter ? '' : 'none';
+        }
+      });
+
+      // Show/hide data lines too
+      document.querySelectorAll('.log-data').forEach(el => {
+        el.style.display = currentLogFilter === 'all' ? '' : 'none';
+      });
+    }
+
+    // ===== CLEAR CONSOLE =====
+    async function clearConsole() {
+      try {
+        await fetch('/api/logs/clear', { method: 'POST' });
+        consoleLogEntries = [];
+        lastLogId = 0; // Сбрасываем ID после очистки
+        consoleDiv.innerHTML = 'Логи очищены';
+      } catch (e) {
+        console.error('Ошибка очистки:', e);
+      }
+    }
+
+    // ===== LOAD HISTORICAL LOGS =====
+    async function loadLogs() {
+      try {
+        const res = await fetch('/api/logs');
+        const data = await res.json();
+        if (data.logs && data.logs.length > 0) {
+          consoleLogEntries = data.logs;
+          // Показываем только последние 50 логов при загрузке
+          const recentLogs = data.logs.slice(-50);
+          recentLogs.forEach(entry => {
+            addLogEntry(entry);
+            lastLogId = entry.id;
+          });
+        }
+      } catch (e) {
+        console.log('Нет сохранённых логов');
+      }
+    }
+
+    // ===== INIT =====
+    loadLogs();
+    loadDirectories();
+
+    // ===== ORIGINAL FORM LOGIC =====
     // Загрузка существующих результатов при открытии страницы
     async function loadResults() {
       logToConsole("Загрузка результатов...");
@@ -226,130 +788,237 @@ caption {
         const response = await fetch('/results');
         const results = await response.json();
 
-        const tbody = document.getElementById('results-table-body');
-        tbody.innerHTML = results.map(item => `
-          <tr>
-            <td>${item.website}</td>
-            <td>${item.email}</td>
-            <td>${item.status}</td>
-            <td><a href="${item.profile_url}" target="_blank">Открыть</a></td>
-            <td>${new Date(item.created_at).toLocaleString()}</td>
-            <td>${item.company}</td>
-            <td>${item.catalog}</td>
-            <td>${item.password}</td>
-          </tr>
-        `).join('');
+        renderDashboard(results);
         logToConsole("Результаты загружены.");
       } catch (error) {
         console.error('Ошибка загрузки результатов:', error);
         logToConsole("Ошибка загрузки результатов: " + error.message);
-        document.getElementById('results-table-body').innerHTML =
-          '<tr><td colspan="5">Ошибка загрузки результатов</td></tr>';
+        document.getElementById('dashboard-grid').innerHTML =
+          '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #6c757d;">Ошибка загрузки результатов</div>';
       }
     }
 
-    // Запуск регистрации и обновление результатов
-document.getElementById('registrationForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  logToConsole("🏁 Запуск агента регистрации...");
+    // ===== РЕНДЕРИНГ DASHBOARD =====
+    function renderDashboard(results) {
+      if (!results || results.length === 0) {
+        document.getElementById('dashboard-grid').innerHTML =
+          '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #6c757d;">Пока нет результатов регистрации</div>';
+        document.getElementById('dashboard-stats').innerHTML = '';
+        return;
+      }
 
-  const form = e.target;
-  const website = form.querySelector('input[name="website"]').value;
-  const imapHost = form.querySelector('input[name="imapHost"]').value;
-  const port = form.querySelector('input[name="port"]').value;
-  const apppassword = form.querySelector('input[name="apppassword"]').value;
-  const email = form.querySelector('input[name="email"]').value;
+      // Группируем результаты по каталогам
+      const catalogStats = {};
+      results.forEach(item => {
+        const catalog = item.catalog || 'Неизвестный каталог';
+        if (!catalogStats[catalog]) {
+          catalogStats[catalog] = {
+            total: 0,
+            success: 0,
+            error: 0,
+            lastItem: item
+          };
+        }
+        catalogStats[catalog].total++;
+        if (item.status === 'success') {
+          catalogStats[catalog].success++;
+        } else {
+          catalogStats[catalog].error++;
+        }
+        // Обновляем последний элемент для отображения
+        if (new Date(item.created_at) > new Date(catalogStats[catalog].lastItem.created_at)) {
+          catalogStats[catalog].lastItem = item;
+        }
+      });
 
-  // 👇 Получаем ВСЕ выбранные опции из select
-  const selectElement = form.querySelector('select[name="directories"]');
-  const selectedOptions = Array.from(selectElement.selectedOptions);
-  
-  // Превращаем их в простой массив значений (URL)
-  const directories = selectedOptions.map(option => option.value);
+      // Рендерим статистику
+      const totalRuns = results.length;
+      const totalSuccess = results.filter(r => r.status === 'success').length;
+      const totalError = totalRuns - totalSuccess;
+      const successRate = totalRuns > 0 ? Math.round((totalSuccess / totalRuns) * 100) : 0;
 
-  if (directories.length === 0) {
-    alert("⚠️ Пожалуйста, выберите хотя бы одну директорию!");
-    return;
-  }
 
-  logToConsole(`✅ Выбрано директорий: ${directories.length}. Начинаем отправку...`);
+      // Рендерим карточки
+      const grid = document.getElementById('dashboard-grid');
+      grid.innerHTML = Object.entries(catalogStats).map(([catalog, stats]) => {
+        const item = stats.lastItem;
+        const successRate = Math.round((stats.success / stats.total) * 100);
+        const favicon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(catalog)}&sz=128`;
+        const status = stats.error > 0 && stats.success === 0 ? 'error' : 'success';
+        const progressClass = status;
+        const cardClass = status;
+        const badgeClass = status;
+        const badgeText = status === 'success' ? '✅ Успех' : '❌ Ошибка';
+        const profileUrl = item.profile_url || catalog;
 
-  // Формируем объект данных вручную
-  const payload = {
-    website,
-    email,
-    imapHost,
-    port,
-    apppassword,
-    directories // Это теперь МАССИВ, а не одна строка
-  };
+        return `
+          <div class="dashboard-card ${cardClass}" data-catalog="${catalog}" data-status="${status}">
+            <div class="card-header">
+              <img src="${favicon}" class="card-logo" alt="${catalog}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>'">
+              <div class="card-info">
+                <h4 class="card-title">${catalog}</h4>
+                <p class="card-url">${catalog}</p>
+              </div>
+            </div>
+            
+            <div class="card-stats">
+              <div class="stat-item">
+                <span class="stat-value">${stats.total}</span>
+                <span class="stat-label">Прогонов</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value">${successRate}%</span>
+                <span class="stat-label">Успех</span>
+              </div>
+            </div>
+            
+            <div class="progress-bar">
+              <div class="progress-fill ${progressClass}" style="width: ${successRate}%"></div>
+            </div>
+            
+            <div class="card-footer">
+              <span class="card-badge ${badgeClass}">${badgeText}</span>
+              <span class="card-date">${new Date(item.created_at).toLocaleDateString()}</span>
+              <button class="card-btn" onclick="window.open('${profileUrl}', '_blank')">Открыть</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
 
-  try {
-    const response = await fetch('/start-registration', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-      headers: { 'Content-Type': 'application/json' }
+    // ===== ФИЛЬТРЫ DASHBOARD =====
+    function filterDashboard() {
+      const siteFilter = document.getElementById('filter-site').value.toLowerCase();
+      const statusFilter = document.getElementById('filter-status').value.toLowerCase();
+      
+      const cards = document.querySelectorAll('.dashboard-card');
+      cards.forEach(card => {
+        const catalog = card.dataset.catalog.toLowerCase();
+        const status = card.dataset.status.toLowerCase();
+        
+        const matchesSite = !siteFilter || catalog.includes(siteFilter);
+        const matchesStatus = !statusFilter || status.includes(statusFilter);
+        
+        card.style.display = (matchesSite && matchesStatus) ? '' : 'none';
+      });
+    }
+
+    function clearAllFilters() {
+      document.getElementById('filter-site').value = '';
+      document.getElementById('filter-status').value = '';
+      filterDashboard();
+    }
+
+    // ===== ЗАПУСК РЕГИСТРАЦИИ =====
+    document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      logToConsole("🏁 Запуск агента регистрации...");
+
+      const website = document.getElementById('website').value;
+      const email = document.getElementById('email').value;
+      const apppassword = document.getElementById('apppassword').value;
+      const imapHost = document.getElementById('imapHost').value;
+      const port = document.getElementById('port').value;
+
+      // Получаем выбранные каталоги из чекбоксов (они внутри #directories-list)
+      const checkboxes = document.querySelectorAll('input[name="directory"]:checked');
+      const directories = Array.from(checkboxes).map(cb => cb.value);
+
+      logToConsole(`📝 Сайт: ${website}`);
+      logToConsole(`📧 Email: ${email}`);
+      logToConsole(`📂 Каталогов: ${directories.length}`);
+
+      if (directories.length === 0) {
+        logToConsole("⚠️ Не выбрано ни одной директории!");
+        alert("⚠️ Пожалуйста, выберите хотя бы одну директорию!");
+        return;
+      }
+
+      const payload = {
+        website,
+        email,
+        imapHost,
+        port: parseInt(port),
+        apppassword,
+        directories
+      };
+
+      logToConsole("📤 Отправка запроса на сервер...");
+      
+      try {
+        const response = await fetch('/start-registration', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || errData.message || `HTTP ${response.status}`);
+        }
+        
+        const data = await response.json();
+        logToConsole("✅ Запрос успешно отправлен!");
+        
+        if (data.result && data.result.stats) {
+          const s = data.result.stats;
+          logToConsole(`📊 Итого: ${s.total} | ✅ ${s.success} | ❌ ${s.error}`);
+        }
+        
+        // Обновляем dashboard
+        loadResults();
+        
+      } catch (error) {
+        logToConsole(`❌ Ошибка: ${error.message}`);
+        console.error('Ошибка отправки:', error);
+      }
     });
-
-    if (!response.ok) throw new Error('Ошибка сервера');
-    
-    logToConsole("🎉 Данные успешно отправлены на сервер!");
-    // Тут можно очистить форму или показать результат
-  } catch (error) {
-    logToConsole(`❌ Ошибка отправки: ${error.message}`);
-    console.error(error);
-  }
-});
 
     // Загружаем результаты при загрузке страницы
     loadResults();
-    //Фильтры ------------
-    function filterTable() {
-  // Получаем значения фильтров
-  const siteFilter = document.getElementById('filter-site').value.toLowerCase();
-  const emailFilter = document.getElementById('filter-email').value.toLowerCase();
-  const statusFilter = document.getElementById('filter-status').value.toLowerCase();
-  const companyFilter = document.getElementById('filter-company').value.toLowerCase();
-  const addressFilter = document.getElementById('filter-catalog').value.toLowerCase();
 
-  // Получаем все строки таблицы (кроме заголовка)
-  const rows = document.querySelectorAll('#results-table-body tr');
-
-  rows.forEach(row => {
-    const cells = row.querySelectorAll('td');
-    const site = cells[0].textContent.toLowerCase();
-    const email = cells[1].textContent.toLowerCase();
-    const status = cells[2].textContent.toLowerCase();
-    const company = cells[5].textContent.toLowerCase();
-    const address = cells[6].textContent.toLowerCase();
-
-
-    // Проверяем, соответствует ли строка всем активным фильтрам
-    const matchesSite = site.includes(siteFilter);
-    const matchesEmail = email.includes(emailFilter);
-    const matchesStatus = status.includes(statusFilter);
-    const matchesCompany = company.includes(companyFilter);
-
-    // Показываем строку, если она соответствует всем фильтрам
-    if (matchesSite && matchesEmail && matchesStatus && matchesCompany) {
-      row.style.display = '';
-    } else {
-      row.style.display = 'none';
-    }
-  });
-}
-
-function clearAllFilters() {
-  // Очищаем все поля фильтров
-  document.getElementById('filter-site').value = '';
-  document.getElementById('filter-email').value = '';
-  document.getElementById('filter-status').value = '';
-  document.getElementById('filter-company').value = '';
-  document.getElementById('filter-catalog').value = '';
-
-  // Применяем фильтрацию (покажет все строки)
-  filterTable();
+// ===== ЭКСПОРТ РЕЗУЛЬТАТОВ =====
+function exportData(format) {
+  const link = document.createElement('a');
+  link.href = '/export/' + format;
+  link.download = 'registrations_' + Date.now() + '.' + (format === 'xlsx' ? 'xlsx' : format === 'csv' ? 'csv' : 'json');
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
   </script>    
+
+  <!-- Modal for adding directory -->
+  <div class="modal-overlay" id="addDirectoryModal">
+    <div class="modal">
+      <h3>➕ Добавить каталог</h3>
+      <div class="form-group">
+        <label for="newDirName">Название:</label>
+        <input type="text" id="newDirName" placeholder="Например: Yell.ru">
+      </div>
+      <div class="form-group">
+        <label for="newDirUrl">URL:</label>
+        <input type="text" id="newDirUrl" placeholder="https://yell.ru">
+      </div>
+      <div class="form-group">
+        <label for="newDirCaptcha">Капча:</label>
+        <select id="newDirCaptcha">
+          <option value="Не проверен">Не проверен</option>
+          <option value="Капча">Капча</option>
+          <option value="Без капчи">Без капчи</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="newDirActive" checked> Активен
+        </label>
+      </div>
+      <div class="modal-buttons">
+        <button type="button" class="btn-cancel" onclick="closeAddDirectoryModal()">Отмена</button>
+        <button type="button" class="btn-save" onclick="saveNewDirectory()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

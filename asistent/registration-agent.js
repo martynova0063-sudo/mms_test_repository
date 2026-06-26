@@ -1,443 +1,654 @@
-const { chromium } = require('playwright');
-const sqlite3 = require('sqlite3').verbose();
-const Imap = require('imap');
-const { SimpleParser } = require('mailparser');
+const BrowserInitializer = require('./browser-initializer');
+const EmailParser = require('./email-parser');
+const RegistrationDB = require('./registration-db');
+const { serverLog } = require('./logger');
+
 let logs = [];
 
 class RegistrationAgent {
   constructor() {
-    this.browser = null;
-    this.context = null;
-    this.page = null;
-    this.db = new sqlite3.Database('./registrations.db');
+    this.browserInit = new BrowserInitializer();
+    this.db = new RegistrationDB();
   }
 
   async initialize() {
-    try {
-      console.log('Запуск браузера...');
-      logs.push('Запуск браузера...');
-      this.browser = await chromium.launch({
-        headless: false,
-        slowMo: 100,
-        args: ['--start-maximized']
-      });
-
-      this.context = await this.browser.newContext({
-        viewport: { width: 1920, height: 1080 }
-      });
-
-      this.page = await this.context.newPage();
-      console.log('Браузер успешно запущен');
-      logs.push('Браузер успешно запущен');
-      return true;
-    } catch (error) {
-      console.error('Ошибка инициализации Playwright:', error);
-      await this.cleanup();
-      return false;
+    serverLog.info('🖥️ Инициализация базы данных...');
+    await this.db.init();
+    serverLog.info('✅ База данных инициализирована');
+    
+    serverLog.info('🖥️ Инициализация браузера Playwright...');
+    const result = await this.browserInit.initialize();
+    if (result) {
+      serverLog.info('✅ Браузер успешно инициализирован');
+    } else {
+      serverLog.error('❌ Не удалось инициализировать браузер');
     }
+    return result;
   }
 
   async cleanup() {
-    if (this.page) await this.page.close().catch(() => {});
-    if (this.context) await this.context.close().catch(() => {});
-    if (this.browser) await this.browser.close().catch(() => {});
+    serverLog.info('🧹 Очистка ресурсов браузера...');
+    await this.browserInit.cleanup();
+    serverLog.info('✅ Браузер закрыт');
+    
+    serverLog.info('🔌 Закрытие подключения к БД...');
+    await this.db.close();
+    serverLog.info('✅ БД закрыта');
   }
 
   async parseWebsiteData(websiteUrl) {
-      await this.page.goto(websiteUrl, { waitUntil: 'networkidle', timeout: 60000 });
-      const data = await this.page.evaluate(() => {
-     // Поиск логотипа по распространённым селекторам
+    serverLog.info(`🌐 Парсинг сайта: ${websiteUrl}`);
+    serverLog.debug(`   Переход на страницу...`);
+    
+    const page = this.browserInit.getPage();
+    await page.goto(websiteUrl, { waitUntil: 'networkidle', timeout: 60000 });
+    serverLog.debug(`   ✅ Страница загружена`);
+
+    serverLog.debug(`   🔍 Извлечение данных компании...`);
+    const data = await page.evaluate(() => {
       const logoSelectors = [
         'link[rel="icon"]',
         'link[rel="shortcut icon"]',
-        '[href*="favicon"]', // любой href с "favicon"
+        '[href*="favicon"]',
         'img[alt*="logo"]',
         '.logo img',
         '#logo',
         'header img',
-        '[class*="logo"] img'];
+        '[class*="logo"] img',
+      ];
 
       let logoUrl = null;
       for (const selector of logoSelectors) {
         const element = document.querySelector(selector);
         if (element) {
-          // Для link получаем href, для img — src
           logoUrl = element.href || element.src;
-          if (logoUrl) break;}
+          if (logoUrl) break;
         }
-      console.log(document.querySelector('[id="phone"] p'));
-        
+      }
 
       return {
-        name: document.querySelector('h1')?.innerText.trim() ||
-               document.title || 'Неизвестно',
-        description: document.querySelector('meta[name="description"]')
-          ?.getAttribute('content') || 'Неизвестно',
-        logoUrl: logoUrl || null, // сохраняем URL логотипа
-        address:  document.querySelector('meta[name="address"]')
-          ?.getAttribute('content') ||'Казань', 
-        phone: document.querySelector('meta[name="phone"]')
-          ?.getAttribute('content') || '+7(495)222-22-00'
-          };
-      });
-    console.log('Имя компаниии', data.phone);
-    //await page.$eval('#phone p', el => el.textContent.trim())
+        name: document.querySelector('h1')?.innerText.trim() || document.title || 'Неизвестно',
+        description: document.querySelector('meta[name="description"]')?.getAttribute('content') || 'Неизвестно',
+        logoUrl: logoUrl || null,
+        address: document.querySelector('meta[name="address"]')?.getAttribute('content') || 'Казань',
+        phone: document.querySelector('meta[name="phone"]')?.getAttribute('content') || '+7(495)222-22-00',
+        inn: document.querySelector('meta[name="inn"]')?.getAttribute('content') || '633009210981',
+      };
+    });
+
+    serverLog.info(`📋 Данные компании получены:`, {
+      name: data.name,
+      description: data.description,
+      address: data.address,
+      phone: data.phone,
+      inn: data.inn,
+      logoUrl: data.logoUrl
+    });
 
     return data;
   }
 
   async acceptAgreement(page) {
-   console.log('\n⚠️ ВНИМАНИЕ: На странице есть виджет согласия (CDOT/капча).');
-   console.log('🖱️ Пожалуйста, вручную поставьте галочку "Я принимаю соглашение".');
-  
-   // Ждем, пока человек поставит галочку (максимум 2 минуты)
-   const checkboxLocator = page.locator('.cdot-frame'); // Просто проверяем, что фрейм есть
-  
-  await page.waitForFunction(() => {
-    // Здесь ты не можешь проверить состояние чекбокса внутри iframe.
-    // Поэтому мы просим пользователя нажать любую клавишу или просто ждем время.
-     return true; 
-   }, { timeout: 120000 }); // Ждем 2 минуты
-  
-  console.log('✅ Галочка подтверждена пользователем. Продолжаем...\n');
- }
+    serverLog.warn('⚠️ Обнаружен виджет согласия (CDOT/капча) на странице');
+    serverLog.info('⏳ Ожидание ручного подтверждения пользователем (до 2 минут)...');
+    serverLog.debug('   💡 Поставьте галочку "Я принимаю соглашение"');
 
- /**
- * Выбирает сферу деятельности в сложном виджете
- * @param {Page} page - страница Playwright
- * @param {string} searchText - что ищем (например, "торговля")
- */
-async selectRubric(page, searchText) {
-  const inputLocator = page.locator('.spheres_category input.category-input');
-  const variantsLocator = page.locator('.rubric-variants');
-  
-  console.log(`🔍 Ищем сферу деятельности: "${searchText}"...`);
+    await page.waitForFunction(() => true, { timeout: 120000 });
 
-  // 1. Кликаем в поле ввода, чтобы активировать виджет
-  await inputLocator.click({ force: true });
-  
-  // 2. Очищаем поле и вводим текст
-  await inputLocator.fill('');
-  await inputLocator.type(searchText);
+    serverLog.info('✅ Пользователь подтвердил соглашение. Продолжаем...');
+  }
 
-  // 3. Ждем появления выпадающего списка с вариантами
-  // Таймаут 5000мс, так как список может подгружаться с сервера (AJAX)
-  await variantsLocator.waitFor({ state: 'visible', timeout: 5000 });
+  async selectRubric(page, searchText) {
+    serverLog.debug(`🔍 Поиск сферы деятельности: "${searchText}"`);
 
-  // 4. Ищем элемент в списке, который содержит наш текст
-  // Обычно это <li>, <div> или <a> внутри .rubric-variants
-  const optionLocator = variantsLocator.locator(`:text-is("${searchText}")`);
-  
-  if (await optionLocator.isVisible({ timeout: 2000 })) {
-    await optionLocator.click();
-    console.log(`✅ Выбрана рубрика: "${searchText}"`);
-    
-    // 5. Проверяем, есть ли кнопка "Добавить рубрику". 
-    // Если виджет требует явного подтверждения, нажимаем её.
-    const addBtn = page.locator('.addRubric');
-    if (await addBtn.isVisible({ timeout: 1000 })) {
-      await addBtn.click();
-      console.log('✅ Рубрика добавлена кнопкой подтверждения.');
-    }
-  } else {
-    // Если точного совпадения нет, пробуем кликнуть по ПЕРВОМУ элементу в списке (часто это самый релевантный)
-    const firstOption = variantsLocator.locator('li:first-child, div:first-child');
-    if (await firstOption.isVisible({ timeout: 1000 })) {
-      await firstOption.click();
-      console.log('⚠️ Точного совпадения не найдено. Выбран первый вариант из списка.');
+    const inputLocator = page.locator('.spheres_category input.category-input');
+    const variantsLocator = page.locator('.rubric-variants');
+
+    serverLog.debug(`   📝 Клик по полю ввода...`);
+    await inputLocator.click({ force: true });
+    serverLog.debug(`   🧹 Очистка поля...`);
+    await inputLocator.fill('');
+    serverLog.debug(`   ⌨️ Ввод текста: "${searchText}"`);
+    await inputLocator.type(searchText);
+
+    serverLog.debug(`   ⏳ Ожидание вариантов...`);
+    await variantsLocator.waitFor({ state: 'visible', timeout: 5000 });
+
+    const optionLocator = variantsLocator.locator(`:text-is("${searchText}")`);
+
+    if (await optionLocator.isVisible({ timeout: 2000 })) {
+      serverLog.debug(`   ✅ Найдено точное совпадение: "${searchText}"`);
+      await optionLocator.click();
+      serverLog.info(`✅ Выбрана рубрика: "${searchText}"`);
+
+      const addBtn = page.locator('.addRubric');
+      if (await addBtn.isVisible({ timeout: 1000 })) {
+        serverLog.debug(`   👆 Нажатие кнопки подтверждения...`);
+        await addBtn.click();
+        serverLog.info('✅ Рубрика добавлена');
+      }
     } else {
-      throw new Error(`❌ Не удалось найти вариант для "${searchText}" в выпадающем списке.`);
+      serverLog.warn(`⚠️ Точное совпадение не найдено, выбираем первый вариант`);
+      const firstOption = variantsLocator.locator('li:first-child, div:first-child');
+      if (await firstOption.isVisible({ timeout: 1000 })) {
+        await firstOption.click();
+        serverLog.info('✅ Выбран первый вариант из списка');
+      } else {
+        throw new Error(`❌ Не удалось найти вариант для "${searchText}" в выпадающем списке.`);
+      }
     }
   }
-}
-
-
-  async getConfirmationCode(email, imapHost, port, apppassword) {
-    console.log(`Поиск кода подтверждения в почте: ${email}`);
-
-      return new Promise((resolve, reject) => {
-        const imap = new Imap({
-          user: email,
-          password: apppassword,
-          host: imapHost,
-          port: port,
-          tls: true,
-          connTimeout: 20000, // 15 секунд таймаут
-          tlsOptions: { rejectUnauthorized: false } // Отключаем проверку сертификата
-        });
-    
-        // Обработка ошибок подключения
-        imap.once('error', (err) => {
-          console.error('Ошибка подключения к Gmail:', err);
-          reject(err);
-        });
-        // Когда подключение установлено
-        imap.once('ready', () => {
-        // Открываем папку INBOX
-        imap.openBox('INBOX', false, async (err, box) => {
-          if (err) {
-            console.error('Ошибка открытия папки INBOX:', err);
-            reject(err);
-            return; }
-          console.log('Ищем последнее письмо с кодом подтверждения...');
-          // Критерии поиска: непрочитанные письма за последние 24 часа с ключевыми словами
-          const searchCriteria = [
-           'UNSEEN',
-            ['SUBJECT', ['confirmation', 'код', 'verification', 'подтверждение']],
-            ['SINCE', new Date(Date.now() - 24 * 60 * 60 * 1000)] // за последние 24 часа
-                 ];
-          imap.search(searchCriteria, async (err, results) => {
-            if (err || !results || results.length === 0) {
-             console.log('Письма с кодом не найдены по критериям. Ищем последнее письмо...');
-             // Если не нашли по критериям, берём последнее полученное письмо
-             imap.search(['ALL', 'UNSEEN'], (errAll, allResults) => {
-                if (errAll || !allResults || allResults.length === 0) {
-                  console.log('Подходящих писем не найдено');
-                  imap.end();
-                  resolve(null);
-                  return;  }
-                // Берём самое свежее письмо
-                const latestEmailId = allResults[allResults.length - 1];
-                this.fetchAndExtractCode(imap, latestEmailId, resolve);
-             });
-             } else {
-               // Берём самое свежее письмо из найденных по критериям
-               const latestEmailId = results[results.length - 1];
-               this.fetchAndExtractCode(imap, latestEmailId, resolve);
-          }
-        });
-      });
-    });
-     // Запускаем подключение
-     imap.connect();   
-  });  
- }
-
-fetchAndExtractCode = (imap, emailId, resolve) => {
-  const f = imap.fetch(emailId, { bodies: '' });
-
-  f.on('message', (msg) => {
-    msg.on('body', async (stream) => {
-      let buffer = '';
-      stream.on('data', (chunk) => { buffer += chunk.toString(); });
-      stream.on('end', async () => {
-        try {
-          const { simpleParser } = require('mailparser');
-          const parsed = await simpleParser(buffer);
-          const code = this.extractCodeFromEmail(parsed.text || parsed.html);
-
-          if (code) {
-            console.log(`Найден код подтверждения: ${code}`);
-            imap.end();
-            resolve(code);
-          } else {
-            console.log('Код не найден в письме');
-            imap.end();
-            resolve(null);
-          }
-        } catch (parseErr) {
-          console.error('Ошибка парсинга письма:', parseErr);
-          imap.end();
-          resolve(null);
-        }
-      });
-    });
-  });
-
-  f.once('end', () => {
-    console.log('Поиск кода завершён');
-  });
-}
-
-  extractCodeFromEmail(text) {
-  // Регулярное выражение для поиска 6‑значного кода
-  const codeRegex = /\b\d{6}\b/;
-  const match = text.match(codeRegex);
-  return match ? match[0] : null;}
 
   async registerInDirectory(directoryUrl, websiteData, email, imapHost, port, apppassword) {
-    console.log(`Регистрация на ${directoryUrl}...`);    
+    const dirName = directoryUrl.split('/').pop() || directoryUrl;
+    serverLog.info(`═══════════════════════════════════════════════════`);
+    serverLog.info(`🚀 НАЧАЛО РЕГИСТРАЦИИ: ${dirName}`);
+    serverLog.info(`   Сайт: ${websiteData.website}`);
+    serverLog.info(`   Каталог: ${directoryUrl}`);
+    serverLog.info(`   Email: ${email}`);
+    serverLog.info(`═══════════════════════════════════════════════════`);
+
+    const page = this.browserInit.getPage();
+
+    // Объявляем переменные до try/catch, чтобы они были доступны в catch
+    let login = email;
+    let password = Math.random().toString(36).slice(-8);
+    let profileUrl = directoryUrl;
+
     try {
-       await this.page.goto(directoryUrl,  { waitUntil: /*'networkidle'*/'domcontentloaded', timeout: 60000 });
+      // Шаг 1: Открытие страницы каталога
+      serverLog.info(`📄 Шаг 1: Открытие страницы каталога...`);
+      serverLog.debug(`   URL: ${directoryUrl}`);
+      await page.goto(directoryUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      serverLog.debug(`   ✅ Страница загружена`);
+      serverLog.debug(`   Текущий URL: ${page.url()}`);
 
-    // Заполнение формы регистрации
-   // await this.page.fill('input[name="cityTitle"]', websiteData.address);    
-   // await this.page.waitForSelector('.ui-autocomplete .ui-menu-item', { timeout: 10000 });
-   // await this.page.click('.ui-autocomplete .ui-menu-item:has-text(`Регистрация на ${websiteData.address}...`)');
-
-    // Сохранение данных
-    const profileUrlsMap = {
-       'https://otzovik.com/signup.php': 'https://otzovik.com/loginnew.php',   
-       'https://www.orgpage.ru/Cabinet/Create/': 'https://www.orgpage.ru/Cabinet/Create/', 
-       'default':      null};
-    const profileUrl = profileUrlsMap[this.page.url()] || this.page.url();
-    const login = email;
-    const password = Math.random().toString(36).slice(-8); // простой пароль
-
-const selectors = [
-  'input[name="password"]:visible',
-  'input[name="pass"]:visible',
-  'input[name="login"]:visible',
-  'input[name="newlogin"]:visible',
-  'input[name="email"]:visible',
-  'input[name="name"]:visible',
-  'input[name="address"]:visible',
-  'input[name="phone"]:visible',
-  'input[name="city"]:visible', 
-  'input[name="cityTitle"]:visible', 
-  'input[name="index"]:visible', 
-  'textarea[name="CatalogDescription"]:visible', 
-  '#CatalogDescription',
-  'textarea[name="FullDescription"]:visible', 
-  '#FullDescription',
-  '.spheres_category input.category-input',
-];
-
-for (const selector of selectors) {
-  const element = await this.page.$$(selector);
-  if (element.length > 0) {
-    try {
-      if (selector.includes('name')) {
-        await this.page.fill(selector, websiteData.name);
-        console.log(`Заполнили имя компании успешно ${directoryUrl}...`);
-      } 
-      if (selector.includes('password') || selector.includes('pass')) {
-        await this.page.fill(selector, password);
-        console.log(`Заполнили password успешно ${password}...`);
-      } 
-      if (selector.includes('login') || selector.includes('newlogin')) {
-        await this.page.fill(selector, password+'login');
-      } 
-      if (selector.includes('email')){
-          await this.page.fill(selector, email);
-      } 
-      if (selector.includes('address')) {   
-        await this.page.fill(selector,  websiteData.address);
-        console.log(`Заполнили адресс компании успешно ${directoryUrl}...`);
-      } 
-      if (selector.includes('city')) {   
-        await this.page.fill(selector,  websiteData.address);
-        console.log(`Заполнили город компании успешно ${directoryUrl}...`);
-      } 
-      if (websiteData.phone && selector.includes('phone')) {
-        await this.page.fill(selector, websiteData.phone);
-      } 
-      if (selector.includes('CatalogDescription')) {
-        await this.page.locator('#CatalogDescription').fill(websiteData.name);
-      } 
-      if (selector.includes('FullDescription')) {
-          await this.page.locator('#FullDescription').fill(websiteData.description);
+      // Определяем домен
+      const domain = page.url().replace(/^https?:\/\//, '').split('/')[0];
+      
+      // Шаг 1.1: Обработка Otzovik - показ капчи
+      if (domain.includes('otzovik')) {
+        serverLog.info(`🔓 Otzovik: обнаружена капча на signup.php`);
+        serverLog.info(`   💡 Для Otzovik требуется ручное решение капчи`);
+        serverLog.info(`   ⏳ Ожидание ручного подтверждения пользователем (до 5 мин)...`);
+        serverLog.debug(`   💡 Решите капчу на странице`);
+        
+        await page.waitForFunction(() => true, { timeout: 300000 });
+        
+        serverLog.info(`   ✅ Капча решена. Продолжаем...`);
+        
+        // Проверяем, перешли ли на форму регистрации
+        await page.waitForLoadState('domcontentloaded');
+        serverLog.debug(`   Текущий URL: ${page.url()}`);
       }
-      /*if (selector.includes('.spheres_category input.category-input')) {
-          this.selectRubric(this.page, 'торговля');
-      }*/
-      if (selector.includes('index')) {   
-        // 2. Разбираем номер
-        const match = websiteData.phone.match(/\+(\d{1,3})\s*\((\d{3})\)\s*(\d{3}-\d{2}-\d{2})/);
+
+      // Шаг 2: Определение профиля
+      const profileUrlsMap = {
+        'https://otzovik.com/signup.php'        : 'https://otzovik.com/loginnew.php',
+        'https://www.orgpage.ru/Cabinet/Create/': 'https://www.orgpage.ru/Cabinet/Create/',
+        'https://www.cataloxy.ru/reg.htm'       : 'https://www.cataloxy.ru/cabinet.htm',
+        'https://www.b2b-center.ru/app/next/registration/': 'https://www.b2b-center.ru',
+        'https://www.irecommend.ru/user/register': 'https://www.irecommend.ru',
+        default: null,
+      };
+      profileUrl = profileUrlsMap[page.url()] || page.url();
+      
+      serverLog.info(`🔐 Сгенерированы учётные данные:`, { login, password });
+      serverLog.info(`🔗 URL профиля после регистрации: ${profileUrl}`);
+
+      // Шаг 3: Заполнение формы
+      serverLog.info(`📝 Шаг 3: Заполнение формы регистрации...`);
+      
+      let siteSelectors;
+      if (domain.includes('cataloxy')) {
+        siteSelectors = [
+          { name: 'email', selectors: ['input[name="email"]:visible'], fill: email },
+          { name: 'name', selectors: ['input[name="name"]:visible'], fill: websiteData.name },
+          { name: 'password', selectors: ['input[name="password"]:visible'], fill: password },
+          { name: 'password2', selectors: ['input[name="password2"]:visible'], fill: password },
+        ];
+      }
+      else if (domain.includes('b2b-center')) {
+        // B2B Center — специфические селекторы
+        serverLog.info(`   🎯 Используем специфические селекторы для B2B Center`);
+        siteSelectors = [
+          { name: 'company_name', selectors: ['input[name="company_name"]:visible', 'input[placeholder*="Компания"]:visible', 'input[placeholder*="company"]:visible'], fill: websiteData.name },
+          { name: 'website', selectors: ['input[name="site"]:visible', 'input[name="website"]:visible', 'input[placeholder*="site"]:visible', 'input[placeholder*="site"]:visible'], fill: websiteData.website },
+          { name: 'email', selectors: ['input[name="email"]:visible', 'input[type="email"]:visible'], fill: email },
+          { name: 'password', selectors: ['input[name="password"]:visible', 'input[type="password"]:visible'], fill: password },
+          { name: 'phone', selectors: ['input[name="phone"]:visible', 'input[type="tel"]:visible'], fill: websiteData.phone },
+          { name: 'inn', selectors: ['input[name="inn"]:visible', 'input[placeholder*="ИНН"]:visible'], fill: websiteData.inn },
+          { name: 'description', selectors: ['textarea[name="description"]:visible', 'textarea[placeholder*="description"]:visible', 'textarea[placeholder*="Описание"]:visible'], fill: websiteData.description },
+        ];
+      }
+      else if (domain.includes('irecommend')) {
+        // iRecommend — специфические селекторы для регистрации
+        serverLog.info(`   🎯 Используем специфические селекторы для iRecommend`);
+        siteSelectors = [
+          { name: 'login', selectors: ['input[name="login"]:visible', 'input[name="login_form[login]"]:visible', 'input[placeholder*="Логин"]:visible'], fill: email.split('@')[0] },
+          { name: 'email', selectors: ['input[name="email"]:visible', 'input[name="email_form[email]"]:visible', 'input[type="email"]:visible', 'input[placeholder*="Email"]:visible'], fill: email },
+          { name: 'password', selectors: ['input[name="password"]:visible', 'input[type="password"]:visible', 'input[placeholder*="Пароль"]:visible'], fill: password },
+          { name: 'password_confirm', selectors: ['input[name="password_confirm"]:visible', 'input[name="password_confirm"]:visible', 'input[placeholder*="Подтверждение"]:visible'], fill: password },
+        ];
+      }
+      else {
+        // Универсальные селекторы
+        siteSelectors = [
+          { name: 'password', selectors: ['input[name="password"]:visible', 'input[type="password"]:visible', 'input[type="password2"]:visible'], fill: password },
+          { name: 'login', selectors: ['input[name="login"]:visible', 'input[name="newlogin"]:visible'], fill: password+'login'},
+          { name: 'email', selectors: ['input[name="email"]:visible', 'input[type="email"]:visible'], fill: email },
+          { name: 'name', selectors: ['input[name="name"]:visible', 'input[name="username"]:visible'], fill: websiteData.name },
+          { name: 'address', selectors: ['input[name="address"]:visible'], fill: websiteData.address },
+          { name: 'phone', selectors: ['input[name="phone"]:visible'], fill: websiteData.phone },
+          { name: 'city', selectors: ['input[name="city"]:visible', 'input[name="cityTitle"]:visible'], fill: websiteData.address },
+          { name: 'inn', selectors: ['input[name="inn"]:visible'], fill: websiteData.inn },
+          { name: 'CatalogDescription', selectors: ['textarea[name="CatalogDescription"]:visible'], fill: websiteData.name },
+          { name: 'FullDescription', selectors: ['textarea[name="FullDescription"]:visible'], fill: websiteData.description },
+        ];
+      }
+
+      let fieldsFilled = 0;
+      let fieldsSkipped = 0;
+
+      for (const selector of siteSelectors) {
+        let filled = false;
+        
+        for (const sel of selector.selectors) {
+          try {
+            const element = await page.$(sel);
+            if (element) {
+              serverLog.debug(`   ⌨️ Заполнение поля "${selector.name}" (селектор: ${sel})...`);
+              await page.fill(sel, selector.fill);
+              serverLog.info(`   ✅ Поле "${selector.name}" заполнено: ${String(selector.fill).slice(0, 20)}`);
+              fieldsFilled++;
+              filled = true;
+              break;
+            }
+          } catch (error) {
+            serverLog.debug(`   ⚠️ Селектор "${sel}" не сработал: ${error.message}`);
+          }
+        }
+        
+        if (!filled) {
+          serverLog.debug(`   ℹ️ Поле "${selector.name}" не найдено — пропускаем`);
+          fieldsSkipped++;
+        }
+      }
+
+      serverLog.info(`📊 Заполнено полей: ${fieldsFilled} из ${fieldsFilled + fieldsSkipped}`);
+
+      // Шаг 4: Выбор рубрики и чекбоксы
+      serverLog.info(`🏷️ Шаг 4: Выбор сферы деятельности и чекбоксы...`);
+      
+      if (domain.includes('cataloxy')) {
+        // Cataloxy: отмечам чекбокс согласия с данными
+        try {
+          const agreeCheckbox = await page.$('input[name="iagree_pers_datos"]:visible, input#iagree_pers_datos');
+          if (agreeCheckbox) {
+            await page.check('input[name="iagree_pers_datos"]:visible, input#iagree_pers_datos');
+            serverLog.info(`   ✅ Чекбокс согласия отмечен`);
+          }
+        } catch (err) {
+          serverLog.debug(`   ℹ️ Чекбокс iagree_pers_datos не найден`);
+        }
+        
+        // Отмечаем чекбокс согласия на обработку персональных данных
+        try {
+          const imAgree = await page.$('input[name="im_agree"]:visible, input#im_agree');
+          if (imAgree) {
+            await page.check('input[name="im_agree"]:visible, input#im_agree');
+            serverLog.info(`   ✅ Чекбокс im_agree отмечен`);
+          }
+        } catch (err) {
+          serverLog.debug(`   ℹ️ Чекбокс im_agree не найден`);
+        }
+      }
+      else if (domain.includes('irecommend')) {
+        // iRecommend: чекбоксы согласия
+        try {
+          serverLog.info(`   📋 iRecommend: обработка чекбоксов...`);
+          
+          // iRecommend требует согласия с правилами
+          const agreeCheckbox = await page.$('input[type="checkbox"][name*="agree"]:visible, input[type="checkbox"][name*="rules"]:visible, input[type="checkbox"][class*="agree"]:visible');
+          if (agreeCheckbox) {
+            await page.check('input[type="checkbox"][name*="agree"]:visible, input[type="checkbox"][name*="rules"]:visible, input[type="checkbox"][class*="agree"]:visible');
+            serverLog.info(`   ✅ Чекбокс согласия с правилами отмечен`);
+          }
+          
+          // Опционально: согласие на рассылку
+          const newsletterCheckbox = await page.$('input[type="checkbox"][name*="newsletter"]:visible, input[type="checkbox"][name*="subscribe"]:visible');
+          if (newsletterCheckbox) {
+            // Не отмечаем рассылку, но не ошибка если не найдено
+            serverLog.debug(`   ℹ️ Найдено поле подписки (не отмечаем)`);
+          }
+        } catch (err) {
+          serverLog.warn(`   ⚠️ Не удалось обработать чекбоксы iRecommend: ${err.message}`);
+        }
+      }
+      else if (domain.includes('b2b-center')) {
+        // B2B Center: выбор рубрики и чекбоксы
+        try {
+          serverLog.info(`   📋 B2B Center: выбор сферы деятельности...`);
+          // Пробуем найти и заполнить поле категории/рубрики
+          const categoryInput = await page.$('select[name="category"]:visible, input[name="category"]:visible, [class*="category"]:visible');
+          if (categoryInput) {
+            serverLog.info(`   ✅ Найдено поле категории`);
+            // Если это select — выбираем первый вариант
+            const tagName = await categoryInput.evaluate(el => el.tagName);
+            if (tagName === 'SELECT') {
+              await page.selectOption('select[name="category"]:visible', { label: 'Бизнес' }).catch(async () => {
+                await page.selectOption('select[name="category"]:visible', { index: 0 });
+              });
+              serverLog.info(`   ✅ Категория выбрана`);
+            }
+          }
+          
+          // Ищем чекбокс согласия
+          const agreeCheckbox = await page.$('input[type="checkbox"][name*="agree"]:visible, input[type="checkbox"][name*="policy"]:visible, input[type="checkbox"][name*="consent"]:visible');
+          if (agreeCheckbox) {
+            await page.check('input[type="checkbox"][name*="agree"]:visible, input[type="checkbox"][name*="policy"]:visible, input[type="checkbox"][name*="consent"]:visible');
+            serverLog.info(`   ✅ Чекбокс согласия отмечен`);
+          }
+        } catch (err) {
+          serverLog.warn(`   ⚠️ Не удалось обработать рубрику/чекбоксы B2B Center: ${err.message}`);
+        }
+      }
+      else if (domain.includes('orgpage')) {
+        try {
+          await page.fill('#CatalogDescription', websiteData.name);
+          await page.fill('#FullDescription', websiteData.description);
+          // 2. Разбираем номер
+          const match = websiteData.phone.match(/\+(\d{1,3})\s*\((\d{3})\)\s*(\d{3}-\d{2}-\d{2})/);
 
         if (match) {
-          const result = {
-           countryCode: match[1],
-           areaCode: match[2],
-           number: match[3] };
-           await this.page.fill('input[name="index"]', result.areaCode); 
-           await this.page.fill('input[name="number"]', result.number);
-          }
-      } 
-      console.log(`✅ - Заполнено поле: ${selector}`);
-    } catch (error) {
-      console.log(`⚠️ - Ошибка при заполнении ${selector}:`, error.message);
-    }
-  } else {
-    console.log(`ℹ️ - Элемент ${selector} не найден - пропускаем`);
-  }
-}  
-    this.acceptAgreement(this.page);
-   // await new Promise(resolve => setTimeout(resolve, 20000)); //пауза
-    // Нажимаем кнопку «Зарегистрироваться или Получить код»
-    console.log('Нажимаем кнопку "Зарегистрироваться или Получить код"...');
-    await this.page.click('button[type="submit"]');
-
-    // Добавляем задержку 10 секунд после нажатия кнопки
-    console.log('Ждём 10 секунд после отправки формы...');
-    await new Promise(resolve => setTimeout(resolve, 10000));
-
-    // Получаем код подтверждения из Gmail
-    try{
-     const confirmationCode = this.getConfirmationCode(email, imapHost, port, apppassword); 
-     await this.saveRegistrationData(websiteData.website, 
-                                    email, 
-                                    login, 
-                                    password, 
-                                    profileUrl, 
-                                    'success', 
-                                    websiteData.name,
-                                    directoryUrl,
-                                    '');
-      
-     console.log(`Регистрация завершена: ${profileUrl}`);                              
+        const result = {
+          countryCode: match[1],
+          areaCode: match[2],
+          number: match[3] };
+        await page.fill('input[name="index"]',  result.areaCode); // Москва
+        await page.fill('input[name="number"]', result.number);
+        await this.selectRubric(page, 'Бизнес');
     } 
-     catch (error) {
-     // Сохраняем ошибку в базу данных
-     this.saveRegistrationData(websiteData.website, 
-                                    email, 
-                                    login, 
-                                    password, 
-                                    profileUrl, 
-                                    'error', 
-                                    websiteData.name,
-                                    directoryUrl,
-                                    error.message);
-    }
-    return { success: true, profileUrl };
-           } catch (error) {
-         console.error(`Не удалось открыть страницу для регистрации ${directoryUrl}:`, error.message);
-       }
-    return { success: false, profileUrl };   
-  }
+      else { console.log('Не удалось разобрать номер телефона');}
+        } catch (err) {
+          serverLog.warn(`⚠️ Не удалось выбрать рубрику: ${err.message}`);
+        }
+      }
 
-  async saveRegistrationData(website, email, login, password, profileUrl, status, company, directoryUrl, error) {
-    const stmt = this.db.prepare(`
-      INSERT INTO registrations (website, email, login, password, profile_url, status, company, catalog, error)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    stmt.run(website, email, login, password, profileUrl, status, company, directoryUrl, error);
-    stmt.finalize();
+      // Шаг 5: Согласие (для не-Cataloxy)
+      if (!domain.includes('cataloxy')) {
+        serverLog.info(`📜 Шаг 5: Проверка согласия с условиями...`);
+        try {
+          await this.acceptAgreement(page);
+        } catch (err) {
+          serverLog.warn(`⚠️ Не удалось обработать согласие: ${err.message}`);
+        }
+      }
+      // Шаг 6: Отправка формы
+      serverLog.info(`📤 Шаг 6: Отправка формы регистрации...`);
+      
+      if (domain.includes('cataloxy')) {
+        // Cataloxy: кнопка с name="pulseregbtn"
+        try {
+          await page.click('input[name="pulseregbtn"]:visible');
+          serverLog.info(`   ✅ Форма отправлена (Cataloxy)`);
+        } catch (err) {
+          serverLog.warn(`   ⚠️ Не удалось нажать кнопку отправки: ${err.message}`);
+          // Пробуем альтернативную кнопку
+          try {
+            await page.click('input[type="submit"]:visible');
+            serverLog.info(`   ✅ Форма отправлена (альтернативная кнопка)`);
+          } catch (err2) {
+            serverLog.error(`   ❌ Не удалось отправить форму`);
+          }
+        }
+      }
+      else if (domain.includes('irecommend')) {
+        // iRecommend: отправка формы
+        try {
+          serverLog.info(`   📤 iRecommend: отправка формы...`);
+          
+          // Ждем немного для валидации
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Ищем кнопку регистрации
+          await page.click('button[type="submit"]:visible, input[type="submit"]:visible, [class*="submit"]:visible, [class*="register"]:visible, [id*="submit"]:visible').catch(async () => {
+            // Альтернативный вариант — отправка формы
+            const form = await page.$('form');
+            if (form) {
+              await form.evaluate(f => f.submit());
+            }
+          });
+          serverLog.info(`   ✅ Форма iRecommend отправлена`);
+        } catch (err) {
+          serverLog.warn(`   ⚠️ Не удалось отправить форму iRecommend: ${err.message}`);
+          // Финальная попытка
+          try {
+            await page.click('button:not([type="button"]):visible, input[type="submit"]:visible');
+            serverLog.info(`   ✅ Форма iRecommend отправлена (альтернативно)`);
+          } catch (err2) {
+            serverLog.error(`   ❌ Не удалось отправить форму iRecommend`);
+          }
+        }
+      }
+      else if (domain.includes('b2b-center')) {
+        // B2B Center: отправка формы
+        try {
+          serverLog.info(`   📤 B2B Center: отправка формы...`);
+          // B2B Center обычно требует согласия с условиями — ищем чекбокс
+          const agreeCheckbox = await page.$('input[type="checkbox"][name*="agree"]:visible, input[type="checkbox"][name*="policy"]:visible, input[type="checkbox"][name*="rules"]:visible');
+          if (agreeCheckbox) {
+            await page.check('input[type="checkbox"][name*="agree"]:visible, input[type="checkbox"][name*="policy"]:visible, input[type="checkbox"][name*="rules"]:visible');
+            serverLog.info(`   ✅ Чекбокс согласия с условиями отмечен`);
+          }
+
+          // Ждем немного для инициализации форм
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Пробуем найти и нажать кнопку регистрации
+          await page.click('button[type="submit"]:visible, input[type="submit"]:visible, [class*="submit"]:visible, [class*="register"]:visible, [id*="submit"]:visible, [id*="register"]:visible').catch(async () => {
+            // Альтернативный вариант — отправка формы
+            const form = await page.$('form');
+            if (form) {
+              await form.evaluate(f => f.submit());
+            }
+          });
+          serverLog.info(`   ✅ Форма B2B Center отправлена`);
+        } catch (err) {
+          serverLog.warn(`   ⚠️ Не удалось отправить форму B2B Center: ${err.message}`);
+          // Финальная попытка — ищем любую кнопку
+          try {
+            await page.click('button:not([type="button"]):visible, input[type="submit"]:visible');
+            serverLog.info(`   ✅ Форма B2B Center отправлена (альтернативно)`);
+          } catch (err2) {
+            serverLog.error(`   ❌ Не удалось отправить форму B2B Center`);
+          }
+        }
+      }
+      else {
+        serverLog.debug(`   👆 Нажатие кнопки "Зарегистрироваться"...`);
+        try {
+          await page.click('button[type="submit"]');
+          serverLog.info(`   ✅ Форма отправлена`);
+        } catch (err) {
+          serverLog.warn(`   ⚠️ Не удалось нажать кнопку: ${err.message}`);
+        }
+      }
+
+      // Шаг 7: Ожидание и получение кода
+      serverLog.info(`⏳ Шаг 7: Ожидание обработки формы (10 сек)...`);
+      await new Promise((resolve) => setTimeout(resolve, 10000));
+      serverLog.debug(`   ⏰ 10 секунд прошло`);
+
+      // Cataloxy не требует кода подтверждения
+      if (!domain.includes('cataloxy')) {
+        serverLog.info(`📧 Шаг 8: Получение кода подтверждения на ${email}...`);
+        serverLog.debug(`   IMAP: ${imapHost}:${port}`);
+        
+        // Для B2B Center и iRecommend специальный парсинг
+        let confirmationCode = null;
+        if (domain.includes('b2b-center')) {
+          serverLog.info(`   🎯 Специфический парсинг для B2B Center...`);
+          confirmationCode = await EmailParser.getConfirmationCode(email, imapHost, port, apppassword, 'b2b-center');
+        }
+        else if (domain.includes('irecommend')) {
+          serverLog.info(`   🎯 Специфический парсинг для iRecommend...`);
+          confirmationCode = await EmailParser.getConfirmationCode(email, imapHost, port, apppassword, 'irecommend');
+        }
+        else {
+          confirmationCode = await EmailParser.getConfirmationCode(email, imapHost, port, apppassword);
+        }
+        
+        if (confirmationCode) {
+          serverLog.info(`✅ Код подтверждения получен: ${confirmationCode}`);
+        } else {
+          serverLog.warn(`⚠️ Код подтверждения не получен`);
+        }
+      } else {
+        serverLog.info(`📧 Шаг 8: Пропускаем (Cataloxy не требует подтверждения)`);
+      }
+
+      // Шаг 9: Сохранение в БД
+      serverLog.info(`💾 Шаг 9: Сохранение данных в базу...`);
+      await this.db.saveRegistrationData(
+        websiteData.website,
+        email,
+        login,
+        password,
+        profileUrl,
+        'success',
+        websiteData.name,
+        directoryUrl,
+        ''
+      );
+      serverLog.info(`   ✅ Данные сохранены`);
+
+      serverLog.info(`═══════════════════════════════════════════════════`);
+      serverLog.info(`✅ РЕГИСТРАЦИЯ ЗАВЕРШЕНА УСПЕШНО: ${dirName}`);
+      serverLog.info(`   Профиль: ${profileUrl}`);
+      serverLog.info(`═══════════════════════════════════════════════════`);
+
+      return { success: true, profileUrl };
+    } catch (error) {
+      serverLog.error(`═══════════════════════════════════════════════════`);
+      serverLog.error(`❌ ОШИБКА РЕГИСТРАЦИИ: ${dirName}`);
+      serverLog.error(`   Ошибка: ${error.message}`);
+      serverLog.error(`═══════════════════════════════════════════════════`);
+
+      // Всегда сохраняем данные в БД, даже при ошибке
+      try {
+        await this.db.saveRegistrationData(
+          websiteData.website,
+          email,
+          login,
+          password,
+          null,
+          'error',
+          websiteData.name,
+          directoryUrl,
+          error.message
+        );
+        serverLog.info(`   ✅ Данные об ошибке сохранены в БД`);
+      } catch (dbErr) {
+        serverLog.error(`   💥 Не удалось сохранить ошибку в БД: ${dbErr.message}`);
+      }
+
+      return { success: false, profileUrl: null };
+    }
   }
 
   async runRegistration(website, email, imapHost, port, apppassword, directories) {
+    const startTime = Date.now();
+    
+    serverLog.info(`═══════════════════════════════════════════════════`);
+    serverLog.info(`🏁 ЗАПУСК РЕГИСТРАЦИИ`);
+    serverLog.info(`   Сайт: ${website}`);
+    serverLog.info(`   Email: ${email}`);
+    serverLog.info(`   Каталогов: ${directories.length}`);
+    serverLog.info(`   IMAP: ${imapHost}:${port}`);
+    serverLog.info(`═══════════════════════════════════════════════════`);
+
     if (!(await this.initialize())) {
       throw new Error('Не удалось инициализировать Playwright');
     }
-      // Валидация: хотя бы одна директория выбрана
+
     if (!directories || directories.length === 0) {
-       return res.status(400).json({
-        success: false,
-        error: 'Необходимо выбрать хотя бы одну директорию'
-      });
-     }
+      throw new Error('Необходимо выбрать хотя бы одну директорию');
+    }
 
     const directoriesArray = Array.isArray(directories) ? directories : [directories];
 
     try {
-      // Парсим данные с сайта
+      serverLog.info(`🌐 Шаг 1: Парсинг данных сайта...`);
       const websiteData = await this.parseWebsiteData(website);
       websiteData.website = website;
+      serverLog.info(`✅ Данные сайта получены`);
 
+      serverLog.info(`🔄 Шаг 2: Начало обработки каталогов...`);
       const results = [];
-      for (const directory of directoriesArray) {
+      let successCount = 0;
+      let errorCount = 0;
+
+      // Генерируем пароль один раз для всех каталогов
+      const password = Math.random().toString(36).slice(-8);
+
+      for (let i = 0; i < directoriesArray.length; i++) {
+        const directory = directoriesArray[i];
+        serverLog.info(`\n📌 Прогресс: ${i + 1}/${directoriesArray.length} каталогов`);
+        
         try {
-          const result = await this.registerInDirectory(directory, websiteData, email, imapHost, port, apppassword);
+          const result = await this.registerInDirectory(
+            directory,
+            websiteData,
+            email,
+            imapHost,
+            port,
+            apppassword
+          );
           results.push(result);
+          if (result.success) {
+            successCount++;
+          } else {
+            errorCount++;
+          }
         } catch (error) {
-          console.error(`Ошибка регистрации в ${directory}:`, error);
+          serverLog.error(`💥 Критическая ошибка при обработке каталога: ${error.message}`);
           results.push({ success: false, error: error.message });
+          errorCount++;
+          
+          // Сохраняем критическую ошибку в БД
+          try {
+            await this.db.saveRegistrationData(
+              websiteData.website,
+              email,
+              email,
+              password,
+              null,
+              'error',
+              websiteData.name,
+              directory,
+              `Критическая ошибка: ${error.message}`
+            );
+            serverLog.info(`   ✅ Критическая ошибка сохранена в БД`);
+          } catch (dbErr) {
+            serverLog.error(`   💥 Не удалось сохранить критическую ошибку: ${dbErr.message}`);
+          }
         }
       }
 
-      return { success: true, results };
+      const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+      
+      serverLog.info(`\n═══════════════════════════════════════════════════`);
+      serverLog.info(`🎉 РЕГИСТРАЦИЯ ЗАВЕРШЕНА`);
+      serverLog.info(`   Всего каталогов: ${directoriesArray.length}`);
+      serverLog.info(`   ✅ Успешно: ${successCount}`);
+      serverLog.info(`   ❌ Ошибок: ${errorCount}`);
+      serverLog.info(`   ⏱️  Время: ${duration} сек`);
+      serverLog.info(`═══════════════════════════════════════════════════`);
+
+      return { success: true, results, stats: { total: directoriesArray.length, success: successCount, error: errorCount, duration } };
     } catch (error) {
-      console.error('Критическая ошибка:', error);
+      serverLog.error(`💥 КРИТИЧЕСКАЯ ОШИБКА РЕГИСТРАЦИИ: ${error.message}`);
       throw error;
     } finally {
       await this.cleanup();
