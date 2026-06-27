@@ -8669,3 +8669,34 @@ Call log:
 [08:18:47] [INFO  ] ℹ️ 📡 SSE stream:      http://localhost:3000/api/logs-stream
 [08:18:47] [INFO  ] ℹ️ 🗑️ Очистить логи:   POST http://localhost:3000/api/logs/clear
 [08:21:52] [INFO  ] ℹ️ 🛑 Сервер останавливается (SIGINT)
+[18:31:37] [INFO  ] ℹ️ 🚀 Сервер запущен!
+[18:31:37] [INFO  ] ℹ️ 📂 Рабочая папка: C:\Users\63_ma\OneDrive\Desktop\AI\Разработка web приложений с АИ\mms_test_repository\asistent
+[18:31:37] [INFO  ] ℹ️ 📊 Уровень логирования: debug
+[18:31:37] [INFO  ] ℹ️ 📏 Макс. логов в памяти: 500
+[18:31:37] [INFO  ] ℹ️ 🌐 Сервер доступен: http://localhost:3000
+[18:31:37] [INFO  ] ℹ️ 📊 API логов:       http://localhost:3000/api/logs
+[18:31:37] [INFO  ] ℹ️ 📡 SSE stream:      http://localhost:3000/api/logs-stream
+[18:31:37] [INFO  ] ℹ️ 🗑️ Очистить логи:   POST http://localhost:3000/api/logs/clear
+[18:32:21] [INFO  ] ℹ️ 🖥️ Инициализация базы данных...
+[18:32:21] [INFO  ] ℹ️ ✅ База данных инициализирована
+[18:32:21] [INFO  ] ℹ️ 🖥️ Инициализация браузера Playwright...
+[18:32:25] [INFO  ] ℹ️ ✅ Браузер успешно инициализирован
+[18:32:25] [INFO  ] ℹ️ 🌐 Парсинг сайта: https://martynova0063-sudo.github.io/mms_test_repository/
+[18:32:25] [DEBUG ] 🐛    Переход на страницу...
+[18:32:28] [DEBUG ] 🐛    ✅ Страница загружена
+[18:32:28] [DEBUG ] 🐛    🔍 Извлечение данных компании...
+[18:32:28] [INFO  ] ℹ️ 📋 Данные компании получены:
+   └─ Данные: {"name":"Это тестовая страница ООО \"Тестовая компания\"","description":"Это сайт тестовой компании. Сфера деятельности - продажа бытовой техники и техники для ремонта. Основана в 15 января 2001 года в городе на Волге Казань и т. д.","address":"Казань","phone":"+7(495)222-22-01","inn":"6330093300","logoUrl":"https://martynova0063-sudo.github.io/mms_test_repository/logo.png"}
+[18:32:28] [INFO  ] ℹ️ 🧹 Очистка ресурсов браузера...
+[18:32:29] [INFO  ] ℹ️ ✅ Браузер закрыт
+[18:32:29] [INFO  ] ℹ️ 🔌 Закрытие подключения к БД...
+[18:32:29] [INFO  ] ℹ️ ✅ БД закрыта
+[18:42:37] [INFO  ] ℹ️ 🚀 Сервер запущен!
+[18:42:37] [INFO  ] ℹ️ 📂 Рабочая папка: C:\Users\63_ma\OneDrive\Desktop\AI\Разработка web приложений с АИ\mms_test_repository\asistent
+[18:42:37] [INFO  ] ℹ️ 📊 Уровень логирования: debug
+[18:42:37] [INFO  ] ℹ️ 📏 Макс. логов в памяти: 500
+[18:42:37] [INFO  ] ℹ️ 🌐 Сервер доступен: http://localhost:3000
+[18:42:37] [INFO  ] ℹ️ 📊 API логов:       http://localhost:3000/api/logs
+[18:42:37] [INFO  ] ℹ️ 📡 SSE stream:      http://localhost:3000/api/logs-stream
+[18:42:37] [INFO  ] ℹ️ 🗑️ Очистить логи:   POST http://localhost:3000/api/logs/clear
+[18:43:07] [INFO  ] ℹ️ 🛑 Сервер останавливается (SIGINT)

@@ -44,7 +44,26 @@
       margin-bottom: 16px;
     }
     .settings-panel.visible { display: block; }
+    .settings-panel { position: relative; }
     .settings-panel h3 { margin-top: 0; }
+    .panel-close {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #666;
+      padding: 4px 8px;
+      border-radius: 4px;
+      line-height: 1;
+      transition: background 0.2s, color 0.2s;
+    }
+    .panel-close:hover {
+      background: rgba(0,0,0,0.1);
+      color: #333;
+    }
 
     /* ===== Modal ===== */
     .modal-overlay {
@@ -411,6 +430,16 @@ caption {
       color: #721c24;
     }
 
+    /* ===== Company check results ===== */
+    .company-field.found {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+    }
+    .company-field.not-found {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+    }
+
   </style>
 </head>
 <body>
@@ -422,10 +451,15 @@ caption {
       <svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.49.49 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 00-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1115.6 12 3.61 3.61 0 0112 15.6z"/></svg>
       <span class="gear-label">Настройки</span>
     </button>
+    <button class="btn-gear" onclick="toggleCompany()">
+      <svg viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
+      <span class="gear-label">Компания</span>
+    </button>
   </div>
 
   <!-- Settings panel (IMAP) -->
   <div class="settings-panel" id="settingsPanel">
+    <button class="panel-close" onclick="closePanel('settingsPanel')" title="Закрыть">×</button>
     <h3>⚙️ Настройки IMAP</h3>
     <p><em>Опционально:</em> агент будет автоматически забирать коды подтверждения из почты.</p>
 
@@ -449,6 +483,23 @@ caption {
     </div>
   </div>
 
+  <!-- Company panel -->
+  <div class="settings-panel" id="companyPanel" style="background: #f0f8e8; border-color: #a8d4a0;">
+    <button class="panel-close" onclick="closePanel('companyPanel')" title="Закрыть">×</button>
+    <h3>🏢 Проверка данных компании</h3>
+    <p><em>Агент проверит сайт на наличие данных для регистрации компании.</em></p>
+
+    <div class="form-group">
+      <label for="companyWebsite">URL сайта компании:</label>
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="companyWebsite" placeholder="https://example.com" style="flex: 1;">
+        <button type="button" onclick="checkCompany()" id="checkCompanyBtn" style="white-space: nowrap;">🔍 Проверить</button>
+      </div>
+    </div>
+
+    <div id="companyResults" style="display: none; margin-top: 12px;"></div>
+  </div>
+
   <form id="registrationForm">
     <div style="float: right; width: 450px; padding: 10px; background-color: #f5f5f5; border: 1px solid #ddd; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
     <div class="form-group" >
@@ -458,7 +509,7 @@ caption {
     <div class="form-group">
       <label for="email">Email для регистрации:</label>
       <input type="email" id="email" name="email" required placeholder="user@example.com">
-    </div>  
+    </div>
 
     <div class="form-group">
       <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -493,7 +544,7 @@ caption {
     <div id="console-log">Ожидание логов...</div> 
    </div>     
   </form>
-  
+
   <!-- Clear fix -->
   <div style="clear: both;"></div>
   
@@ -522,6 +573,85 @@ caption {
     function toggleSettings() {
       const panel = document.getElementById('settingsPanel');
       panel.classList.toggle('visible');
+    }
+
+    // ===== COMPANY PANEL TOGGLE =====
+    function toggleCompany() {
+      const panel = document.getElementById('companyPanel');
+      panel.classList.toggle('visible');
+    }
+
+    // ===== CLOSE PANEL =====
+    function closePanel(panelId) {
+      document.getElementById(panelId).classList.remove('visible');
+    }
+
+    // ===== CHECK COMPANY DATA =====
+    async function checkCompany() {
+      const website = document.getElementById('companyWebsite').value.trim();
+      const resultsDiv = document.getElementById('companyResults');
+      const btn = document.getElementById('checkCompanyBtn');
+
+      if (!website) {
+        resultsDiv.style.display = 'block';
+        resultsDiv.innerHTML = '<div style="color: #856404; background: #fff3cd; padding: 10px; border-radius: 4px;">⚠️ Введите URL сайта</div>';
+        return;
+      }
+
+      // Loading state
+      btn.disabled = true;
+      btn.textContent = '⏳ Проверка...';
+      resultsDiv.style.display = 'block';
+      resultsDiv.innerHTML = '<div style="text-align: center; padding: 20px; color: #007bff;">🔍 Агент проверяет сайт, подождите...</div>';
+
+      try {
+        const res = await fetch('/api/company/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ website })
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+          resultsDiv.innerHTML = `<div style="color: #721c24; background: #f8d7da; padding: 10px; border-radius: 4px;">❌ ${data.error}</div>`;
+          return;
+        }
+
+        // Build results
+        let html = '';
+        
+        if (data.allFound) {
+          html += '<div style="color: #155724; background: #d4edda; padding: 10px; border-radius: 4px; margin-bottom: 12px; font-weight: bold;">✅ Все данные найдены успешно!</div>';
+        } else {
+          const missing = data.results.filter(r => !r.found);
+          html += `<div style="color: #721c24; background: #f8d7da; padding: 10px; border-radius: 4px; margin-bottom: 12px; font-weight: bold;">❌ Не найдено ${missing.length} полей:</div>`;
+        }
+
+        html += '<div style="display: flex; flex-direction: column; gap: 6px;">';
+        
+        for (const r of data.results) {
+          const statusClass = r.found ? 'found' : 'not-found';
+          const icon = r.found ? '✅' : '❌';
+          const value = r.found ? r.value : '— не найдено —';
+          html += `
+            <div class="company-field ${statusClass}" style="display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 4px; font-size: 0.9em;">
+              <span style="font-size: 1.1em;">${icon}</span>
+              <span style="font-weight: 600; min-width: 140px;">${r.label}:</span>
+              <span style="color: ${r.found ? '#155724' : '#721c24'};">${escapeHtml(value)}</span>
+            </div>
+          `;
+        }
+            
+        html += '</div>';
+        resultsDiv.innerHTML = html;
+
+      } catch (error) {
+        resultsDiv.innerHTML = `<div style="color: #721c24; background: #f8d7da; padding: 10px; border-radius: 4px;">❌ Ошибка: ${error.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔍 Проверить';
+      }
     }
 
     // ===== MODAL FOR ADDING DIRECTORY =====

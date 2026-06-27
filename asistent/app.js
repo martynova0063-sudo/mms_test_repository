@@ -122,6 +122,56 @@ app.get('/results', (req, res) => {
 });
 
 // ============================================================
+// API ДЛЯ ПРОВЕРКИ ДАННЫХ КОМПАНИИ НА САЙТЕ
+// ============================================================
+
+app.post('/api/company/check', async (req, res) => {
+  const { website } = req.body;
+  
+  if (!website) {
+    return res.status(400).json({ error: 'Укажите URL сайта' });
+  }
+
+  try {
+    const agent = new RegistrationAgent();
+    await agent.initialize();
+    
+    const data = await agent.parseWebsiteData(website);
+    await agent.cleanup();
+
+    // Проверяем, какие поля заполнены реальными данными (не дефолтными)
+    const fields = [
+      { key: 'name', label: 'Название компании', value: data.name },
+      { key: 'description', label: 'Описание', value: data.description },
+      { key: 'address', label: 'Адрес', value: data.address },
+      { key: 'phone', label: 'Телефон', value: data.phone },
+      { key: 'inn', label: 'ИНН', value: data.inn },
+      { key: 'logoUrl', label: 'Логотип', value: data.logoUrl },
+    ];
+
+    const results = fields.map(f => ({
+      ...f,
+      found: f.value && f.value !== 'Неизвестно' && f.value !== 'Казань' && f.value !== '+7(495)222-22-00' && f.value !== '633009210981' && f.value !== null && f.value !== ''
+    }));
+
+    const allFound = results.every(r => r.found);
+
+    res.json({
+      success: true,
+      allFound,
+      data,
+      results
+    });
+  } catch (error) {
+    serverLog.error(`❌ Ошибка проверки компании: ${error.message}`);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ============================================================
 // ЭКСПОРТ РЕЗУЛЬТАТОВ
 // ============================================================
 
