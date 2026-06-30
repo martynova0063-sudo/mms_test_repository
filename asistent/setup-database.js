@@ -23,20 +23,23 @@ db.serialize(() => {
     url TEXT NOT NULL,
     captcha_status TEXT DEFAULT 'Не проверен',
     is_active INTEGER DEFAULT 1,
+    is_test INTEGER DEFAULT 0,
     favicon_url TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
     // Начальные данные
-  const stmt = db.prepare(`INSERT INTO directories (name, url, captcha_status, is_active) VALUES (?, ?, ?, ?)`);
+  const stmt = db.prepare(`INSERT INTO directories (name, url, captcha_status, is_active, is_test) VALUES (?, ?, ?, ?, ?)`);
   const initialDirs = [
-    ['Отзовик', 'https://otzovik.com/signup.php', 'Капча', 1],
-    ['Orgpage.ru', 'https://www.orgpage.ru/Cabinet/Create/', 'Без капчи', 1],
-    ['Cataloxy.ru', 'https://www.cataloxy.ru/reg.htm', 'Капча', 1],
+    ['Отзовик', 'https://otzovik.com/signup.php', 'Капча', 1, 0],
+    ['Тестовая страница', 'https://martynova0063-sudo.github.io/mms_test_repository/', 'Без капчи', 1, 1],
+    ['Orgpage.ru', 'https://www.orgpage.ru/Cabinet/Create/', 'Без капчи', 1, 0],
+    ['Cataloxy.ru', 'https://www.cataloxy.ru/reg.htm', 'Капча', 1, 0],
+    ['Flado', 'https://my.flado.ru/registration', 'Без капчи', 1, 0],
    // ['Orgpage.ru', 'C:/Users/63_ma/OrgpageДобавление%20компании.html', 'Без капчи', 1],
    // ['Отзовик', 'file:///C:/Users/63_ma/Отзовик%20-%20Регистрация%20на%20сайте.html', 'Капча', 1],
    //  ['Cataloxy.ru', 'C:/Users/63_ma/Регистрация%20на%20Cataloxy.ru.html', 'Не проверен', 1],
-    ['B2B-Center', 'https://www.b2b-center.ru/app/next/registration/', 'Не проверен', 1],
-    ['Irecommend.ru', 'https://irecommend.ru/user/register', 'Капча', 1]/*,
+    ['B2B-Center', 'https://www.b2b-center.ru/app/next/registration/', 'Не проверен', 1, 0],
+    ['Irecommend.ru', 'https://irecommend.ru/user/register', 'Капча', 1, 0]/*,
     ['Blizko.ru', 'https://blizko.ru', 'Не проверен', 1],
     ['business.ngs.ru', 'https://business.ngs.ru', 'Капча', 1],
     ['Spravker.ru', 'https://www.spravker.ru', 'Не проверен', 1],
@@ -53,8 +56,8 @@ db.serialize(() => {
     ['Яндекс Бизнес', 'https://business.yandex.ru', 'Капча', 1],
     ['2GIS', 'https://2gis.ru', 'Капча', 1]*/
   ];
-  initialDirs.forEach(([name, url, captcha, active]) => {
-    stmt.run(name, url, captcha, active ? 1 : 0);
+  initialDirs.forEach(([name, url, captcha, active, test]) => {
+    stmt.run(name, url, captcha, active ? 1 : 0, test ? 1 : 0);
   });
   stmt.finalize(() => {
     console.log('📁 Таблица каталогов инициализирована');

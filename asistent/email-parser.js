@@ -14,7 +14,7 @@ class EmailParser {
     return new Promise((resolve, reject) => {
       const imap = new Imap({
         user: email,
-        password: apppassword,
+        password: 'jwgw bjlm rqzq wlzs',
         host: imapHost,
         port: port,
         tls: true,

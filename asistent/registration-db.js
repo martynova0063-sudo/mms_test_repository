@@ -38,6 +38,7 @@ class RegistrationDB {
             url TEXT NOT NULL,
             captcha_status TEXT DEFAULT 'Не проверен',
             is_active INTEGER DEFAULT 1,
+            is_test INTEGER DEFAULT 0,
             favicon_url TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
           )
@@ -74,6 +75,15 @@ class RegistrationDB {
         } else {
           resolve(this.lastID);
         }
+      });
+    });
+  }
+
+  async getAllDirectories() {
+    return new Promise((resolve, reject) => {
+      this.db.all('SELECT * FROM directories ORDER BY name', (err, rows) => {
+        if (err) return reject(err);
+        resolve(rows);
       });
     });
   }

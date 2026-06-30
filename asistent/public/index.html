@@ -206,8 +206,8 @@ caption {
       padding: 10px;
       background-color: #2d3436;
       font-family: 'Consolas', 'Courier New', monospace;
-      min-height: 150px;
-      max-height: 400px;
+      min-height: 400px;
+      max-height: 500px;
       border-radius: 4px;
       overflow-y: auto;
       border: 1px solid #555;
@@ -497,6 +497,11 @@ caption {
       </div>
     </div>
 
+    <div class="form-group">
+      <label for="companyEmail">Email компании (из сайта):</label>
+      <input type="email" id="companyEmail" placeholder="info@example.com" readonly style="background: #e9ecef; cursor: not-allowed;">
+    </div>
+
     <div id="companyResults" style="display: none; margin-top: 12px;"></div>
   </div>
 
@@ -517,7 +522,7 @@ caption {
         <button type="button" onclick="toggleAllDirectories()" style="background: #6c757d; padding: 4px 10px; font-size: 0.85em; border-radius: 4px;">Выбрать все</button>
         <span id="selected-count" style="font-size: 0.85em; color: #007bff; font-weight: 600;">Выбрано: 0</span>
       </div>
-      <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 8px;">
+      <div style="max-height: 500px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 8px;">
         <div id="directories-list">Загрузка каталогов...</div>
       </div>
     </div>
@@ -595,6 +600,8 @@ caption {
       if (!website) {
         resultsDiv.style.display = 'block';
         resultsDiv.innerHTML = '<div style="color: #856404; background: #fff3cd; padding: 10px; border-radius: 4px;">⚠️ Введите URL сайта</div>';
+        document.getElementById('companyEmail').value = '';
+        document.getElementById('companyEmail').style.background = '#e9ecef';
         return;
       }
 
@@ -621,6 +628,19 @@ caption {
         // Build results
         let html = '';
         
+        // Заполняем поле email, если найдено
+        const emailField = document.getElementById('companyEmail');
+        const emailResult = data.results.find(r => r.key === 'email');
+        if (emailResult && emailResult.found && emailResult.value) {
+          emailField.value = emailResult.value;
+          emailField.style.background = '#d4edda';
+          emailField.style.color = '#155724';
+        } else {
+          emailField.value = '';
+          emailField.style.background = '#e9ecef';
+          emailField.style.color = '#6c757d';
+        }
+
         if (data.allFound) {
           html += '<div style="color: #155724; background: #d4edda; padding: 10px; border-radius: 4px; margin-bottom: 12px; font-weight: bold;">✅ Все данные найдены успешно!</div>';
         } else {
@@ -648,9 +668,8 @@ caption {
 
       } catch (error) {
         resultsDiv.innerHTML = `<div style="color: #721c24; background: #f8d7da; padding: 10px; border-radius: 4px;">❌ Ошибка: ${error.message}</div>`;
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '🔍 Проверить';
+        document.getElementById('companyEmail').value = '';
+        document.getElementById('companyEmail').style.background = '#e9ecef';
       }
     }
 
@@ -710,7 +729,18 @@ caption {
         }
 
         container.innerHTML = dirs.map(dir => {
-          const favicon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(dir.url)}&sz=32`;
+          // Извлекаем домен из URL для favicon
+          let domain = dir.url;
+          try {
+            const urlObj = new URL(dir.url);
+            // Берём последние две части домена (например, flado.ru вместо my.flado.ru)
+            const hostnameParts = urlObj.hostname.split('.');
+            if (hostnameParts.length >= 2) {
+              domain = hostnameParts.slice(-2).join('.');
+            }
+          } catch (e) {}
+          
+          const favicon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`;
           const statusBadge = {
             'Капча': '🟡 Капча',
             'Без капчи': '🟢 Без капчи',
@@ -718,13 +748,16 @@ caption {
           }[dir.captcha_status] || dir.captcha_status;
           
           const activeIcon = dir.is_active ? '✅' : '⛔';
+          const testIcon = dir.is_test ? '🧪 Тест' : '';
           
           return `
-            <label style="display: flex; align-items: center; padding: 6px 8px; border-bottom: 1px solid #eee; cursor: pointer;">
+            <label style="display: flex; align-items: center; padding: 6px 8px; border-bottom: 1px solid #eee; cursor: pointer; ${dir.is_test ? 'background: #fff3cd;' : ''}">
               <input type="checkbox" name="directory" value="${dir.url}" style="margin-right: 10px; width: 16px; height: 16px;" onchange="updateSelectedCount()">
-              <img src="${favicon}" style="width: 16px; height: 16px; margin-right: 8px;" onerror="this.style.display='none'">
+              <img src="${favicon}" style="width: 16px; height: 16px; margin-right: 8px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+              <span style="display: none; width: 16px; height: 16px; margin-right: 8px; font-size: 14px;">🌐</span>
               <span style="flex: 1;">${dir.name}</span>
               <span style="margin-right: 8px; font-size: 0.85em; color: #666;">${statusBadge}</span>
+              ${testIcon ? `<span style="margin-right: 8px; font-size: 0.85em; color: #856404; background: #fff3cd; padding: 2px 6px; border-radius: 3px;">🧪 Тест</span>` : ''}
               <span style="font-size: 0.85em;">${activeIcon}</span>
             </label>
           `;
@@ -929,7 +962,14 @@ caption {
     }
 
     // ===== РЕНДЕРИНГ DASHBOARD =====
-    function renderDashboard(results) {
+    async function renderDashboard(results) {
+      // Загружаем список каталогов для подсчёта тестовых
+      let dirs = [];
+      try {
+        const dirRes = await fetch('/api/directories');
+        dirs = await dirRes.json();
+      } catch(e) {}
+
       if (!results || results.length === 0) {
         document.getElementById('dashboard-grid').innerHTML =
           '<div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #6c757d;">Пока нет результатов регистрации</div>';
@@ -961,19 +1001,46 @@ caption {
         }
       });
 
-      // Рендерим статистику
+      // Подсчитываем общую статистику
       const totalRuns = results.length;
       const totalSuccess = results.filter(r => r.status === 'success').length;
       const totalError = totalRuns - totalSuccess;
       const successRate = totalRuns > 0 ? Math.round((totalSuccess / totalRuns) * 100) : 0;
+      
+      // Подсчитываем тестовые / обычные каталоги
+      const testDirs = dirs.filter(d => d.is_test);
+      const regularDirs = dirs.filter(d => !d.is_test);
 
+      // Рендерим карточки статистики сверху
+      const statsHtml = `
+        <div style="grid-column: 1 / -1; background: #f8f9fa; padding: 8px 16px; border-radius: 8px; border: 1px solid #e9ecef; font-size: 0.9em; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; margin-bottom: 16px;">
+          <span><strong>Всего:</strong> ${dirs.length}</span>
+          <span><strong>📂 Обычных:</strong> ${regularDirs.length}</span>
+          <span><strong>🧪 Тестовых:</strong> ${testDirs.length}</span>
+          <span style="color: #155724;"><strong>✅ Успешных:</strong> ${totalSuccess}</span>
+          <span style="color: #721c24;"><strong>❌ Ошибок:</strong> ${totalError}</span>
+          <span style="color: #0c5460; font-weight: bold;"><strong>📈 Успешность:</strong> ${successRate}%</span>
+        </div>
+      `;
 
-      // Рендерим карточки
       const grid = document.getElementById('dashboard-grid');
-      grid.innerHTML = Object.entries(catalogStats).map(([catalog, stats]) => {
+      grid.innerHTML = statsHtml + Object.entries(catalogStats).map(([catalog, stats]) => {
         const item = stats.lastItem;
-        const successRate = Math.round((stats.success / stats.total) * 100);
-        const favicon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(catalog)}&sz=128`;
+        const sr = Math.round((stats.success / stats.total) * 100);
+        
+        // Извлекаем домен из URL для favicon (например, flado.ru вместо https://my.flado.ru/registration)
+        let domain = catalog;
+        try {
+          const urlObj = new URL(catalog);
+          const hostnameParts = urlObj.hostname.split('.');
+          if (hostnameParts.length >= 2) {
+            domain = hostnameParts.slice(-2).join('.');
+          }
+        } catch (e) {
+          // Если не удалось распарсить URL, используем как есть
+        }
+        
+        const favicon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=128`;
         const status = stats.error > 0 && stats.success === 0 ? 'error' : 'success';
         const progressClass = status;
         const cardClass = status;
@@ -984,7 +1051,8 @@ caption {
         return `
           <div class="dashboard-card ${cardClass}" data-catalog="${catalog}" data-status="${status}">
             <div class="card-header">
-              <img src="${favicon}" class="card-logo" alt="${catalog}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>'">
+              <img src="${favicon}" class="card-logo" alt="${catalog}" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+              <span style="display: none; width: 40px; height: 40px; align-items: center; justify-content: center; font-size: 32px;">🌐</span>
               <div class="card-info">
                 <h4 class="card-title">${catalog}</h4>
                 <p class="card-url">${catalog}</p>
@@ -997,13 +1065,13 @@ caption {
                 <span class="stat-label">Прогонов</span>
               </div>
               <div class="stat-item">
-                <span class="stat-value">${successRate}%</span>
+                <span class="stat-value">${sr}%</span>
                 <span class="stat-label">Успех</span>
               </div>
             </div>
             
             <div class="progress-bar">
-              <div class="progress-fill ${progressClass}" style="width: ${successRate}%"></div>
+              <div class="progress-fill ${progressClass}" style="width: ${sr}%"></div>
             </div>
             
             <div class="card-footer">
@@ -1093,6 +1161,7 @@ caption {
         if (data.result && data.result.stats) {
           const s = data.result.stats;
           logToConsole(`📊 Итого: ${s.total} | ✅ ${s.success} | ❌ ${s.error}`);
+          logToConsole(`📂 Обычных: ${s.regularCount || 0} | 🧪 Тестовых: ${s.testCount || 0}`);
         }
         
         // Обновляем dashboard

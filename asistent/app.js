@@ -16,6 +16,22 @@ app.use(express.urlencoded({ extended: true }));
 // Инициализация базы данных
 const db = new sqlite3.Database('./registrations.db');
 
+// Миграция: добавляем столбец is_test если его нет
+db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='directories'", (err, row) => {
+  if (!err && row) {
+    db.all("PRAGMA table_info(directories)", (err, rows) => {
+      if (err) { serverLog.warn('⚠️ Миграция is_test не удалась:', err.message); return; }
+      const hasIsTest = rows && rows.some(r => r.name === 'is_test');
+      if (!hasIsTest) {
+        db.run("ALTER TABLE directories ADD COLUMN is_test INTEGER DEFAULT 0", (err) => {
+          if (err) serverLog.warn('⚠️ Миграция is_test не удалась:', err.message);
+          else serverLog.info('✅ Миграция: добавлен столбец is_test');
+        });
+      }
+    });
+  }
+});
+
 // Стартовые логи
 serverLog.info('🚀 Сервер запущен!');
 serverLog.info(`📂 Рабочая папка: ${process.cwd()}`);
@@ -42,13 +58,13 @@ app.get('/api/directories', (req, res) => {
 
 // Добавить каталог (POST /api/directories)
 app.post('/api/directories', (req, res) => {
-  const { name, url, captcha_status, is_active } = req.body;
+  const { name, url, captcha_status, is_active, is_test } = req.body;
   if (!name || !url) {
     return res.status(400).json({ error: 'name и url обязательны' });
   }
   db.run(
-    'INSERT INTO directories (name, url, captcha_status, is_active) VALUES (?, ?, ?, ?)',
-    [name, url, captcha_status || 'Не проверен', is_active ? 1 : 0],
+    'INSERT INTO directories (name, url, captcha_status, is_active, is_test) VALUES (?, ?, ?, ?, ?)',
+    [name, url, captcha_status || 'Не проверен', is_active ? 1 : 0, is_test ? 1 : 0],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
       serverLog.info(`➕ Каталог добавлен: ${name}`);
@@ -60,10 +76,10 @@ app.post('/api/directories', (req, res) => {
 // Обновить каталог (PUT /api/directories/:id)
 app.put('/api/directories/:id', (req, res) => {
   const { id } = req.params;
-  const { name, url, captcha_status, is_active } = req.body;
+  const { name, url, captcha_status, is_active, is_test } = req.body;
   db.run(
-    'UPDATE directories SET name=?, url=?, captcha_status=?, is_active=? WHERE id=?',
-    [name, url, captcha_status, is_active ? 1 : 0, id],
+    'UPDATE directories SET name=?, url=?, captcha_status=?, is_active=?, is_test=? WHERE id=?',
+    [name, url, captcha_status, is_active ? 1 : 0, is_test ? 1 : 0, id],
     function (err) {
       if (err) return res.status(500).json({ error: err.message });
       if (this.changes === 0) return res.status(404).json({ error: 'Не найден' });
@@ -145,13 +161,16 @@ app.post('/api/company/check', async (req, res) => {
       { key: 'description', label: 'Описание', value: data.description },
       { key: 'address', label: 'Адрес', value: data.address },
       { key: 'phone', label: 'Телефон', value: data.phone },
+      { key: 'email', label: 'Email', value: data.email },
       { key: 'inn', label: 'ИНН', value: data.inn },
+      { key: 'city', label: 'Город', value: data.city },
+      { key: 'industry', label: 'Сфера деятельности', value: data.industry },
       { key: 'logoUrl', label: 'Логотип', value: data.logoUrl },
     ];
 
     const results = fields.map(f => ({
       ...f,
-      found: f.value && f.value !== 'Неизвестно' && f.value !== 'Казань' && f.value !== '+7(495)222-22-00' && f.value !== '633009210981' && f.value !== null && f.value !== ''
+      found: f.value && f.value !== 'Неизвестно' && f.value !== 'Не определено' && f.value !== null && f.value !== ''
     }));
 
     const allFound = results.every(r => r.found);
