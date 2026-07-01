@@ -19587,3 +19587,875 @@ Call log:
 [21:26:24] [INFO  ] ℹ️ ✅ БД закрыта
 [21:26:24] [INFO  ] ℹ️ ✅ Запрос обработан успешно
 [21:27:07] [INFO  ] ℹ️ 🛑 Сервер останавливается (SIGINT)
+[12:46:26] [INFO  ] ℹ️ 🚀 Сервер запущен!
+[12:46:26] [INFO  ] ℹ️ 📂 Рабочая папка: C:\Users\63_ma\OneDrive\Desktop\AI\Разработка web приложений с АИ\mms_test_repository\asistent
+[12:46:26] [INFO  ] ℹ️ 📊 Уровень логирования: debug
+[12:46:26] [INFO  ] ℹ️ 📏 Макс. логов в памяти: 500
+[12:46:26] [INFO  ] ℹ️ 🌐 Сервер доступен: http://localhost:3000
+[12:46:26] [INFO  ] ℹ️ 📊 API логов:       http://localhost:3000/api/logs
+[12:46:26] [INFO  ] ℹ️ 📡 SSE stream:      http://localhost:3000/api/logs-stream
+[12:46:26] [INFO  ] ℹ️ 🗑️ Очистить логи:   POST http://localhost:3000/api/logs/clear
+[12:52:18] [INFO  ] ℹ️ 🚀 Сервер запущен!
+[12:52:18] [INFO  ] ℹ️ 📂 Рабочая папка: C:\Users\63_ma\OneDrive\Desktop\AI\Разработка web приложений с АИ\mms_test_repository\asistent
+[12:52:18] [INFO  ] ℹ️ 📊 Уровень логирования: debug
+[12:52:18] [INFO  ] ℹ️ 📏 Макс. логов в памяти: 500
+[12:52:18] [INFO  ] ℹ️ 🌐 Сервер доступен: http://localhost:3000
+[12:52:18] [INFO  ] ℹ️ 📊 API логов:       http://localhost:3000/api/logs
+[12:52:18] [INFO  ] ℹ️ 📡 SSE stream:      http://localhost:3000/api/logs-stream
+[12:52:18] [INFO  ] ℹ️ 🗑️ Очистить логи:   POST http://localhost:3000/api/logs/clear
+[12:52:46] [INFO  ] ℹ️ 📥 Получен запрос на регистрацию
+[12:52:46] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[12:52:46] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[12:52:46] [INFO  ] ℹ️    Каталогов: 7
+[12:52:47] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:52:47] [INFO  ] ℹ️ 🏁 ЗАПУСК РЕГИСТРАЦИИ
+[12:52:47] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[12:52:47] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[12:52:47] [INFO  ] ℹ️    Каталогов: 7 (обычных: 6, тестовых: 1)
+[12:52:47] [INFO  ] ℹ️    IMAP: imap.gmail.com:993
+[12:52:47] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:52:47] [INFO  ] ℹ️ 🖥️ Инициализация базы данных...
+[12:52:47] [INFO  ] ℹ️ ✅ База данных инициализирована
+[12:52:47] [INFO  ] ℹ️ 🖥️ Инициализация браузера Playwright...
+[12:52:49] [INFO  ] ℹ️ ✅ Браузер успешно инициализирован
+[12:52:49] [INFO  ] ℹ️ 🌐 Шаг 1: Парсинг данных сайта...
+[12:52:49] [INFO  ] ℹ️ 🌐 Парсинг сайта: https://ural-rti.ru/
+[12:52:49] [DEBUG ] 🐛    Переход на страницу...
+[12:52:51] [DEBUG ] 🐛    ✅ Страница загружена
+[12:52:51] [DEBUG ] 🐛    🔍 Извлечение данных компании...
+[12:52:52] [INFO  ] ℹ️ 📋 Данные компании получены:
+   └─ Данные: {"name":"УРТ","description":"От типовых деталей до резиновых изделий на заказ. Каталог РТИ компании «УРТ». Собственное производство, гарантия качества, работаем по ТЗ.","address":"620902, Россия, Свердловская область,г. Екатеринбург, 10я Самородная, стр. 11(Полевской тракт 19 км, 26)","phone":"+79585780589","email":"rti@ural-rti.ru","inn":"6679180957","city":"Россия","industry":"🚚 Логистика и транспорт","logoUrl":"https://ural-rti.ru/wp-content/uploads/2026/03/cropped-cropped-logo-60x60.webp"}
+[12:52:52] [INFO  ] ℹ️ ✅ Данные сайта получены
+[12:52:52] [INFO  ] ℹ️ 🔄 Шаг 2: Начало обработки каталогов...
+[12:52:52] [INFO  ] ℹ️ 
+📌 Прогресс: 1/7 каталогов
+[12:52:52] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:52:52] [INFO  ] ℹ️ 🚀 НАЧАЛО РЕГИСТРАЦИИ: https://www.b2b-center.ru/app/next/registration/
+[12:52:52] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[12:52:52] [INFO  ] ℹ️    Каталог: https://www.b2b-center.ru/app/next/registration/
+[12:52:52] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[12:52:52] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:52:52] [INFO  ] ℹ️ 📄 Шаг 1: Открытие страницы каталога...
+[12:52:52] [DEBUG ] 🐛    URL: https://www.b2b-center.ru/app/next/registration/
+[12:52:53] [DEBUG ] 🐛    ✅ Страница загружена
+[12:52:53] [DEBUG ] 🐛    Текущий URL: https://www.b2b-center.ru/app/next/registration/
+[12:52:53] [INFO  ] ℹ️ 🔐 Сгенерированы учётные данные:
+   └─ Данные: {"login":"martynova0063@gmail.com","password":"at380zb5"}
+[12:52:53] [INFO  ] ℹ️ 🔗 URL профиля после регистрации: https://www.b2b-center.ru
+[12:52:53] [INFO  ] ℹ️ 📝 Шаг 3: Заполнение формы регистрации...
+[12:52:53] [INFO  ] ℹ️    🎯 Используем специфические селекторы для B2B Center
+[12:52:54] [DEBUG ] 🐛    ℹ️ Поле "company_name" не найдено — пропускаем
+[12:52:54] [DEBUG ] 🐛    ℹ️ Поле "website" не найдено — пропускаем
+[12:52:54] [DEBUG ] 🐛    ℹ️ Поле "email" не найдено — пропускаем
+[12:52:54] [DEBUG ] 🐛    ℹ️ Поле "password" не найдено — пропускаем
+[12:52:54] [DEBUG ] 🐛    ℹ️ Поле "phone" не найдено — пропускаем
+[12:52:55] [DEBUG ] 🐛    ⌨️ Заполнение поля "inn" (селектор: input[placeholder*="ИНН"]:visible)...
+[12:52:55] [INFO  ] ℹ️    ✅ Поле "inn" заполнено: 6679180957
+[12:52:55] [DEBUG ] 🐛    ℹ️ Поле "description" не найдено — пропускаем
+[12:52:55] [INFO  ] ℹ️ 📊 Заполнено полей: 1 из 7
+[12:52:55] [INFO  ] ℹ️ 🏷️ Шаг 4: Выбор сферы деятельности и чекбоксы...
+[12:52:55] [INFO  ] ℹ️    📋 B2B Center: выбор сферы деятельности...
+[12:52:55] [INFO  ] ℹ️ 📧 Шаг 7: Получение кода подтверждения на martynova0063@gmail.com...
+[12:52:55] [DEBUG ] 🐛    IMAP: imap.gmail.com:993
+[12:52:55] [INFO  ] ℹ️    🎯 Специфический парсинг для B2B Center...
+[12:52:57] [INFO  ] ℹ️ ✅ Код подтверждения получен: 992745
+[12:52:57] [INFO  ] ℹ️ 💾 Шаг 9: Сохранение данных в базу...
+[12:52:57] [INFO  ] ℹ️    ✅ Данные сохранены
+[12:52:57] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:52:57] [INFO  ] ℹ️ ✅ РЕГИСТРАЦИЯ ЗАВЕРШЕНА УСПЕШНО: https://www.b2b-center.ru/app/next/registration/
+[12:52:57] [INFO  ] ℹ️    Профиль: https://www.b2b-center.ru
+[12:52:57] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:52:57] [INFO  ] ℹ️ 
+📌 Прогресс: 2/7 каталогов
+[12:52:57] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:52:57] [INFO  ] ℹ️ 🚀 НАЧАЛО РЕГИСТРАЦИИ: reg.htm
+[12:52:57] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[12:52:57] [INFO  ] ℹ️    Каталог: https://www.cataloxy.ru/reg.htm
+[12:52:57] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[12:52:57] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:52:57] [INFO  ] ℹ️ 📄 Шаг 1: Открытие страницы каталога...
+[12:52:57] [DEBUG ] 🐛    URL: https://www.cataloxy.ru/reg.htm
+[12:52:59] [DEBUG ] 🐛    ✅ Страница загружена
+[12:52:59] [DEBUG ] 🐛    Текущий URL: https://www.cataloxy.ru/reg.htm
+[12:52:59] [INFO  ] ℹ️ 🔐 Сгенерированы учётные данные:
+   └─ Данные: {"login":"martynova0063@gmail.com","password":"n5efnsoo"}
+[12:52:59] [INFO  ] ℹ️ 🔗 URL профиля после регистрации: https://www.cataloxy.ru/cabinet.htm
+[12:52:59] [INFO  ] ℹ️ 📝 Шаг 3: Заполнение формы регистрации...
+[12:52:59] [DEBUG ] 🐛    ⌨️ Заполнение поля "email" (селектор: input[name="email"]:visible)...
+[12:52:59] [INFO  ] ℹ️    ✅ Поле "email" заполнено: martynova0063@gmail.
+[12:52:59] [DEBUG ] 🐛    ⌨️ Заполнение поля "name" (селектор: input[name="name"]:visible)...
+[12:52:59] [INFO  ] ℹ️    ✅ Поле "name" заполнено: УРТ
+[12:52:59] [DEBUG ] 🐛    ⌨️ Заполнение поля "password" (селектор: input[name="password"]:visible)...
+[12:52:59] [INFO  ] ℹ️    ✅ Поле "password" заполнено: n5efnsoo
+[12:52:59] [DEBUG ] 🐛    ⌨️ Заполнение поля "password2" (селектор: input[name="password2"]:visible)...
+[12:52:59] [INFO  ] ℹ️    ✅ Поле "password2" заполнено: n5efnsoo
+[12:52:59] [INFO  ] ℹ️ 📊 Заполнено полей: 4 из 4
+[12:52:59] [INFO  ] ℹ️ 🏷️ Шаг 4: Выбор сферы деятельности и чекбоксы...
+[12:52:59] [INFO  ] ℹ️    ✅ Чекбокс согласия отмечен
+[12:53:30] [DEBUG ] 🐛    ℹ️ Чекбокс im_agree не найден
+[12:53:30] [INFO  ] ℹ️ 📧 Шаг 8: Пропускаем (Cataloxy не требует подтверждения)
+[12:53:30] [INFO  ] ℹ️ 💾 Шаг 9: Сохранение данных в базу...
+[12:53:30] [INFO  ] ℹ️    ✅ Данные сохранены
+[12:53:30] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:53:30] [INFO  ] ℹ️ ✅ РЕГИСТРАЦИЯ ЗАВЕРШЕНА УСПЕШНО: reg.htm
+[12:53:30] [INFO  ] ℹ️    Профиль: https://www.cataloxy.ru/cabinet.htm
+[12:53:30] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:53:30] [INFO  ] ℹ️ 
+📌 Прогресс: 3/7 каталогов
+[12:53:30] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:53:30] [INFO  ] ℹ️ 🚀 НАЧАЛО РЕГИСТРАЦИИ: registration
+[12:53:30] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[12:53:30] [INFO  ] ℹ️    Каталог: https://my.flado.ru/registration
+[12:53:30] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[12:53:30] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:53:30] [INFO  ] ℹ️ 📄 Шаг 1: Открытие страницы каталога...
+[12:53:30] [DEBUG ] 🐛    URL: https://my.flado.ru/registration
+[12:53:31] [DEBUG ] 🐛    ✅ Страница загружена
+[12:53:31] [DEBUG ] 🐛    Текущий URL: https://my.flado.ru/registration
+[12:53:31] [DEBUG ] 🐛    ⏳ Для Flado ждём полную загрузку (favicon, картинки)...
+[12:53:34] [DEBUG ] 🐛    ✅ Полная загрузка завершена
+[12:53:34] [INFO  ] ℹ️ 🔐 Сгенерированы учётные данные:
+   └─ Данные: {"login":"martynova0063@gmail.com","password":"oh8ggfjj"}
+[12:53:34] [INFO  ] ℹ️ 🔗 URL профиля после регистрации: https://my.flado.ru/
+[12:53:34] [INFO  ] ℹ️ 📝 Шаг 3: Заполнение формы регистрации...
+[12:53:34] [INFO  ] ℹ️    🎯 Используем специфические селекторы для Flado
+[12:53:34] [DEBUG ] 🐛    ⌨️ Заполнение поля "email" (селектор: input[name="email"]:visible)...
+[12:53:34] [INFO  ] ℹ️    ✅ Поле "email" заполнено: martynova0063@gmail.
+[12:53:34] [DEBUG ] 🐛    ⌨️ Заполнение поля "password" (селектор: input[name="password"]:visible)...
+[12:53:34] [INFO  ] ℹ️    ✅ Поле "password" заполнено: oh8ggfjj
+[12:53:34] [DEBUG ] 🐛    🔍 Поиск поля "password_confirm" через label...
+[12:53:34] [DEBUG ] 🐛    🔍 Поиск второго поля password...
+[12:54:04] [DEBUG ] 🐛    ⚠️ Ошибка customFind для "password_confirm": elementHandle.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="cookie-popup-overlay">…</div> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="cookie-popup-overlay">…</div> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    32 × waiting for element to be visible, enabled and stable[22m
+[2m       - element is visible, enabled and stable[22m
+[2m       - scrolling into view if needed[22m
+[2m       - done scrolling[22m
+[2m       - <div class="cookie-popup-overlay">…</div> intercepts pointer events[22m
+[2m     - retrying click action[22m
+[2m       - waiting 500ms[22m
+
+[12:54:04] [DEBUG ] 🐛    ℹ️ Поле "name" не найдено — пропускаем
+[12:54:04] [DEBUG ] 🐛    ℹ️ Поле "phone" не найдено — пропускаем
+[12:54:04] [DEBUG ] 🐛    ℹ️ Поле "company_name" не найдено — пропускаем
+[12:54:04] [DEBUG ] 🐛    ℹ️ Поле "description" не найдено — пропускаем
+[12:54:04] [DEBUG ] 🐛    ℹ️ Поле "category" не найдено — пропускаем
+[12:54:04] [DEBUG ] 🐛    ⌨️ Заполнение поля "confirmation_code" (селектор: input[type="text"][maxlength="4"])...
+[12:54:04] [DEBUG ] 🐛    ⚠️ Селектор "input[type="text"][maxlength="4"]" не сработал: page.fill: value: expected string, got object
+[12:54:04] [DEBUG ] 🐛    ℹ️ Поле "confirmation_code" не найдено — пропускаем
+[12:54:04] [INFO  ] ℹ️ 📊 Заполнено полей: 2 из 9
+[12:54:04] [INFO  ] ℹ️    🔍 Flado: дополнительный поиск поля "Имя *"...
+[12:54:33] [DEBUG ] 🐛    ℹ️ Не удалось заполнить "Имя *" дополнительно: page.$: Target page, context or browser has been closed
+[12:54:33] [INFO  ] ℹ️ 🏷️ Шаг 4: Выбор сферы деятельности и чекбоксы...
+[12:54:33] [INFO  ] ℹ️    📋 Flado: выбор сферы деятельности...
+[12:54:33] [WARN  ] ⚠️    ⚠️ Не удалось обработать рубрику/чекбоксы Flado: locator.count: Target page, context or browser has been closed
+[12:54:33] [INFO  ] ℹ️ 🔐 Шаг 7: Распознавание CAPTCHA для Flado...
+[12:54:33] [INFO  ] ℹ️    💡 Если код не распознается автоматически, введите его вручную
+[12:54:33] [ERROR ] ❌    ❌ Ошибка распознавания CAPTCHA: page.waitForTimeout: Target page, context or browser has been closed
+[12:54:33] [INFO  ] ℹ️    💡 Введите код CAPTCHA вручную (у вас 2 минуты)
+[12:54:33] [ERROR ] ❌ ═══════════════════════════════════════════════════
+[12:54:33] [ERROR ] ❌ ❌ ОШИБКА РЕГИСТРАЦИИ: registration
+[12:54:33] [ERROR ] ❌    Ошибка: page.screenshot: Target page, context or browser has been closed
+[12:54:33] [ERROR ] ❌ ═══════════════════════════════════════════════════
+[12:54:33] [INFO  ] ℹ️    ✅ Данные об ошибке сохранены в БД
+[12:54:33] [INFO  ] ℹ️ 
+📌 Прогресс: 4/7 каталогов
+[12:54:33] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:54:33] [INFO  ] ℹ️ 🚀 НАЧАЛО РЕГИСТРАЦИИ: register
+[12:54:33] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[12:54:33] [INFO  ] ℹ️    Каталог: https://irecommend.ru/user/register
+[12:54:33] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[12:54:33] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:54:33] [INFO  ] ℹ️ 📄 Шаг 1: Открытие страницы каталога...
+[12:54:33] [DEBUG ] 🐛    URL: https://irecommend.ru/user/register
+[12:54:33] [ERROR ] ❌ ═══════════════════════════════════════════════════
+[12:54:33] [ERROR ] ❌ ❌ ОШИБКА РЕГИСТРАЦИИ: register
+[12:54:33] [ERROR ] ❌    Ошибка: page.goto: Target page, context or browser has been closed
+[12:54:33] [ERROR ] ❌ ═══════════════════════════════════════════════════
+[12:54:33] [INFO  ] ℹ️    ✅ Данные об ошибке сохранены в БД
+[12:54:33] [INFO  ] ℹ️ 
+📌 Прогресс: 5/7 каталогов
+[12:54:33] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:54:33] [INFO  ] ℹ️ 🚀 НАЧАЛО РЕГИСТРАЦИИ: https://www.orgpage.ru/Cabinet/Create/
+[12:54:33] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[12:54:33] [INFO  ] ℹ️    Каталог: https://www.orgpage.ru/Cabinet/Create/
+[12:54:33] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[12:54:33] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:54:33] [INFO  ] ℹ️ 📄 Шаг 1: Открытие страницы каталога...
+[12:54:33] [DEBUG ] 🐛    URL: https://www.orgpage.ru/Cabinet/Create/
+[12:54:33] [ERROR ] ❌ ═══════════════════════════════════════════════════
+[12:54:33] [ERROR ] ❌ ❌ ОШИБКА РЕГИСТРАЦИИ: https://www.orgpage.ru/Cabinet/Create/
+[12:54:33] [ERROR ] ❌    Ошибка: page.goto: Target page, context or browser has been closed
+[12:54:33] [ERROR ] ❌ ═══════════════════════════════════════════════════
+[12:54:33] [INFO  ] ℹ️    ✅ Данные об ошибке сохранены в БД
+[12:54:33] [INFO  ] ℹ️ 
+📌 Прогресс: 6/7 каталогов
+[12:54:33] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:54:33] [INFO  ] ℹ️ 🚀 НАЧАЛО РЕГИСТРАЦИИ: signup.php
+[12:54:33] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[12:54:33] [INFO  ] ℹ️    Каталог: https://otzovik.com/signup.php
+[12:54:33] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[12:54:33] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:54:33] [INFO  ] ℹ️ 📄 Шаг 1: Открытие страницы каталога...
+[12:54:33] [DEBUG ] 🐛    URL: https://otzovik.com/signup.php
+[12:54:33] [ERROR ] ❌ ═══════════════════════════════════════════════════
+[12:54:33] [ERROR ] ❌ ❌ ОШИБКА РЕГИСТРАЦИИ: signup.php
+[12:54:33] [ERROR ] ❌    Ошибка: page.goto: Target page, context or browser has been closed
+[12:54:33] [ERROR ] ❌ ═══════════════════════════════════════════════════
+[12:54:33] [INFO  ] ℹ️    ✅ Данные об ошибке сохранены в БД
+[12:54:33] [INFO  ] ℹ️ 
+📌 Прогресс: 7/7 каталогов
+[12:54:33] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:54:33] [INFO  ] ℹ️ 🚀 НАЧАЛО РЕГИСТРАЦИИ: https://martynova0063-sudo.github.io/mms_test_repository/
+[12:54:33] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[12:54:33] [INFO  ] ℹ️    Каталог: https://martynova0063-sudo.github.io/mms_test_repository/
+[12:54:33] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[12:54:33] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:54:33] [INFO  ] ℹ️ 📄 Шаг 1: Открытие страницы каталога...
+[12:54:33] [DEBUG ] 🐛    URL: https://martynova0063-sudo.github.io/mms_test_repository/
+[12:54:33] [ERROR ] ❌ ═══════════════════════════════════════════════════
+[12:54:33] [ERROR ] ❌ ❌ ОШИБКА РЕГИСТРАЦИИ: https://martynova0063-sudo.github.io/mms_test_repository/
+[12:54:33] [ERROR ] ❌    Ошибка: page.goto: Target page, context or browser has been closed
+[12:54:33] [ERROR ] ❌ ═══════════════════════════════════════════════════
+[12:54:33] [INFO  ] ℹ️    ✅ Данные об ошибке сохранены в БД
+[12:54:33] [INFO  ] ℹ️ 
+═══════════════════════════════════════════════════
+[12:54:33] [INFO  ] ℹ️ 🎉 РЕГИСТРАЦИЯ ЗАВЕРШЕНА
+[12:54:33] [INFO  ] ℹ️    Всего каталогов: 7
+[12:54:33] [INFO  ] ℹ️    ✅ Успешно: 2
+[12:54:33] [INFO  ] ℹ️    ❌ Ошибок: 5
+[12:54:33] [INFO  ] ℹ️    📊 Обычных каталогов: 6
+[12:54:33] [INFO  ] ℹ️    🧪 Тестовых каталогов: 1
+[12:54:33] [INFO  ] ℹ️    ⏱️  Время: 106.9 сек
+[12:54:33] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[12:54:33] [INFO  ] ℹ️ 🧹 Очистка ресурсов браузера...
+[12:54:36] [INFO  ] ℹ️ ✅ Браузер закрыт
+[12:54:36] [INFO  ] ℹ️ 🔌 Закрытие подключения к БД...
+[12:54:36] [INFO  ] ℹ️ ✅ БД закрыта
+[12:54:36] [INFO  ] ℹ️ ✅ Запрос обработан успешно
+[12:54:36] [INFO  ] ℹ️ 🛑 Сервер останавливается (SIGINT)
+[13:11:19] [INFO  ] ℹ️ 🚀 Сервер запущен!
+[13:11:19] [INFO  ] ℹ️ 📂 Рабочая папка: C:\Users\63_ma\OneDrive\Desktop\AI\Разработка web приложений с АИ\mms_test_repository\asistent
+[13:11:19] [INFO  ] ℹ️ 📊 Уровень логирования: debug
+[13:11:19] [INFO  ] ℹ️ 📏 Макс. логов в памяти: 500
+[13:11:19] [INFO  ] ℹ️ 🌐 Сервер доступен: http://localhost:3000
+[13:11:19] [INFO  ] ℹ️ 📊 API логов:       http://localhost:3000/api/logs
+[13:11:19] [INFO  ] ℹ️ 📡 SSE stream:      http://localhost:3000/api/logs-stream
+[13:11:19] [INFO  ] ℹ️ 🗑️ Очистить логи:   POST http://localhost:3000/api/logs/clear
+[13:17:02] [DEBUG ] 🐛 🔌 SSE клиент задач отключился
+[13:19:00] [INFO  ] ℹ️ 🚀 Сервер запущен!
+[13:19:00] [INFO  ] ℹ️ 📂 Рабочая папка: C:\Users\63_ma\OneDrive\Desktop\AI\Разработка web приложений с АИ\mms_test_repository\asistent
+[13:19:00] [INFO  ] ℹ️ 📊 Уровень логирования: debug
+[13:19:00] [INFO  ] ℹ️ 📏 Макс. логов в памяти: 500
+[13:19:00] [INFO  ] ℹ️ 🌐 Сервер доступен: http://localhost:3000
+[13:19:00] [INFO  ] ℹ️ 📊 API логов:       http://localhost:3000/api/logs
+[13:19:00] [INFO  ] ℹ️ 📡 SSE stream:      http://localhost:3000/api/logs-stream
+[13:19:00] [INFO  ] ℹ️ 📋 API задач:       http://localhost:3000/api/tasks
+[13:19:00] [INFO  ] ℹ️ 📡 SSE задач:       http://localhost:3000/api/tasks-stream
+[13:19:00] [INFO  ] ℹ️ 🗑️ Очистить логи:   POST http://localhost:3000/api/logs/clear
+[13:34:10] [INFO  ] ℹ️ 📥 Получен запрос на регистрацию
+[13:34:10] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[13:34:10] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[13:34:10] [INFO  ] ℹ️    Каталогов: 7
+[13:34:10] [INFO  ] ℹ️ 📋 Создана задача: task_1782898450199_0 для https://ural-rti.ru/ → https://www.b2b-center.ru/app/next/registration/
+[13:34:10] [INFO  ] ℹ️ 📋 Создана задача: task_1782898450202_1 для https://ural-rti.ru/ → reg.htm
+[13:34:10] [INFO  ] ℹ️ 📋 Создана задача: task_1782898450203_2 для https://ural-rti.ru/ → registration
+[13:34:10] [INFO  ] ℹ️ 📋 Создана задача: task_1782898450206_3 для https://ural-rti.ru/ → register
+[13:34:10] [INFO  ] ℹ️ 📋 Создана задача: task_1782898450209_4 для https://ural-rti.ru/ → https://www.orgpage.ru/Cabinet/Create/
+[13:34:10] [INFO  ] ℹ️ 📋 Создана задача: task_1782898450211_5 для https://ural-rti.ru/ → signup.php
+[13:34:10] [INFO  ] ℹ️ 📋 Создана задача: task_1782898450215_6 для https://ural-rti.ru/ → https://martynova0063-sudo.github.io/mms_test_repository/
+[13:34:10] [INFO  ] ℹ️ ═══════════════════════════════════════════════
+[13:34:10] [INFO  ] ℹ️ 🏁 ЗАПУСК РЕГИСТРАЦИИ
+[13:34:10] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[13:34:10] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[13:34:10] [INFO  ] ℹ️    Каталогов: 7 (обычных: 6, тестовых: 1)
+[13:34:10] [INFO  ] ℹ️    IMAP: imap.gmail.com:993
+[13:34:10] [INFO  ] ℹ️ ═══════════════════════════════════════════════
+[13:34:10] [INFO  ] ℹ️ 🖥️ Инициализация базы данных...
+[13:34:10] [INFO  ] ℹ️ ✅ База данных инициализирована
+[13:34:10] [INFO  ] ℹ️ 🖥️ Инициализация браузера Playwright...
+[13:34:15] [INFO  ] ℹ️ ✅ Браузер успешно инициализирован
+[13:34:15] [INFO  ] ℹ️ 🌐 Шаг 1: Парсинг данных сайта...
+[13:34:15] [INFO  ] ℹ️ 🌐 Парсинг сайта: https://ural-rti.ru/
+[13:34:15] [DEBUG ] 🐛    Переход на страницу...
+[13:34:18] [DEBUG ] 🐛    ✅ Страница загружена
+[13:34:18] [DEBUG ] 🐛    🔍 Извлечение данных компании...
+[13:34:18] [INFO  ] ℹ️ 📋 Данные компании получены:
+   └─ Данные: {"name":"УРТ","description":"От типовых деталей до резиновых изделий на заказ. Каталог РТИ компании «УРТ». Собственное производство, гарантия качества, работаем по ТЗ.","address":"620902, Россия, Свердловская область,г. Екатеринбург, 10я Самородная, стр. 11(Полевской тракт 19 км, 26)","phone":"+79585780589","email":"rti@ural-rti.ru","inn":"6679180957","city":"Россия","industry":"🚚 Логистика и транспорт","logoUrl":"https://ural-rti.ru/wp-content/uploads/2026/03/cropped-cropped-logo-60x60.webp"}
+[13:34:18] [INFO  ] ℹ️ ✅ Данные сайта получены
+[13:34:18] [INFO  ] ℹ️ 🔄 Шаг 2: Начало обработки каталогов...
+[13:34:18] [INFO  ] ℹ️ 
+📌 Прогресс: 1/7 каталогов
+[13:34:18] [DEBUG ] 🐛 📝 Обновлена задача task_1782898450199_0: status=active, progress=0, step=Начало регистрации
+[13:34:18] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:34:18] [INFO  ] ℹ️ 🚀 НАЧАЛО РЕГИСТРАЦИИ: https://www.b2b-center.ru/app/next/registration/
+[13:34:18] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[13:34:18] [INFO  ] ℹ️    Каталог: https://www.b2b-center.ru/app/next/registration/
+[13:34:18] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[13:34:18] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:34:18] [INFO  ] ℹ️ 📄 Шаг 1: Открытие страницы каталога...
+[13:34:18] [DEBUG ] 🐛    URL: https://www.b2b-center.ru/app/next/registration/
+[13:34:20] [DEBUG ] 🐛    ✅ Страница загружена
+[13:34:20] [DEBUG ] 🐛    Текущий URL: https://www.b2b-center.ru/app/next/registration/
+[13:34:20] [INFO  ] ℹ️ 🔐 Сгенерированы учётные данные:
+   └─ Данные: {"login":"martynova0063@gmail.com","password":"q2j37dci"}
+[13:34:20] [INFO  ] ℹ️ 🔗 URL профиля после регистрации: https://www.b2b-center.ru
+[13:34:20] [INFO  ] ℹ️ 📝 Шаг 3: Заполнение формы регистрации...
+[13:34:20] [INFO  ] ℹ️    🎯 Используем специфические селекторы для B2B Center
+[13:34:22] [DEBUG ] 🐛    ℹ️ Поле "company_name" не найдено — пропускаем
+[13:34:22] [DEBUG ] 🐛    ℹ️ Поле "website" не найдено — пропускаем
+[13:34:22] [DEBUG ] 🐛    ℹ️ Поле "email" не найдено — пропускаем
+[13:34:22] [DEBUG ] 🐛    ℹ️ Поле "password" не найдено — пропускаем
+[13:34:22] [DEBUG ] 🐛    ℹ️ Поле "phone" не найдено — пропускаем
+[13:34:23] [DEBUG ] 🐛    ⌨️ Заполнение поля "inn" (селектор: input[placeholder*="ИНН"]:visible)...
+[13:34:23] [INFO  ] ℹ️    ✅ Поле "inn" заполнено: 6679180957
+[13:34:23] [DEBUG ] 🐛    ℹ️ Поле "description" не найдено — пропускаем
+[13:34:23] [INFO  ] ℹ️ 📊 Заполнено полей: 1 из 7
+[13:34:23] [INFO  ] ℹ️ 🏷️ Шаг 4: Выбор сферы деятельности и чекбоксы...
+[13:34:23] [INFO  ] ℹ️    📋 B2B Center: выбор сферы деятельности...
+[13:34:23] [INFO  ] ℹ️ 📧 Шаг 7: Получение кода подтверждения на martynova0063@gmail.com...
+[13:34:23] [DEBUG ] 🐛    IMAP: imap.gmail.com:993
+[13:34:23] [INFO  ] ℹ️    🎯 Специфический парсинг для B2B Center...
+[13:34:25] [INFO  ] ℹ️ ✅ Код подтверждения получен: 992745
+[13:34:25] [INFO  ] ℹ️ 💾 Шаг 9: Сохранение данных в базу...
+[13:34:25] [INFO  ] ℹ️    ✅ Данные сохранены
+[13:34:25] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:34:25] [INFO  ] ℹ️ ✅ РЕГИСТРАЦИЯ ЗАВЕРШЕНА УСПЕШНО: https://www.b2b-center.ru/app/next/registration/
+[13:34:25] [INFO  ] ℹ️    Профиль: https://www.b2b-center.ru
+[13:34:25] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:34:25] [INFO  ] ℹ️ ✅ Завершена задача task_1782898450199_0: success
+[13:34:25] [INFO  ] ℹ️ 
+📌 Прогресс: 2/7 каталогов
+[13:34:25] [DEBUG ] 🐛 📝 Обновлена задача task_1782898450202_1: status=active, progress=14, step=Начало регистрации
+[13:34:25] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:34:25] [INFO  ] ℹ️ 🚀 НАЧАЛО РЕГИСТРАЦИИ: reg.htm
+[13:34:25] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[13:34:25] [INFO  ] ℹ️    Каталог: https://www.cataloxy.ru/reg.htm
+[13:34:25] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[13:34:25] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:34:25] [INFO  ] ℹ️ 📄 Шаг 1: Открытие страницы каталога...
+[13:34:25] [DEBUG ] 🐛    URL: https://www.cataloxy.ru/reg.htm
+[13:34:29] [DEBUG ] 🐛    ✅ Страница загружена
+[13:34:29] [DEBUG ] 🐛    Текущий URL: https://www.cataloxy.ru/reg.htm
+[13:34:29] [INFO  ] ℹ️ 🔐 Сгенерированы учётные данные:
+   └─ Данные: {"login":"martynova0063@gmail.com","password":"ixwt0bse"}
+[13:34:29] [INFO  ] ℹ️ 🔗 URL профиля после регистрации: https://www.cataloxy.ru/cabinet.htm
+[13:34:29] [INFO  ] ℹ️ 📝 Шаг 3: Заполнение формы регистрации...
+[13:34:29] [DEBUG ] 🐛    ⌨️ Заполнение поля "email" (селектор: input[name="email"]:visible)...
+[13:34:30] [INFO  ] ℹ️    ✅ Поле "email" заполнено: martynova0063@gmail.
+[13:34:30] [DEBUG ] 🐛    ⌨️ Заполнение поля "name" (селектор: input[name="name"]:visible)...
+[13:34:30] [INFO  ] ℹ️    ✅ Поле "name" заполнено: УРТ
+[13:34:30] [DEBUG ] 🐛    ⌨️ Заполнение поля "password" (селектор: input[name="password"]:visible)...
+[13:34:31] [INFO  ] ℹ️    ✅ Поле "password" заполнено: ixwt0bse
+[13:34:31] [DEBUG ] 🐛    ⌨️ Заполнение поля "password2" (селектор: input[name="password2"]:visible)...
+[13:34:31] [INFO  ] ℹ️    ✅ Поле "password2" заполнено: ixwt0bse
+[13:34:31] [INFO  ] ℹ️ 📊 Заполнено полей: 4 из 4
+[13:34:31] [INFO  ] ℹ️ 🏷️ Шаг 4: Выбор сферы деятельности и чекбоксы...
+[13:34:31] [INFO  ] ℹ️    ✅ Чекбокс согласия отмечен
+[13:34:55] [DEBUG ] 🐛 🗑️ Задача task_1782898450199_0 удалена из активных
+[13:35:01] [DEBUG ] 🐛    ℹ️ Чекбокс im_agree не найден
+[13:35:01] [INFO  ] ℹ️ 📧 Шаг 8: Пропускаем (Cataloxy не требует подтверждения)
+[13:35:01] [INFO  ] ℹ️ 💾 Шаг 9: Сохранение данных в базу...
+[13:35:01] [INFO  ] ℹ️    ✅ Данные сохранены
+[13:35:01] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:35:01] [INFO  ] ℹ️ ✅ РЕГИСТРАЦИЯ ЗАВЕРШЕНА УСПЕШНО: reg.htm
+[13:35:01] [INFO  ] ℹ️    Профиль: https://www.cataloxy.ru/cabinet.htm
+[13:35:01] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:35:01] [INFO  ] ℹ️ ✅ Завершена задача task_1782898450202_1: success
+[13:35:01] [INFO  ] ℹ️ 
+📌 Прогресс: 3/7 каталогов
+[13:35:01] [DEBUG ] 🐛 📝 Обновлена задача task_1782898450203_2: status=active, progress=29, step=Начало регистрации
+[13:35:01] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:35:01] [INFO  ] ℹ️ 🚀 НАЧАЛО РЕГИСТРАЦИИ: registration
+[13:35:01] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[13:35:01] [INFO  ] ℹ️    Каталог: https://my.flado.ru/registration
+[13:35:01] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[13:35:01] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:35:01] [INFO  ] ℹ️ 📄 Шаг 1: Открытие страницы каталога...
+[13:35:01] [DEBUG ] 🐛    URL: https://my.flado.ru/registration
+[13:35:02] [DEBUG ] 🐛    ✅ Страница загружена
+[13:35:02] [DEBUG ] 🐛    Текущий URL: https://my.flado.ru/registration
+[13:35:02] [DEBUG ] 🐛    ⏳ Для Flado ждём полную загрузку (favicon, картинки)...
+[13:35:05] [DEBUG ] 🐛    ✅ Полная загрузка завершена
+[13:35:05] [INFO  ] ℹ️ 🔐 Сгенерированы учётные данные:
+   └─ Данные: {"login":"martynova0063@gmail.com","password":"d71epwb2"}
+[13:35:05] [INFO  ] ℹ️ 🔗 URL профиля после регистрации: https://my.flado.ru/
+[13:35:05] [INFO  ] ℹ️ 📝 Шаг 3: Заполнение формы регистрации...
+[13:35:05] [INFO  ] ℹ️    🎯 Используем специфические селекторы для Flado
+[13:35:05] [DEBUG ] 🐛    ⌨️ Заполнение поля "email" (селектор: input[name="email"]:visible)...
+[13:35:06] [INFO  ] ℹ️    ✅ Поле "email" заполнено: martynova0063@gmail.
+[13:35:06] [DEBUG ] 🐛    ⌨️ Заполнение поля "password" (селектор: input[name="password"]:visible)...
+[13:35:06] [INFO  ] ℹ️    ✅ Поле "password" заполнено: d71epwb2
+[13:35:06] [DEBUG ] 🐛    🔍 Поиск поля "password_confirm" через label...
+[13:35:06] [DEBUG ] 🐛    🔍 Поиск второго поля password...
+[13:35:31] [DEBUG ] 🐛 🗑️ Задача task_1782898450202_1 удалена из активных
+[13:35:36] [DEBUG ] 🐛    ⚠️ Ошибка customFind для "password_confirm": elementHandle.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="cookie-popup-overlay">…</div> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="cookie-popup-overlay">…</div> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    51 × waiting for element to be visible, enabled and stable[22m
+[2m       - element is visible, enabled and stable[22m
+[2m       - scrolling into view if needed[22m
+[2m       - done scrolling[22m
+[2m       - <div class="cookie-popup-overlay">…</div> intercepts pointer events[22m
+[2m     - retrying click action[22m
+[2m       - waiting 500ms[22m
+
+[13:35:36] [DEBUG ] 🐛    ℹ️ Поле "name" не найдено — пропускаем
+[13:35:36] [DEBUG ] 🐛    ℹ️ Поле "phone" не найдено — пропускаем
+[13:35:36] [DEBUG ] 🐛    ℹ️ Поле "company_name" не найдено — пропускаем
+[13:35:36] [DEBUG ] 🐛    ℹ️ Поле "description" не найдено — пропускаем
+[13:35:36] [DEBUG ] 🐛    ℹ️ Поле "category" не найдено — пропускаем
+[13:35:36] [DEBUG ] 🐛    ⌨️ Заполнение поля "confirmation_code" (селектор: input[type="text"][maxlength="4"])...
+[13:35:36] [DEBUG ] 🐛    ⚠️ Селектор "input[type="text"][maxlength="4"]" не сработал: page.fill: value: expected string, got object
+[13:35:36] [DEBUG ] 🐛    ℹ️ Поле "confirmation_code" не найдено — пропускаем
+[13:35:36] [INFO  ] ℹ️ 📊 Заполнено полей: 2 из 9
+[13:35:36] [INFO  ] ℹ️    🔍 Flado: дополнительный поиск поля "Имя *"...
+[13:36:07] [WARN  ] ⚠️    ⚠️ Не удалось найти поле "Имя *"
+[13:36:07] [INFO  ] ℹ️ 🏷️ Шаг 4: Выбор сферы деятельности и чекбоксы...
+[13:36:07] [INFO  ] ℹ️    📋 Flado: выбор сферы деятельности...
+[13:36:07] [INFO  ] ℹ️    📋 Flado: поиск чекбокса согласия...
+[13:36:37] [DEBUG ] 🐛    ⚠️ Ошибка проверки чекбокса: elementHandle.check: Timeout 30000ms exceeded.
+Call log:
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="cookie-popup-overlay">…</div> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="cookie-popup-overlay">…</div> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    51 × waiting for element to be visible, enabled and stable[22m
+[2m       - element is visible, enabled and stable[22m
+[2m       - scrolling into view if needed[22m
+[2m       - done scrolling[22m
+[2m       - <div class="cookie-popup-overlay">…</div> intercepts pointer events[22m
+[2m     - retrying click action[22m
+[2m       - waiting 500ms[22m
+
+[13:36:37] [INFO  ] ℹ️    🔍 Поиск чекбокса в форме...
+[13:36:37] [DEBUG ] 🐛    📊 Найдено чекбоксов: 1
+[13:37:07] [DEBUG ] 🐛    ⚠️ Ошибка проверки чекбокса: elementHandle.check: Timeout 30000ms exceeded.
+Call log:
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="cookie-popup-overlay">…</div> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="cookie-popup-overlay">…</div> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    51 × waiting for element to be visible, enabled and stable[22m
+[2m       - element is visible, enabled and stable[22m
+[2m       - scrolling into view if needed[22m
+[2m       - done scrolling[22m
+[2m       - <div class="cookie-popup-overlay">…</div> intercepts pointer events[22m
+[2m     - retrying click action[22m
+[2m       - waiting 500ms[22m
+
+[13:37:07] [INFO  ] ℹ️    🔍 Попытка отметить чекбокс через JavaScript...
+[13:37:07] [INFO  ] ℹ️    ✅ Чекбокс согласия отмечен через JavaScript
+[13:37:07] [INFO  ] ℹ️ 🔐 Шаг 7: Распознавание CAPTCHA для Flado...
+[13:37:07] [INFO  ] ℹ️    💡 Если код не распознается автоматически, введите его вручную
+[13:37:12] [DEBUG ] 🐛    ⏳ Страница загружена, ищем картинку с кодом...
+[13:37:13] [DEBUG ] 🐛    📸 Скриншот сохранён для проверки
+[13:37:13] [INFO  ] ℹ️    🖼️ Найдена картинка с кодом
+[13:37:13] [DEBUG ] 🐛    📷 URL изображения: /captcha_register.gif?178289850393
+[13:37:13] [DEBUG ] 🐛    📷 Абсолютный URL: https://my.flado.ru/captcha_register.gif?178289850393
+[13:37:13] [INFO  ] ℹ️    📸 CAPTCHA сохранена: captcha-original.png
+[13:37:13] [INFO  ] ℹ️    🔧 Предобработка изображения...
+[13:37:15] [DEBUG ] 🐛    ⚠️ Не удалось обработать изображение: Input buffer contains unsupported image format
+[13:37:15] [INFO  ] ℹ️    ℹ️ Используем оригинальное изображение
+[13:37:15] [INFO  ] ℹ️    🔍 Распознавание текста с картинки (Tesseract)...
+[13:37:15] [DEBUG ] 🐛    🔍 Попытка 1 (PSM 6 - блок текста)...
+[13:37:16] [DEBUG ] 🐛       Распознано: "184" → Цифры: "184"
+[13:37:18] [DEBUG ] 🐛       Распознано: "184" → Цифры: "184"
+[13:37:18] [DEBUG ] 🐛    📝 Результат 1: "184" (3 цифр)
+[13:37:18] [DEBUG ] 🐛    🔍 Попытка 2 (PSM 8 - одно слово)...
+[13:37:19] [DEBUG ] 🐛       Распознано: "84" → Цифры: "84"
+[13:37:20] [DEBUG ] 🐛       Распознано: "84" → Цифры: "84"
+[13:37:20] [DEBUG ] 🐛    📝 Результат 2: "84" (2 цифр)
+[13:37:20] [DEBUG ] 🐛    🔍 Попытка 3 (PSM 7 - одна строка)...
+[13:37:21] [DEBUG ] 🐛       Распознано: "184" → Цифры: "184"
+[13:37:23] [DEBUG ] 🐛       Распознано: "184" → Цифры: "184"
+[13:37:23] [DEBUG ] 🐛    📝 Результат 3: "184" (3 цифр)
+[13:37:23] [DEBUG ] 🐛    🔍 Попытка 4 (PSM 10 - один символ)...
+[13:37:24] [DEBUG ] 🐛       Распознано: "184" → Цифры: "184"
+[13:37:25] [DEBUG ] 🐛       Распознано: "184" → Цифры: "184"
+[13:37:25] [DEBUG ] 🐛    📝 Результат 4: "184" (3 цифр)
+[13:37:25] [DEBUG ] 🐛    🔍 Попытка 5 (PSM 13 - одна строка)...
+[13:37:26] [DEBUG ] 🐛       Распознано: "84" → Цифры: "84"
+[13:37:27] [DEBUG ] 🐛       Распознано: "84" → Цифры: "84"
+[13:37:27] [DEBUG ] 🐛    📝 Результат 5: "84" (2 цифр)
+[13:37:27] [DEBUG ] 🐛    🔍 Попытка 6 (PSM 3 - авто)...
+[13:37:29] [DEBUG ] 🐛       Распознано: "184" → Цифры: "184"
+[13:37:30] [DEBUG ] 🐛       Распознано: "184" → Цифры: "184"
+[13:37:30] [DEBUG ] 🐛    📝 Результат 6: "184" (3 цифр)
+[13:37:30] [DEBUG ] 🐛    🔍 Попытка 7 (оригинальное изображение, PSM 6)...
+[13:37:31] [DEBUG ] 🐛       Распознано: "184" → Цифры: "184"
+[13:37:31] [DEBUG ] 🐛    📝 Результат 7: "184" (3 цифр)
+[13:37:31] [DEBUG ] 🐛    🔍 Попытка 8 (оригинальное изображение, PSM 8)...
+[13:37:32] [DEBUG ] 🐛       Распознано: "84" → Цифры: "84"
+[13:37:32] [DEBUG ] 🐛    📝 Результат 8: "84" (2 цифр)
+[13:37:32] [INFO  ] ℹ️    📊 Все попытки: [{"psm":6,"result":"184"},{"psm":8,"result":"84"},{"psm":7,"result":"184"},{"psm":10,"result":"184"},{"psm":13,"result":"84"},{"psm":3,"result":"184"},{"psm":6,"result":"184","processed":false},{"psm":8,"result":"84","processed":false}]
+[13:37:32] [INFO  ] ℹ️    📊 Лучший результат: "184" (3 цифр)
+[13:37:32] [DEBUG ] 🐛    📄 Результаты сохранены: captcha-results.json
+[13:37:32] [DEBUG ] 🐛    🗳️ Голосование: "184"
+[13:37:32] [WARN  ] ⚠️    ⚠️ Найдено только 3 цифр: "184", дополнено до: 1840
+[13:37:32] [INFO  ] ℹ️    ✅ Финальный код CAPTCHA: 1840
+[13:37:32] [INFO  ] ℹ️    🔑 Заполнение поля "Введите код *"...
+[13:38:03] [ERROR ] ❌    ❌ Ошибка распознавания CAPTCHA: elementHandle.click: Timeout 30000ms exceeded.
+Call log:
+[2m  - attempting click action[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="cookie-popup-overlay">…</div> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m    - waiting 20ms[22m
+[2m    2 × waiting for element to be visible, enabled and stable[22m
+[2m      - element is visible, enabled and stable[22m
+[2m      - scrolling into view if needed[22m
+[2m      - done scrolling[22m
+[2m      - <div class="cookie-popup-overlay">…</div> intercepts pointer events[22m
+[2m    - retrying click action[22m
+[2m      - waiting 100ms[22m
+[2m    51 × waiting for element to be visible, enabled and stable[22m
+[2m       - element is visible, enabled and stable[22m
+[2m       - scrolling into view if needed[22m
+[2m       - done scrolling[22m
+[2m       - <div class="cookie-popup-overlay">…</div> intercepts pointer events[22m
+[2m     - retrying click action[22m
+[2m       - waiting 500ms[22m
+
+[13:38:03] [INFO  ] ℹ️    💡 Введите код CAPTCHA вручную (у вас 2 минуты)
+[13:38:33] [INFO  ] ℹ️ 💾 Шаг 9: Сохранение данных в базу...
+[13:38:34] [INFO  ] ℹ️    ✅ Данные сохранены
+[13:38:34] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:38:34] [INFO  ] ℹ️ ✅ РЕГИСТРАЦИЯ ЗАВЕРШЕНА УСПЕШНО: registration
+[13:38:34] [INFO  ] ℹ️    Профиль: https://my.flado.ru/
+[13:38:34] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:38:34] [INFO  ] ℹ️ ✅ Завершена задача task_1782898450203_2: success
+[13:38:34] [INFO  ] ℹ️ 
+📌 Прогресс: 4/7 каталогов
+[13:38:34] [DEBUG ] 🐛 📝 Обновлена задача task_1782898450206_3: status=active, progress=43, step=Начало регистрации
+[13:38:34] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:38:34] [INFO  ] ℹ️ 🚀 НАЧАЛО РЕГИСТРАЦИИ: register
+[13:38:34] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[13:38:34] [INFO  ] ℹ️    Каталог: https://irecommend.ru/user/register
+[13:38:34] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[13:38:34] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:38:34] [INFO  ] ℹ️ 📄 Шаг 1: Открытие страницы каталога...
+[13:38:34] [DEBUG ] 🐛    URL: https://irecommend.ru/user/register
+[13:38:37] [DEBUG ] 🐛    ✅ Страница загружена
+[13:38:37] [DEBUG ] 🐛    Текущий URL: https://irecommend.ru/user/register
+[13:38:37] [INFO  ] ℹ️ 🔐 Сгенерированы учётные данные:
+   └─ Данные: {"login":"martynova0063@gmail.com","password":"5wk20d34"}
+[13:38:37] [INFO  ] ℹ️ 🔗 URL профиля после регистрации: https://irecommend.ru/user/register
+[13:38:37] [INFO  ] ℹ️ 📝 Шаг 3: Заполнение формы регистрации...
+[13:38:37] [INFO  ] ℹ️    🎯 Используем специфические селекторы для iRecommend
+[13:38:39] [INFO  ] ℹ️    ✅ Форма найдена
+[13:38:40] [DEBUG ] 🐛    ⌨️ Заполнение поля "login" (селектор: input[name="name"]:visible)...
+[13:38:43] [INFO  ] ℹ️    ✅ Поле "login" заполнено: martynova0063
+[13:38:43] [DEBUG ] 🐛    ⌨️ Заполнение поля "email" (селектор: input[name="mail"]:visible)...
+[13:38:44] [INFO  ] ℹ️    ✅ Поле "email" заполнено: martynova0063@gmail.
+[13:38:45] [DEBUG ] 🐛    ⌨️ Заполнение поля "password" (селектор: input[name="pass[pass1]"]:visible)...
+[13:38:46] [INFO  ] ℹ️    ✅ Поле "password" заполнено: 5wk20d34
+[13:38:47] [DEBUG ] 🐛    ⌨️ Заполнение поля "password_confirm" (селектор: input[name="pass[pass2]"]:visible)...
+[13:38:49] [INFO  ] ℹ️    ✅ Поле "password_confirm" заполнено: 5wk20d34
+[13:38:49] [INFO  ] ℹ️    🔧 iRecommend: дополнительное заполнение через JavaScript...
+[13:38:49] [INFO  ] ℹ️    ✅ Login заполнен через JavaScript: martynova0063
+[13:38:49] [INFO  ] ℹ️    ✅ Email заполнен через JavaScript: martynova0063@gmail.com
+[13:38:49] [INFO  ] ℹ️    ✅ Password заполнен через JavaScript
+[13:38:49] [INFO  ] ℹ️    ✅ Password Confirm заполнен через JavaScript
+[13:38:51] [INFO  ] ℹ️    📸 Скриншот заполненной формы: irecommend-filled.png
+[13:38:51] [INFO  ] ℹ️ 📊 Заполнено полей: 8 из 8
+[13:38:51] [INFO  ] ℹ️ 🏷️ Шаг 4: Выбор сферы деятельности и чекбоксы...
+[13:38:51] [INFO  ] ℹ️    📋 iRecommend: обработка чекбоксов...
+[13:38:51] [INFO  ] ℹ️    ⏳ Ожидание загрузки чекбоксов (7 секунд)...
+[13:38:58] [INFO  ] ℹ️    🤖 iRecommend: поиск и отметка "Я не робот"...
+[13:38:58] [INFO  ] ℹ️    🔍 Попытка отметить CAPTCHA #1 из 5...
+[13:39:01] [DEBUG ] 🐛    ℹ️ reCAPTCHA iframe не найден: page.waitForSelector: Timeout 3000ms exceeded.
+Call log:
+[2m  - waiting for locator('iframe[src*="recaptcha"], iframe[src*="google.com/recaptcha"]') to be visible[22m
+
+[13:39:01] [DEBUG ] 🐛    🔍 Поиск чекбокса по тексту...
+[13:39:01] [INFO  ] ℹ️    ✅ Найден элемент с текстом CAPTCHA
+[13:39:01] [INFO  ] ℹ️    ✅ CAPTCHA отмечена через JavaScript
+[13:39:04] [DEBUG ] 🐛 🗑️ Задача task_1782898450203_2 удалена из активных
+[13:39:04] [INFO  ] ℹ️    ✅ CAPTCHA успешно отмечена!
+[13:39:04] [INFO  ] ℹ️    📋 iRecommend: отметка "Принимаю Пользовательское соглашение"...
+[13:39:04] [DEBUG ] 🐛    🔍 Попытка отметить соглашение #1...
+[13:39:04] [INFO  ] ℹ️    ✅ Найден чекбокс соглашения: input[name="reg_user_agreement"]:visible
+[13:39:04] [DEBUG ] 🐛    ⚠️ Селектор input[name="reg_user_agreement"]:visible не сработал: page.evaluate: SyntaxError: Failed to execute 'querySelector' on 'Document': 'input[name="reg_user_agreement"]:visible' is not a valid selector.
+    at eval (eval at evaluate (:302:30), <anonymous>:2:41)
+    at UtilityScript.evaluate (<anonymous>:304:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+[13:39:04] [INFO  ] ℹ️    ✅ Найден чекбокс соглашения: #edit-reg-user-agreement:visible
+[13:39:04] [DEBUG ] 🐛    ⚠️ Селектор #edit-reg-user-agreement:visible не сработал: page.evaluate: SyntaxError: Failed to execute 'querySelector' on 'Document': '#edit-reg-user-agreement:visible' is not a valid selector.
+    at eval (eval at evaluate (:302:30), <anonymous>:2:41)
+    at UtilityScript.evaluate (<anonymous>:304:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+[13:39:04] [INFO  ] ℹ️    ✅ Найден чекбокс соглашения: input[type="checkbox"][name*="agreement"]:visible
+[13:39:04] [DEBUG ] 🐛    ⚠️ Селектор input[type="checkbox"][name*="agreement"]:visible не сработал: page.evaluate: SyntaxError: Failed to execute 'querySelector' on 'Document': 'input[type="checkbox"][name*="agreement"]:visible' is not a valid selector.
+    at eval (eval at evaluate (:302:30), <anonymous>:2:41)
+    at UtilityScript.evaluate (<anonymous>:304:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+[13:39:04] [INFO  ] ℹ️    ✅ Найден чекбокс соглашения: input[type="checkbox"][id*="agreement"]:visible
+[13:39:04] [DEBUG ] 🐛    ⚠️ Селектор input[type="checkbox"][id*="agreement"]:visible не сработал: page.evaluate: SyntaxError: Failed to execute 'querySelector' on 'Document': 'input[type="checkbox"][id*="agreement"]:visible' is not a valid selector.
+    at eval (eval at evaluate (:302:30), <anonymous>:2:41)
+    at UtilityScript.evaluate (<anonymous>:304:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+[13:39:04] [INFO  ] ℹ️    ✅ Чекбокс соглашения найден через JavaScript
+[13:39:05] [INFO  ] ℹ️    📋 iRecommend: отметка "Соглашаюсь на обработку персональных данных"...
+[13:39:05] [INFO  ] ℹ️    🔍 Поиск чекбокса по тексту метки...
+[13:39:05] [INFO  ] ℹ️    🔍 Поиск чекбокса в DOM...
+[13:39:05] [DEBUG ] 🐛    📊 Найдено чекбоксов: 2
+[13:39:06] [INFO  ] ℹ️    ✅ Чекбокс персональных данных отмечен (в DOM)
+[13:39:06] [INFO  ] ℹ️    🔍 Финальная проверка чекбоксов (через 3 секунды)...
+[13:39:09] [INFO  ] ℹ️    📊 Финальный статус: CAPTCHA=false, Agreement=true, PersonalData=true
+[13:39:09] [INFO  ] ℹ️    📸 Скриншот чекбоксов: irecommend-checkboxes.png
+[13:39:09] [INFO  ] ℹ️ 📧 Шаг 7: Получение кода подтверждения на martynova0063@gmail.com...
+[13:39:09] [DEBUG ] 🐛    IMAP: imap.gmail.com:993
+[13:39:09] [INFO  ] ℹ️    🎯 Специфический парсинг для iRecommend...
+[13:39:12] [INFO  ] ℹ️ ✅ Код подтверждения получен: 992745
+[13:39:12] [INFO  ] ℹ️ 💾 Шаг 9: Сохранение данных в базу...
+[13:39:12] [INFO  ] ℹ️    ✅ Данные сохранены
+[13:39:12] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:39:12] [INFO  ] ℹ️ ✅ РЕГИСТРАЦИЯ ЗАВЕРШЕНА УСПЕШНО: register
+[13:39:12] [INFO  ] ℹ️    Профиль: https://irecommend.ru/user/register
+[13:39:12] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:39:12] [INFO  ] ℹ️ ✅ Завершена задача task_1782898450206_3: success
+[13:39:12] [INFO  ] ℹ️ 
+📌 Прогресс: 5/7 каталогов
+[13:39:12] [DEBUG ] 🐛 📝 Обновлена задача task_1782898450209_4: status=active, progress=57, step=Начало регистрации
+[13:39:12] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:39:12] [INFO  ] ℹ️ 🚀 НАЧАЛО РЕГИСТРАЦИИ: https://www.orgpage.ru/Cabinet/Create/
+[13:39:12] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[13:39:12] [INFO  ] ℹ️    Каталог: https://www.orgpage.ru/Cabinet/Create/
+[13:39:12] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[13:39:12] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:39:12] [INFO  ] ℹ️ 📄 Шаг 1: Открытие страницы каталога...
+[13:39:12] [DEBUG ] 🐛    URL: https://www.orgpage.ru/Cabinet/Create/
+[13:39:17] [DEBUG ] 🐛    ✅ Страница загружена
+[13:39:17] [DEBUG ] 🐛    Текущий URL: https://www.orgpage.ru/Cabinet/Create/
+[13:39:17] [INFO  ] ℹ️ 🔐 Сгенерированы учётные данные:
+   └─ Данные: {"login":"martynova0063@gmail.com","password":"wkmorjpa"}
+[13:39:17] [INFO  ] ℹ️ 🔗 URL профиля после регистрации: https://www.orgpage.ru/Cabinet/Create/
+[13:39:17] [INFO  ] ℹ️ 📝 Шаг 3: Заполнение формы регистрации...
+[13:39:17] [INFO  ] ℹ️    🎯 Используем специфические селекторы для Orgpage.ru
+[13:39:17] [INFO  ] ℹ️    ⏳ Orgpage: ожидание загрузки формы (до 60 секунд)...
+[13:39:42] [DEBUG ] 🐛 🗑️ Задача task_1782898450206_3 удалена из активных
+[13:40:17] [WARN  ] ⚠️    ⚠️ Форма не появилась за 60 секунд, пробуем продолжить...
+[13:40:24] [DEBUG ] 🐛    ℹ️ Поле "company" не найдено — пропускаем
+[13:40:24] [DEBUG ] 🐛    ℹ️ Поле "email" не найдено — пропускаем
+[13:40:24] [DEBUG ] 🐛    ℹ️ Поле "password" не найдено — пропускаем
+[13:40:24] [DEBUG ] 🐛    ℹ️ Поле "password2" не найдено — пропускаем
+[13:40:24] [DEBUG ] 🐛    ℹ️ Поле "phone" не найдено — пропускаем
+[13:40:24] [DEBUG ] 🐛    ℹ️ Поле "site" не найдено — пропускаем
+[13:40:24] [INFO  ] ℹ️    🔧 Orgpage: дополнительное заполнение через JavaScript...
+[13:40:26] [INFO  ] ℹ️    ✅ Email заполнен через JavaScript
+[13:40:26] [INFO  ] ℹ️    ✅ Password заполнен через JavaScript
+[13:40:26] [INFO  ] ℹ️    📸 Скриншот заполненной формы: orgpage-filled.png
+[13:40:26] [INFO  ] ℹ️ 📊 Заполнено полей: 2 из 8
+[13:40:26] [INFO  ] ℹ️ 🏷️ Шаг 4: Выбор сферы деятельности и чекбоксы...
+[13:40:26] [INFO  ] ℹ️    📋 Orgpage: обработка чекбоксов...
+[13:40:27] [INFO  ] ℹ️    🤖 Orgpage: поиск чекбокса "Я не робот"...
+[13:40:32] [DEBUG ] 🐛    ℹ️ reCAPTCHA iframe не найден: page.waitForSelector: Timeout 5000ms exceeded.
+Call log:
+[2m  - waiting for locator('iframe[src*="recaptcha"]') to be visible[22m
+
+[13:40:37] [WARN  ] ⚠️    ⚠️ Чекбокс "Я не робот" не найден или требует ручного подтверждения
+[13:40:37] [INFO  ] ℹ️    💡 Введите CAPTCHA вручную, если появится
+[13:40:37] [INFO  ] ℹ️    📋 Orgpage: поиск чекбокса согласия с правилами...
+[13:40:37] [DEBUG ] 🐛    ℹ️ Чекбокс согласия не найден
+[13:40:37] [INFO  ] ℹ️    📸 Скриншот чекбоксов: orgpage-checkboxes.png
+[13:40:37] [INFO  ] ℹ️ 📧 Шаг 7: Получение кода подтверждения на martynova0063@gmail.com...
+[13:40:37] [DEBUG ] 🐛    IMAP: imap.gmail.com:993
+[13:40:38] [INFO  ] ℹ️ ✅ Код подтверждения получен: 992745
+[13:40:38] [INFO  ] ℹ️ 💾 Шаг 9: Сохранение данных в базу...
+[13:40:38] [INFO  ] ℹ️    ✅ Данные сохранены
+[13:40:38] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:40:38] [INFO  ] ℹ️ ✅ РЕГИСТРАЦИЯ ЗАВЕРШЕНА УСПЕШНО: https://www.orgpage.ru/Cabinet/Create/
+[13:40:38] [INFO  ] ℹ️    Профиль: https://www.orgpage.ru/Cabinet/Create/
+[13:40:38] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:40:38] [INFO  ] ℹ️ ✅ Завершена задача task_1782898450209_4: success
+[13:40:38] [INFO  ] ℹ️ 
+📌 Прогресс: 6/7 каталогов
+[13:40:38] [DEBUG ] 🐛 📝 Обновлена задача task_1782898450211_5: status=active, progress=71, step=Начало регистрации
+[13:40:38] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:40:38] [INFO  ] ℹ️ 🚀 НАЧАЛО РЕГИСТРАЦИИ: signup.php
+[13:40:38] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[13:40:38] [INFO  ] ℹ️    Каталог: https://otzovik.com/signup.php
+[13:40:38] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[13:40:38] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:40:38] [INFO  ] ℹ️ 📄 Шаг 1: Открытие страницы каталога...
+[13:40:38] [DEBUG ] 🐛    URL: https://otzovik.com/signup.php
+[13:40:39] [DEBUG ] 🐛    ✅ Страница загружена
+[13:40:39] [DEBUG ] 🐛    Текущий URL: https://otzovik.com/signup.php
+[13:40:39] [INFO  ] ℹ️ 🔓 Otzovik: обнаружена капча на signup.php
+[13:40:39] [INFO  ] ℹ️    💡 Для Otzovik требуется ручное решение капчи
+[13:40:39] [INFO  ] ℹ️    ⏳ Ожидание ручного подтверждения пользователем (до 5 мин)...
+[13:40:39] [DEBUG ] 🐛    💡 Решите капчу на странице
+[13:40:39] [INFO  ] ℹ️    ✅ Капча решена. Продолжаем...
+[13:40:39] [DEBUG ] 🐛    Текущий URL: https://otzovik.com/signup.php
+[13:40:39] [INFO  ] ℹ️ 🔐 Сгенерированы учётные данные:
+   └─ Данные: {"login":"martynova0063@gmail.com","password":"5t8wledq"}
+[13:40:39] [INFO  ] ℹ️ 🔗 URL профиля после регистрации: https://otzovik.com/loginnew.php
+[13:40:39] [INFO  ] ℹ️ 📝 Шаг 3: Заполнение формы регистрации...
+[13:40:40] [DEBUG ] 🐛    ⌨️ Заполнение поля "password" (селектор: input[type="password"]:visible)...
+[13:40:40] [INFO  ] ℹ️    ✅ Поле "password" заполнено: 5t8wledq
+[13:40:40] [DEBUG ] 🐛    ⌨️ Заполнение поля "login" (селектор: input[name="newlogin"]:visible)...
+[13:40:40] [INFO  ] ℹ️    ✅ Поле "login" заполнено: 5t8wledqlogin
+[13:40:40] [DEBUG ] 🐛    ⌨️ Заполнение поля "email" (селектор: input[name="email"]:visible)...
+[13:40:40] [INFO  ] ℹ️    ✅ Поле "email" заполнено: martynova0063@gmail.
+[13:40:40] [DEBUG ] 🐛    ℹ️ Поле "name" не найдено — пропускаем
+[13:40:40] [DEBUG ] 🐛    ℹ️ Поле "address" не найдено — пропускаем
+[13:40:40] [DEBUG ] 🐛    ℹ️ Поле "phone" не найдено — пропускаем
+[13:40:40] [DEBUG ] 🐛    ℹ️ Поле "city" не найдено — пропускаем
+[13:40:40] [DEBUG ] 🐛    ℹ️ Поле "inn" не найдено — пропускаем
+[13:40:40] [DEBUG ] 🐛    ℹ️ Поле "CatalogDescription" не найдено — пропускаем
+[13:40:40] [DEBUG ] 🐛    ℹ️ Поле "FullDescription" не найдено — пропускаем
+[13:40:40] [INFO  ] ℹ️ 📊 Заполнено полей: 3 из 10
+[13:40:40] [INFO  ] ℹ️ 🏷️ Шаг 4: Выбор сферы деятельности и чекбоксы...
+[13:40:40] [INFO  ] ℹ️    📤 Otzovik: отправка формы...
+[13:40:42] [INFO  ] ℹ️    ✅ Форма Otzovik отправлена
+[13:40:42] [INFO  ] ℹ️ 📧 Шаг 7: Получение кода подтверждения на martynova0063@gmail.com...
+[13:40:42] [DEBUG ] 🐛    IMAP: imap.gmail.com:993
+[13:40:43] [INFO  ] ℹ️ ✅ Код подтверждения получен: 992745
+[13:40:43] [INFO  ] ℹ️ 💾 Шаг 9: Сохранение данных в базу...
+[13:40:43] [INFO  ] ℹ️    ✅ Данные сохранены
+[13:40:43] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:40:43] [INFO  ] ℹ️ ✅ РЕГИСТРАЦИЯ ЗАВЕРШЕНА УСПЕШНО: signup.php
+[13:40:43] [INFO  ] ℹ️    Профиль: https://otzovik.com/loginnew.php
+[13:40:43] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:40:43] [INFO  ] ℹ️ ✅ Завершена задача task_1782898450211_5: success
+[13:40:43] [INFO  ] ℹ️ 
+📌 Прогресс: 7/7 каталогов
+[13:40:43] [DEBUG ] 🐛 📝 Обновлена задача task_1782898450215_6: status=active, progress=86, step=Начало регистрации
+[13:40:43] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:40:43] [INFO  ] ℹ️ 🚀 НАЧАЛО РЕГИСТРАЦИИ: https://martynova0063-sudo.github.io/mms_test_repository/
+[13:40:43] [INFO  ] ℹ️    Сайт: https://ural-rti.ru/
+[13:40:43] [INFO  ] ℹ️    Каталог: https://martynova0063-sudo.github.io/mms_test_repository/
+[13:40:43] [INFO  ] ℹ️    Email: martynova0063@gmail.com
+[13:40:43] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:40:43] [INFO  ] ℹ️ 📄 Шаг 1: Открытие страницы каталога...
+[13:40:43] [DEBUG ] 🐛    URL: https://martynova0063-sudo.github.io/mms_test_repository/
+[13:40:44] [DEBUG ] 🐛    ✅ Страница загружена
+[13:40:44] [DEBUG ] 🐛    Текущий URL: https://martynova0063-sudo.github.io/mms_test_repository/
+[13:40:44] [INFO  ] ℹ️ 🔐 Сгенерированы учётные данные:
+   └─ Данные: {"login":"martynova0063@gmail.com","password":"rs13rg19"}
+[13:40:44] [INFO  ] ℹ️ 🔗 URL профиля после регистрации: https://martynova0063-sudo.github.io/mms_test_repository/
+[13:40:44] [INFO  ] ℹ️ 📝 Шаг 3: Заполнение формы регистрации...
+[13:40:44] [DEBUG ] 🐛    ⌨️ Заполнение поля "password" (селектор: input[name="password"]:visible)...
+[13:40:44] [INFO  ] ℹ️    ✅ Поле "password" заполнено: rs13rg19
+[13:40:44] [DEBUG ] 🐛    ℹ️ Поле "login" не найдено — пропускаем
+[13:40:44] [DEBUG ] 🐛    ⌨️ Заполнение поля "email" (селектор: input[name="email"]:visible)...
+[13:40:44] [INFO  ] ℹ️    ✅ Поле "email" заполнено: martynova0063@gmail.
+[13:40:44] [DEBUG ] 🐛    ⌨️ Заполнение поля "name" (селектор: input[name="name"]:visible)...
+[13:40:44] [INFO  ] ℹ️    ✅ Поле "name" заполнено: УРТ
+[13:40:44] [DEBUG ] 🐛    ℹ️ Поле "address" не найдено — пропускаем
+[13:40:44] [DEBUG ] 🐛    ℹ️ Поле "phone" не найдено — пропускаем
+[13:40:44] [DEBUG ] 🐛    ℹ️ Поле "city" не найдено — пропускаем
+[13:40:44] [DEBUG ] 🐛    ℹ️ Поле "inn" не найдено — пропускаем
+[13:40:44] [DEBUG ] 🐛    ℹ️ Поле "CatalogDescription" не найдено — пропускаем
+[13:40:44] [DEBUG ] 🐛    ℹ️ Поле "FullDescription" не найдено — пропускаем
+[13:40:44] [INFO  ] ℹ️ 📊 Заполнено полей: 3 из 10
+[13:40:44] [INFO  ] ℹ️ 🏷️ Шаг 4: Выбор сферы деятельности и чекбоксы...
+[13:40:44] [DEBUG ] 🐛    👆 Нажатие кнопки "Зарегистрироваться"...
+[13:40:45] [INFO  ] ℹ️    ✅ Форма отправлена
+[13:40:45] [INFO  ] ℹ️ 📧 Шаг 7: Получение кода подтверждения на martynova0063@gmail.com...
+[13:40:45] [DEBUG ] 🐛    IMAP: imap.gmail.com:993
+[13:40:46] [INFO  ] ℹ️ ✅ Код подтверждения получен: 992745
+[13:40:46] [INFO  ] ℹ️ 💾 Шаг 9: Сохранение данных в базу...
+[13:40:46] [INFO  ] ℹ️    ✅ Данные сохранены
+[13:40:46] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:40:46] [INFO  ] ℹ️ ✅ РЕГИСТРАЦИЯ ЗАВЕРШЕНА УСПЕШНО: https://martynova0063-sudo.github.io/mms_test_repository/
+[13:40:46] [INFO  ] ℹ️    Профиль: https://martynova0063-sudo.github.io/mms_test_repository/
+[13:40:46] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:40:46] [INFO  ] ℹ️ ✅ Завершена задача task_1782898450215_6: success
+[13:40:46] [INFO  ] ℹ️ 
+═══════════════════════════════════════════════════
+[13:40:46] [INFO  ] ℹ️ 🎉 РЕГИСТРАЦИЯ ЗАВЕРШЕНА
+[13:40:46] [INFO  ] ℹ️    Всего каталогов: 7
+[13:40:46] [INFO  ] ℹ️    ✅ Успешно: 7
+[13:40:46] [INFO  ] ℹ️    ❌ Ошибок: 0
+[13:40:46] [INFO  ] ℹ️    📊 Обычных каталогов: 6
+[13:40:46] [INFO  ] ℹ️    🧪 Тестовых каталогов: 1
+[13:40:46] [INFO  ] ℹ️    ⏱️  Время: 396.0 сек
+[13:40:46] [INFO  ] ℹ️ ═══════════════════════════════════════════════════
+[13:40:46] [INFO  ] ℹ️ 🧹 Очистка ресурсов браузера...
+[13:40:48] [INFO  ] ℹ️ ✅ Браузер закрыт
+[13:40:48] [INFO  ] ℹ️ 🔌 Закрытие подключения к БД...
+[13:40:48] [INFO  ] ℹ️ ✅ БД закрыта
+[13:40:48] [INFO  ] ℹ️ ✅ Запрос обработан успешно
+[13:41:08] [DEBUG ] 🐛 🗑️ Задача task_1782898450209_4 удалена из активных
+[13:41:13] [DEBUG ] 🐛 🗑️ Задача task_1782898450211_5 удалена из активных
+[13:41:16] [DEBUG ] 🐛 🗑️ Задача task_1782898450215_6 удалена из активных
+[14:02:02] [DEBUG ] 🐛 🔌 SSE клиент задач отключился
+[15:18:01] [INFO  ] ℹ️ 🚀 Сервер запущен!
+[15:18:01] [INFO  ] ℹ️ 📂 Рабочая папка: C:\Users\63_ma\OneDrive\Desktop\AI\Разработка web приложений с АИ\mms_test_repository\asistent
+[15:18:01] [INFO  ] ℹ️ 📊 Уровень логирования: debug
+[15:18:01] [INFO  ] ℹ️ 📏 Макс. логов в памяти: 500
+[15:18:01] [INFO  ] ℹ️ 🌐 Сервер доступен: http://localhost:3000
+[15:18:01] [INFO  ] ℹ️ 📊 API логов:       http://localhost:3000/api/logs
+[15:18:01] [INFO  ] ℹ️ 📡 SSE stream:      http://localhost:3000/api/logs-stream
+[15:18:01] [INFO  ] ℹ️ 📋 API задач:       http://localhost:3000/api/tasks
+[15:18:01] [INFO  ] ℹ️ 📡 SSE задач:       http://localhost:3000/api/tasks-stream
+[15:18:01] [INFO  ] ℹ️ 🗑️ Очистить логи:   POST http://localhost:3000/api/logs/clear
+[15:18:25] [INFO  ] ℹ️ 🛑 Сервер останавливается (SIGINT)
+[15:24:03] [INFO  ] ℹ️ 🚀 Сервер запущен!
+[15:24:03] [INFO  ] ℹ️ 📂 Рабочая папка: C:\Users\63_ma\OneDrive\Desktop\AI\Разработка web приложений с АИ\mms_test_repository\asistent
+[15:24:03] [INFO  ] ℹ️ 📊 Уровень логирования: debug
+[15:24:03] [INFO  ] ℹ️ 📏 Макс. логов в памяти: 500
+[15:24:03] [INFO  ] ℹ️ 🌐 Сервер доступен: http://localhost:3000
+[15:24:03] [INFO  ] ℹ️ 📊 API логов:       http://localhost:3000/api/logs
+[15:24:03] [INFO  ] ℹ️ 📡 SSE stream:      http://localhost:3000/api/logs-stream
+[15:24:03] [INFO  ] ℹ️ 📋 API задач:       http://localhost:3000/api/tasks
+[15:24:03] [INFO  ] ℹ️ 📡 SSE задач:       http://localhost:3000/api/tasks-stream
+[15:24:03] [INFO  ] ℹ️ 🗑️ Очистить логи:   POST http://localhost:3000/api/logs/clear
+[15:25:15] [DEBUG ] 🐛 🔌 SSE клиент задач отключился
+[15:25:17] [INFO  ] ℹ️ 🛑 Сервер останавливается (SIGINT)

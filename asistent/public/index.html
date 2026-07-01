@@ -440,6 +440,87 @@ caption {
       border: 1px solid #f5c6cb;
     }
 
+    /* ===== Active Tasks Panel ===== */
+    .task-item {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: box-shadow 0.2s;
+    }
+    .task-item:hover {
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .task-status {
+      min-width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .task-status.queued { background: #6c757d; }
+    .task-status.active { background: #007bff; animation: pulse 1.5s infinite; }
+    .task-status.captcha_pending { background: #ffc107; }
+    .task-status.success { background: #28a745; }
+    .task-status.error { background: #dc3545; }
+    
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.4); }
+      70% { box-shadow: 0 0 0 6px rgba(0, 123, 255, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+    }
+    
+    .task-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .task-title {
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #212529;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .task-meta {
+      font-size: 0.85em;
+      color: #6c757d;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .task-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.75em;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .task-badge.queued { background: #e9ecef; color: #495057; }
+    .task-badge.active { background: #cce5ff; color: #004085; }
+    .task-badge.captcha_pending { background: #fff3cd; color: #856404; }
+    .task-badge.success { background: #d4edda; color: #155724; }
+    .task-badge.error { background: #f8d7da; color: #721c24; }
+    
+    .task-favicon {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      object-fit: contain;
+      background: #f8f9fa;
+      padding: 2px;
+    }
+    
+    .tasks-empty {
+      text-align: center;
+      padding: 30px;
+      color: #6c757d;
+    }
+
   </style>
 </head>
 <body>
@@ -454,6 +535,10 @@ caption {
     <button class="btn-gear" onclick="toggleCompany()">
       <svg viewBox="0 0 24 24"><path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/></svg>
       <span class="gear-label">Компания</span>
+    </button>
+    <button class="btn-gear" onclick="toggleTasks()">
+      <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14h-2v-4h2v4zm0-6h-2V7h2v4z"/></svg>
+      <span class="gear-label">Активные задачи</span>
     </button>
   </div>
 
@@ -503,6 +588,32 @@ caption {
     </div>
 
     <div id="companyResults" style="display: none; margin-top: 12px;"></div>
+  </div>
+
+  <!-- Active Tasks panel -->
+  <div class="settings-panel" id="tasksPanel" style="background: #fff8e8; border-color: #f0d4a0;">
+    <button class="panel-close" onclick="closePanel('tasksPanel')" title="Закрыть">×</button>
+    <h3>📋 Активные задачи регистрации</h3>
+    <p><em>Текущий статус задач регистрации для каждой компании на каждом сайте.</em></p>
+    
+    <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+      <button type="button" onclick="loadActiveTasks()" id="refreshTasksBtn" style="background: #007bff; padding: 6px 12px; font-size: 0.9em;">🔄 Обновить</button>
+      <select id="taskCompanyFilter" onchange="filterTasks()" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; min-width: 150px;">
+        <option value="all">Все компании</option>
+      </select>
+      <select id="taskStatusFilter" onchange="filterTasks()" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px;">
+        <option value="all">Все статусы</option>
+        <option value="queued">В очереди</option>
+        <option value="active">Активная</option>
+        <option value="captcha_pending">Ожидает капчи</option>
+        <option value="success">Успешно</option>
+        <option value="error">Ошибка</option>
+      </select>
+    </div>
+    
+    <div id="tasksContent" style="max-height: 400px; overflow-y: auto;">
+      <div style="text-align: center; padding: 20px; color: #6c757d;">Нажмите "Обновить" для загрузки задач</div>
+    </div>
   </div>
 
   <form id="registrationForm">
@@ -586,9 +697,198 @@ caption {
       panel.classList.toggle('visible');
     }
 
+    // ===== TASKS PANEL TOGGLE =====
+    function toggleTasks() {
+      const panel = document.getElementById('tasksPanel');
+      panel.classList.toggle('visible');
+      if (panel.classList.contains('visible')) {
+        loadActiveTasks();
+      }
+    }
+
     // ===== CLOSE PANEL =====
     function closePanel(panelId) {
       document.getElementById(panelId).classList.remove('visible');
+    }
+
+    // ===== ACTIVE TASKS =====
+    let allTasks = [];
+    let taskEventSource = null;
+
+    // Подключение к SSE для задач
+    function connectTasksStream() {
+      if (taskEventSource) {
+        taskEventSource.close();
+      }
+      
+      taskEventSource = new EventSource('/api/tasks-stream');
+      
+      taskEventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'init') {
+            allTasks = data.tasks || [];
+            updateTaskCompanyFilter();
+            filterTasks();
+          } else if (data.type === 'update') {
+            // Обновляем задачу в списке
+            const updatedTask = data.task;
+            const existingIndex = allTasks.findIndex(t => t.tempId === updatedTask.tempId);
+        
+            if (existingIndex >= 0) {
+              allTasks[existingIndex] = updatedTask;
+            } else {
+              allTasks.unshift(updatedTask);
+            }
+            
+            filterTasks();
+            updateTaskCompanyFilter();
+          }
+        } catch (e) {
+          console.error('Ошибка обработки SSE задач:', e);
+        }
+      };
+
+      taskEventSource.onerror = () => {
+        console.log('SSE задач отключено, переподключение...');
+        taskEventSource.close();
+        setTimeout(connectTasksStream, 3000);
+      };
+      
+      console.log('✅ Подключено SSE для задач');
+    }
+
+    async function loadActiveTasks() {
+      const contentDiv = document.getElementById('tasksContent');
+      const btn = document.getElementById('refreshTasksBtn');
+      
+      btn.disabled = true;
+      btn.textContent = '⏳ Загрузка...';
+      
+      try {
+        const res = await fetch('/api/tasks');
+        const data = await res.json();
+
+        allTasks = data.tasks || [];
+        filterTasks();
+        
+        // Подключаем SSE для авто-обновления
+        connectTasksStream();
+        
+      } catch (error) {
+        contentDiv.innerHTML = `<div style="color: #721c24; background: #f8d7da; padding: 10px; border-radius: 4px;">❌ Ошибка: ${error.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🔄 Обновить';
+      }
+    }
+
+    function updateTaskCompanyFilter() {
+      // Собираем уникальные компании из задач
+      const companies = new Set(allTasks.map(t => t.company).filter(Boolean));
+      const select = document.getElementById('taskCompanyFilter');
+      const currentVal = select.value;
+      
+      // Восстанавливаем опции
+      select.innerHTML = '<option value="all">Все компании</option>';
+      for (const company of [...companies].sort()) {
+        const opt = document.createElement('option');
+        opt.value = company;
+        opt.textContent = company;
+        select.appendChild(opt);
+      }
+      
+      // Восстанавливаем выбранное значение, если оно ещё есть
+      if ([...companies].includes(currentVal)) {
+        select.value = currentVal;
+      }
+    }
+
+    function filterTasks() {
+      const statusFilter = document.getElementById('taskStatusFilter').value;
+      const companyFilter = document.getElementById('taskCompanyFilter').value;
+      const contentDiv = document.getElementById('tasksContent');
+      
+      const filtered = allTasks.filter(t => {
+        const matchesStatus = statusFilter === 'all' || t.status === statusFilter;
+        const matchesCompany = companyFilter === 'all' || t.company === companyFilter;
+        return matchesStatus && matchesCompany;
+      });
+      
+      if (filtered.length === 0) {
+        contentDiv.innerHTML = '<div class="tasks-empty">Нет задач с выбранным статусом</div>';
+        return;
+      }
+
+      const statusLabels = {
+        'queued': 'В очереди',
+        'active': 'Активная',
+        'captcha_pending': 'Ожидает капчи',
+        'success': 'Успешно',
+        'error': 'Ошибка'
+      };
+
+      let html = '';
+      for (const task of filtered) {
+        const domain = extractDomain(task.website || '');
+        const favicon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`;
+        const statusLabel = statusLabels[task.status] || task.status;
+        const timeAgo = getTimeAgo(task.created_at);
+        
+        html += `
+          <div class="task-item" data-status="${task.status}">
+            <div class="task-status ${task.status}"></div>
+            <img class="task-favicon" src="${favicon}" onerror="this.style.display='none'">
+            <div class="task-info">
+              <div class="task-title">${escapeHtml(task.company || 'Компания')} → ${escapeHtml(task.catalog || 'Каталог')}</div>
+              <div class="task-meta">
+                <span class="task-badge ${task.status}">${statusLabel}</span>
+                <span>🌐 ${escapeHtml(task.website || '')}</span>
+                <span>📧 ${escapeHtml(task.email || '')}</span>
+                <span>🕐 ${timeAgo}</span>
+              </div>
+              ${task.currentStep ? `<div style="margin-top: 4px; font-size: 0.85em; color: #007bff;">📍 ${escapeHtml(task.currentStep)}</div>` : ''}
+              ${task.progress !== undefined && task.status === 'active' ? `
+                <div style="margin-top: 6px; width: 100%; background: #e9ecef; border-radius: 3px; height: 4px; overflow: hidden;">
+                  <div style="width: ${task.progress}%; background: #007bff; height: 100%; transition: width 0.3s;"></div>
+                </div>
+              ` : ''}
+              ${task.error ? `<div style="margin-top: 4px; font-size: 0.85em; color: #dc3545;">⚠️ ${escapeHtml(task.error)}</div>` : ''}
+            </div>
+          </div>
+        `;
+      }
+      
+      contentDiv.innerHTML = html;
+    }
+
+    function extractDomain(url) {
+      try {
+        const urlObj = new URL(url);
+        const parts = urlObj.hostname.split('.');
+        if (parts.length >= 2) {
+          return parts.slice(-2).join('.');
+        }
+        return urlObj.hostname;
+      } catch (e) {
+        return url;
+      }
+    }
+
+    function getTimeAgo(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffSec = Math.floor(diffMs / 1000);
+      const diffMin = Math.floor(diffSec / 60);
+      const diffHour = Math.floor(diffMin / 60);
+      const diffDay = Math.floor(diffHour / 24);
+      
+      if (diffDay > 0) return `${diffDay} дн. назад`;
+      if (diffHour > 0) return `${diffHour} ч. назад`;
+      if (diffMin > 0) return `${diffMin} мин. назад`;
+      return 'только что';
     }
 
     // ===== CHECK COMPANY DATA =====
@@ -624,7 +924,7 @@ caption {
           resultsDiv.innerHTML = `<div style="color: #721c24; background: #f8d7da; padding: 10px; border-radius: 4px;">❌ ${data.error}</div>`;
           return;
         }
-
+        
         // Build results
         let html = '';
         

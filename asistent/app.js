@@ -3,6 +3,7 @@ const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const RegistrationAgent = require('./registration-agent');
 const { serverLog, getLogs, clearLogs, eventStreamClients, logFileStream } = require('./logger');
+const taskManager = require('./task-manager');
 const excel = require('excel4node');
 
 const app = express();
@@ -109,7 +110,28 @@ app.post('/start-registration', async (req, res) => {
 
   try {
     const agent = new RegistrationAgent();
-    const result = await agent.runRegistration(website, email, imapHost, port, apppassword, directories);
+    
+    // Создаём задачи для каждого каталога
+    const directoryList = Array.isArray(directories) ? directories : [directories];
+    const taskIds = [];
+    
+    for (const dirUrl of directoryList) {
+      const dirName = dirUrl.split('/').pop() || dirUrl;
+      const taskId = taskManager.createTask(website, email, website, dirName);
+      taskIds.push({ taskId, dirUrl });
+    }
+
+    // Передаём callback для обновления задач
+    const taskCallbacks = {
+      updateStatus: (taskId, status, progress, currentStep, error) => {
+        taskManager.updateTaskStatus(taskId, status, progress, currentStep, error);
+      },
+      completeTask: (taskId, status, error) => {
+        taskManager.completeTask(taskId, status, error);
+      }
+    };
+    
+    const result = await agent.runRegistration(website, email, imapHost, port, apppassword, directories, taskIds, taskCallbacks);
 
     serverLog.info(`✅ Запрос обработан успешно`);
     res.json({
@@ -351,6 +373,82 @@ app.get('/api/logs-stream', (req, res) => {
   });
 });
 
+// ============================================================
+// API ДЛЯ АКТИВНЫХ ЗАДАЧ
+// ============================================================
+
+// Получить все задачи регистрации (GET /api/tasks)
+app.get('/api/tasks', (req, res) => {
+  const activeTasksArray = taskManager.getAllTasks();
+  
+  // Получаем все регистрации из БД, сортируем по дате (новые первые)
+  db.all(
+    `SELECT 
+       r.id,
+       r.website,
+       r.email,
+       r.company,
+       r.catalog,
+       r.status,
+       r.error,
+       r.created_at,
+       r.profile_url
+     FROM registrations r
+     ORDER BY r.created_at DESC
+     LIMIT 100`,
+    (err, rows) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      
+      // Преобразуем статусы в понятные форматы
+      const dbTasks = rows.map(row => ({
+        id: row.id,
+        website: row.website,
+        email: row.email,
+        company: row.company,
+        catalog: row.catalog,
+        status: mapRegistrationStatus(row.status),
+        error: row.error,
+        created_at: row.created_at,
+        profile_url: row.profile_url,
+        isHistorical: true
+      }));
+      
+      // Объединяем активные задачи и исторические (без дубликатов)
+      const activeIds = new Set(activeTasksArray.map(t => t.tempId));
+      const allTasks = [...activeTasksArray, ...dbTasks.filter(t => !activeIds.has(t.tempId))];
+      
+      res.json({ tasks: allTasks, count: allTasks.length });
+    }
+  );
+});
+
+// SSE STREAM — ПОДПИСКА НА ЗАДАЧИ В РЕАЛЬНОМ ВРЕМЕНИ
+app.get('/api/tasks-stream', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  // Отправляем текущие задачи сразу
+  taskManager.sendInitialTasks(res);
+  
+  // Добавляем клиент
+  taskManager.addTaskStreamClient(res);
+});
+
+// Преобразование статусов регистрации в статусы задач
+function mapRegistrationStatus(status) {
+  if (status === 'success') return 'success';
+  if (status === 'error' || status === 'failed') return 'error';
+  if (status === 'pending' || status === 'in_progress') return 'active';
+  if (status === 'captcha_required') return 'captcha_pending';
+  if (status === 'queued') return 'queued';
+  // По умолчанию считаем активными
+  return 'active';
+}
+
 // 404 HANDLER
 app.use((req, res) => {
   serverLog.warn(`⛔ 404: ${req.method} ${req.originalUrl}`);
@@ -371,6 +469,8 @@ app.listen(PORT, () => {
   serverLog.info(`🌐 Сервер доступен: http://localhost:${PORT}`);
   serverLog.info(`📊 API логов:       http://localhost:${PORT}/api/logs`);
   serverLog.info(`📡 SSE stream:      http://localhost:${PORT}/api/logs-stream`);
+  serverLog.info(`📋 API задач:       http://localhost:${PORT}/api/tasks`);
+  serverLog.info(`📡 SSE задач:       http://localhost:${PORT}/api/tasks-stream`);
   serverLog.info(`🗑️ Очистить логи:   POST http://localhost:${PORT}/api/logs/clear`);
 });
 

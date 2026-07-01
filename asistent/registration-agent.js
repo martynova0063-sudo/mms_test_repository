@@ -3283,7 +3283,7 @@ class RegistrationAgent {
     }
   }
 
-  async runRegistration(website, email, imapHost, port, apppassword, directories) {
+  async runRegistration(website, email, imapHost, port, apppassword, directories, taskIds = [], taskCallbacks = null) {
     const startTime = Date.now();
     
     // Получаем информацию о каталогах (включая is_test)
@@ -3297,13 +3297,13 @@ class RegistrationAgent {
     }).length;
     const regularCount = directoriesArray.length - testCount;
     
-    serverLog.info(`═══════════════════════════════════════════════════`);
+    serverLog.info(`═══════════════════════════════════════════════`);
     serverLog.info(`🏁 ЗАПУСК РЕГИСТРАЦИИ`);
     serverLog.info(`   Сайт: ${website}`);
     serverLog.info(`   Email: ${email}`);
     serverLog.info(`   Каталогов: ${directoriesArray.length} (обычных: ${regularCount}, тестовых: ${testCount})`);
     serverLog.info(`   IMAP: ${imapHost}:${port}`);
-    serverLog.info(`═══════════════════════════════════════════════════`);
+    serverLog.info(`═══════════════════════════════════════════════`);
 
     if (!(await this.initialize())) {
       throw new Error('Не удалось инициализировать Playwright');
@@ -3331,6 +3331,15 @@ class RegistrationAgent {
         const directory = directoriesArray[i];
         serverLog.info(`\n📌 Прогресс: ${i + 1}/${directoriesArray.length} каталогов`);
         
+        // Получаем taskId для этого каталога
+        const taskInfo = taskIds.find(t => t.dirUrl === directory);
+        const taskId = taskInfo ? taskInfo.taskId : null;
+        
+        // Обновляем статус задачи
+        if (taskId && taskCallbacks) {
+          taskCallbacks.updateStatus(taskId, 'active', Math.round((i / directoriesArray.length) * 100), 'Начало регистрации');
+        }
+        
         try {
           const result = await this.registerInDirectory(
             directory,
@@ -3343,13 +3352,26 @@ class RegistrationAgent {
           results.push(result);
           if (result.success) {
             successCount++;
+            // Обновляем статус задачи - успешно
+            if (taskId && taskCallbacks) {
+              taskCallbacks.completeTask(taskId, 'success', null);
+            }
           } else {
             errorCount++;
+            // Обновляем статус задачи - ошибка
+            if (taskId && taskCallbacks) {
+              taskCallbacks.completeTask(taskId, 'error', result.error || 'Неизвестная ошибка');
+            }
           }
         } catch (error) {
           serverLog.error(`💥 Критическая ошибка при обработке каталога: ${error.message}`);
           results.push({ success: false, error: error.message });
           errorCount++;
+          
+          // Обновляем статус задачи - критическая ошибка
+          if (taskId && taskCallbacks) {
+            taskCallbacks.completeTask(taskId, 'error', error.message);
+          }
           
           // Сохраняем критическую ошибку в БД
           try {
