@@ -1,18 +1,22 @@
 {
-  "name": "registration-agent",
+  "name": "@workspace/registration-agent",
   "version": "1.0.0",
-  "description": "Агент автоматической регистрации сайтов в каталогах",
-  "main": "app.js",
+  "private": true,
   "scripts": {
+    "dev": "node app.js",
     "start": "node app.js",
-    "test": "npx playwright test"
+    "build": "node -e \"console.log('Registration agent is ready to run')\""
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
     "excel4node": "^1.8.2",
+    "exceljs": "^4.4.0",
     "express": "^4.18.0",
     "he": "^1.2.0",
     "imap": "^0.8.19",
     "mailparser": "^3.9.9",
+    "openai": "^6.49.0",
+    "openapi": "^1.0.0",
     "playwright": "^1.45.0",
     "sharp": "^0.35.2",
     "sqlite3": "^5.1.6",

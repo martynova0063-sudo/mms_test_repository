@@ -1,10 +1,17 @@
 const express = require('express');
+require('dotenv').config();
+
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const RegistrationAgent = require('./registration-agent');
 const { serverLog, getLogs, clearLogs, eventStreamClients, logFileStream } = require('./logger');
 const taskManager = require('./task-manager');
 const excel = require('excel4node');
+const {
+  getChatPriority,
+  normalizeStatus,
+  summarizeChats,
+} = require('./chat-prioritization');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,6 +23,28 @@ app.use(express.urlencoded({ extended: true }));
 
 // Инициализация базы данных
 const db = new sqlite3.Database('./registrations.db');
+
+// Таблица чатов отделена от регистраций: она не содержит пароли и подходит
+// для импорта откликов из HH.ru, Telegram, Slack или другого источника.
+db.run(`
+  CREATE TABLE IF NOT EXISTS chats (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    external_id TEXT UNIQUE,
+    conversation_url TEXT,
+    company TEXT,
+    status TEXT NOT NULL DEFAULT 'UNKNOWN',
+    applied_at TEXT,
+    last_response_at TEXT,
+    last_message_at TEXT,
+    last_message_direction TEXT DEFAULT 'incoming',
+    new_message_at TEXT,
+    message_preview TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )
+`, (err) => {
+  if (err) serverLog.error('❌ Не удалось создать таблицу чатов:', err.message);
+});
 
 // Миграция: добавляем столбец is_test если его нет
 db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='directories'", (err, row) => {
@@ -32,6 +61,158 @@ db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='directories'
     });
   }
 });
+
+function dbAll(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) reject(err);
+      else resolve(rows || []);
+    });
+  });
+}
+
+function dbGet(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => {
+      if (err) reject(err);
+      else resolve(row || null);
+    });
+  });
+}
+
+function dbRun(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.run(sql, params, function (err) {
+      if (err) reject(err);
+      else resolve({ lastID: this.lastID, changes: this.changes });
+    });
+  });
+}
+
+function normalizeTimestamp(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function normalizeChatInput(input) {
+  const source = input && typeof input === 'object' ? input : {};
+  const externalId = source.external_id ?? source.externalId ?? source.chat_id;
+  const company = String(source.company ?? source.from ?? '').trim();
+  const direction = String(
+    source.last_message_direction ??
+      source.lastMessageDirection ??
+      source.message_direction ??
+      source.messageDirection ??
+      'incoming',
+  ).toLowerCase();
+
+  return {
+    externalId: externalId ? String(externalId).trim() : null,
+    conversationUrl:
+      source.conversation_url ?? source.conversationUrl ?? source.url ?? null,
+    company: company || 'Без компании',
+    status: normalizeStatus(source.status),
+    appliedAt: normalizeTimestamp(
+      source.applied_at ?? source.appliedAt ?? source.application_at,
+    ),
+    lastResponseAt: normalizeTimestamp(
+      source.last_response_at ?? source.lastResponseAt,
+    ),
+    lastMessageAt: normalizeTimestamp(
+      source.last_message_at ?? source.lastMessageAt ?? source.message_at,
+    ),
+    lastMessageDirection: direction === 'outgoing' ? 'outgoing' : 'incoming',
+    newMessageAt: normalizeTimestamp(
+      source.new_message_at ?? source.newMessageAt ?? source.unread_at,
+    ),
+    messagePreview:
+      source.message_preview ?? source.last_message ?? source.lastMessage ?? null,
+    createdAt: normalizeTimestamp(source.created_at),
+  };
+}
+
+function serializeChat(row) {
+  const priority = getChatPriority(row);
+  return {
+    ...row,
+    from: row.company,
+    status: priority.status,
+    isHot: priority.isHot,
+    priority: priority.priority,
+    priorityReasons: priority.reasons,
+    waitingDays: priority.waitingDays,
+  };
+}
+
+async function getChats() {
+  const rows = await dbAll('SELECT * FROM chats ORDER BY updated_at DESC, id DESC');
+  return rows.map(serializeChat);
+}
+
+function getNotificationSettings(body = {}) {
+  const provider = String(
+    body.provider ||
+      process.env.NOTIFICATION_WEBHOOK_PROVIDER ||
+      'slack',
+  ).toLowerCase();
+  const webhookUrl = body.webhookUrl || process.env.NOTIFICATION_WEBHOOK_URL;
+  const telegramChatId =
+    body.telegramChatId || process.env.NOTIFICATION_TELEGRAM_CHAT_ID;
+
+  return { provider, webhookUrl, telegramChatId };
+}
+
+function formatNotificationReport(summary) {
+  return [
+    'Отчёт по чатам',
+    `Новые отклики за 24 часа: ${summary.newApplications}`,
+    `Новые сообщения за 24 часа: ${summary.newMessages}`,
+    `Отказы: ${summary.refusals}`,
+    `Собеседования: ${summary.interviews}`,
+    `Горячие чаты: ${summary.hot}`,
+  ].join('\n');
+}
+
+async function sendNotificationReport(summary, settings = {}) {
+  const { provider, webhookUrl, telegramChatId } =
+    getNotificationSettings(settings);
+
+  if (!webhookUrl) {
+    throw new Error('Вебхук уведомлений не настроен');
+  }
+
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(webhookUrl);
+  } catch {
+    throw new Error('Укажите корректный URL вебхука');
+  }
+  if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+    throw new Error('Вебхук должен использовать HTTP или HTTPS');
+  }
+
+  const text = formatNotificationReport(summary);
+  const payload =
+    provider === 'telegram'
+      ? { chat_id: telegramChatId, text }
+      : { text };
+
+  if (provider === 'telegram' && !telegramChatId) {
+    throw new Error('Для Telegram укажите Chat ID');
+  }
+
+  const response = await fetch(parsedUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    throw new Error(`Вебхук вернул HTTP ${response.status}`);
+  }
+
+  return { provider, message: text };
+}
 
 // Стартовые логи
 serverLog.info('🚀 Сервер запущен!');
@@ -160,6 +341,187 @@ app.get('/results', (req, res) => {
 });
 
 // ============================================================
+// ЧАТЫ, ПРИОРИТЕТЫ И СТАТИСТИКА
+// ============================================================
+
+app.get('/api/chats', async (req, res) => {
+  try {
+    const priorityFilter = String(req.query.priority || 'all').toLowerCase();
+    const chats = await getChats();
+    const filtered = chats.filter((chat) => {
+      if (priorityFilter === 'hot') return chat.isHot;
+      if (priorityFilter === 'archive') return !chat.isHot;
+      return true;
+    });
+    res.json({ chats: filtered, count: filtered.length });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/chat-analytics', async (req, res) => {
+  try {
+    const chats = await getChats();
+    res.json({
+      summary: summarizeChats(chats),
+      chats: chats.filter((chat) => chat.isHot),
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+function upsertChat(chat) {
+  return new Promise((resolve, reject) => {
+    const updateExisting = (existing) => {
+      if (!existing) {
+        const insertSql = chat.createdAt
+          ? `INSERT INTO chats (
+              external_id, conversation_url, company, status, applied_at,
+              last_response_at, last_message_at, last_message_direction,
+              new_message_at, message_preview, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`
+          : `INSERT INTO chats (
+              external_id, conversation_url, company, status, applied_at,
+              last_response_at, last_message_at, last_message_direction,
+              new_message_at, message_preview, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`;
+        const values = [
+          chat.externalId,
+          chat.conversationUrl,
+          chat.company,
+          chat.status,
+          chat.appliedAt,
+          chat.lastResponseAt,
+          chat.lastMessageAt,
+          chat.lastMessageDirection,
+          chat.newMessageAt,
+          chat.messagePreview,
+        ];
+        if (chat.createdAt) values.push(chat.createdAt);
+        db.run(insertSql, values, function (error) {
+          if (error) reject(error);
+          else resolve({ action: 'imported', id: this.lastID });
+        });
+        return;
+      }
+
+      db.run(
+        `UPDATE chats SET
+          conversation_url=?, company=?, status=?, applied_at=?,
+          last_response_at=?, last_message_at=?, last_message_direction=?,
+          new_message_at=?, message_preview=?, updated_at=CURRENT_TIMESTAMP
+         WHERE id=?`,
+        [
+          chat.conversationUrl,
+          chat.company,
+          chat.status,
+          chat.appliedAt,
+          chat.lastResponseAt,
+          chat.lastMessageAt,
+          chat.lastMessageDirection,
+          chat.newMessageAt,
+          chat.messagePreview,
+          existing.id,
+        ],
+        (error) => {
+          if (error) reject(error);
+          else resolve({ action: 'updated', id: existing.id });
+        },
+      );
+    };
+
+    if (!chat.externalId) {
+      updateExisting(null);
+      return;
+    }
+
+    db.get(
+      'SELECT id FROM chats WHERE external_id=?',
+      [chat.externalId],
+      (error, existing) => {
+        if (error) reject(error);
+        else updateExisting(existing);
+      },
+    );
+  });
+}
+
+app.post('/api/chats/import', async (req, res) => {
+  const rawChats = Array.isArray(req.body) ? req.body : req.body?.chats;
+  if (!Array.isArray(rawChats) || rawChats.length === 0) {
+    return res.status(400).json({ error: 'Передайте непустой массив chats' });
+  }
+  if (rawChats.length > 2000) {
+    return res.status(400).json({ error: 'За один импорт можно передать не более 2000 чатов' });
+  }
+
+  try {
+    const imported = [];
+    const errors = [];
+    for (const [index, rawChat] of rawChats.entries()) {
+      try {
+        const result = await upsertChat(normalizeChatInput(rawChat));
+        imported.push({ index, ...result });
+      } catch (error) {
+        errors.push({ index, error: error.message });
+      }
+    }
+
+    const chats = await getChats();
+    const summary = summarizeChats(chats);
+    let notification = null;
+    if (
+      process.env.NOTIFICATION_WEBHOOK_URL &&
+      process.env.NOTIFY_ON_CHAT_IMPORT !== 'false'
+    ) {
+      try {
+        notification = await sendNotificationReport(summary);
+      } catch (error) {
+        serverLog.warn(`⚠️ Отчёт после импорта не отправлен: ${error.message}`);
+      }
+    }
+
+    res.json({
+      success: errors.length === 0,
+      imported: imported.filter((item) => item.action === 'imported').length,
+      updated: imported.filter((item) => item.action === 'updated').length,
+      errors,
+      summary,
+      notification: notification
+        ? { provider: notification.provider, sent: true }
+        : null,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/notification-config', (req, res) => {
+  const settings = getNotificationSettings();
+  res.json({
+    configured: Boolean(settings.webhookUrl),
+    provider: settings.provider,
+    telegramChatIdConfigured: Boolean(settings.telegramChatId),
+  });
+});
+
+app.post('/api/notifications/send', async (req, res) => {
+  try {
+    const chats = await getChats();
+    const summary = summarizeChats(chats);
+    const result = await sendNotificationReport(summary, req.body || {});
+    res.json({
+      success: true,
+      provider: result.provider,
+      summary,
+    });
+  } catch (error) {
+    res.status(400).json({ success: false, error: error.message });
+  }
+});
+
+// ============================================================
 // API ДЛЯ ПРОВЕРКИ ДАННЫХ КОМПАНИИ НА САЙТЕ
 // ============================================================
 
@@ -249,8 +611,9 @@ app.get('/export/csv', (req, res) => {
   });
 });
 
-// Экспорт в Excel (XLSX)
-app.get('/export/excel', (req, res) => {
+// Старый экспорт регистраций оставлен отдельно, чтобы не ломать архив
+// результатов регистрации.
+app.get('/export/registrations-excel', (req, res) => {
   db.all('SELECT * FROM registrations ORDER BY created_at DESC', (err, rows) => {
     if (err) {
       return res.status(500).json({ error: err.message });
@@ -316,6 +679,119 @@ app.get('/export/excel', (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename=registrations_${Date.now()}.xlsx`);
     wb.write(res);
   });
+});
+
+function writeChatSheet(workbook, sheetName, rows, styles) {
+  const worksheet = workbook.addWorksheet(sheetName);
+  const headers = [
+    'ID',
+    'Компания / from',
+    'Статус',
+    'Приоритет',
+    'Причина',
+    'Дата отклика',
+    'Последний ответ',
+    'Последнее сообщение',
+    'Направление',
+    'Текст сообщения',
+    'Ссылка на чат',
+  ];
+  headers.forEach((header, index) => {
+    worksheet.cell(1, index + 1).string(header).style(styles.header);
+  });
+
+  const reasonLabels = {
+    INTERVIEW: 'Собеседование',
+    NO_RESPONSE_3_DAYS: 'Нет ответа более 3 дней',
+    NEW_MESSAGE_24_HOURS: 'Новое сообщение за 24 часа',
+  };
+
+  rows.forEach((row, rowIndex) => {
+    const line = rowIndex + 2;
+    const rowStyle = row.isHot ? styles.hot : styles.archive;
+    const values = [
+      String(row.id || ''),
+      row.company || row.from || '',
+      row.status || '',
+      row.isHot ? 'Горячий' : 'Архив',
+      (row.priorityReasons || []).map((reason) => reasonLabels[reason] || reason).join(', '),
+      row.applied_at || '',
+      row.last_response_at || '',
+      row.last_message_at || '',
+      row.last_message_direction || '',
+      row.message_preview || '',
+      row.conversation_url || '',
+    ];
+    values.forEach((value, index) => {
+      worksheet.cell(line, index + 1).string(String(value)).style(rowStyle);
+    });
+  });
+
+  headers.forEach((header, index) => {
+    const wide = ['Текст сообщения', 'Ссылка на чат', 'Причина'].includes(header);
+    worksheet.column(index + 1).setWidth(wide ? 34 : 18);
+  });
+  worksheet.row(1).setHeight(24);
+  return worksheet;
+}
+
+// Экспорт чатов в Excel с обязательными листами «Приоритетные» и «Архив».
+app.get('/export/excel', async (req, res) => {
+  try {
+    const chats = await getChats();
+    const workbook = new excel.Workbook();
+    const styles = {
+      header: workbook.createStyle({
+        font: { bold: true, color: '#FFFFFF', size: 12 },
+        fill: { type: 'pattern', patternType: 'solid', fgColor: '#4472C4' },
+        alignment: { horizontal: 'center', vertical: 'center' },
+        border: {
+          top: { style: 'thin' },
+          bottom: { style: 'thin' },
+          left: { style: 'thin' },
+          right: { style: 'thin' },
+        },
+      }),
+      hot: workbook.createStyle({
+        font: { size: 11 },
+        fill: { type: 'pattern', patternType: 'solid', fgColor: '#FFF2CC' },
+        alignment: { vertical: 'center', wrapText: true },
+        border: {
+          top: { style: 'thin' },
+          bottom: { style: 'thin' },
+          left: { style: 'thin' },
+          right: { style: 'thin' },
+        },
+      }),
+      archive: workbook.createStyle({
+        font: { size: 11 },
+        fill: { type: 'pattern', patternType: 'solid', fgColor: '#F2F2F2' },
+        alignment: { vertical: 'center', wrapText: true },
+        border: {
+          top: { style: 'thin' },
+          bottom: { style: 'thin' },
+          left: { style: 'thin' },
+          right: { style: 'thin' },
+        },
+      }),
+    };
+
+    writeChatSheet(workbook, 'Приоритетные', chats.filter((chat) => chat.isHot), styles);
+    writeChatSheet(workbook, 'Архив', chats.filter((chat) => !chat.isHot), styles);
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=chat_report_${Date.now()}.xlsx`,
+    );
+    const buffer = await workbook.writeToBuffer();
+    res.end(buffer);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Экспорт в JSON

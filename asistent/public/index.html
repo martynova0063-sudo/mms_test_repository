@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Агент регистрации в каталогах</title>
+  <title>AI-Агент регистрации в каталогах</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
   <style>
     body {
@@ -46,6 +46,110 @@
     .settings-panel.visible { display: block; }
     .settings-panel { position: relative; }
     .settings-panel h3 { margin-top: 0; }
+    .panel-close {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #666;
+      padding: 4px 8px;
+      border-radius: 4px;
+      line-height: 1;
+      transition: background 0.2s, color 0.2s;
+    }
+    .panel-close:hover {
+      background: rgba(0,0,0,0.1);
+      color: #333;
+    }
+     /* ===== Help gear button & panel ===== */
+    .helps-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 10px;
+    }
+    .btn-gear {
+      background: none;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+      background: #f8f9fa;
+    }
+    .btn-gear:hover { background: #e9ecef; }
+    .btn-gear svg { width: 18px; height: 18px; fill: #555; }
+    .btn-gear .gear-label { font-weight: bold; color: #333; }
+
+    .helps-panel {
+      display: none;
+      background: #f4e8fd;
+      border: 1px solid #bcaecf;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .helps-panel.visible { display: block; }
+    .helps-panel { position: relative; }
+    .helps-panel h3 { margin-top: 0; }
+    .panel-close {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #666;
+      padding: 4px 8px;
+      border-radius: 4px;
+      line-height: 1;
+      transition: background 0.2s, color 0.2s;
+    }
+    .panel-close:hover {
+      background: rgba(0,0,0,0.1);
+      color: #333;
+    }
+/* ===== Feedback gear button & panel ===== */
+    .feedback-bar {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 10px;
+    }
+    .btn-gear {
+      background: none;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+      background: #f8f9fa;
+    }
+    .btn-gear:hover { background: #e9ecef; }
+    .btn-gear svg { width: 18px; height: 18px; fill: #555; }
+    .btn-gear .gear-label { font-weight: bold; color: #333; }
+
+    .feedback-panel {
+      display: none;
+      background: #fde8f5;
+      border: 1px solid #f0a8a8;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .feedback-panel.visible { display: block; }
+    .feedback-panel { position: relative; }
+    .feedback-panel h3 { margin-top: 0; }
     .panel-close {
       position: absolute;
       top: 8px;
@@ -520,11 +624,84 @@ caption {
       padding: 30px;
       color: #6c757d;
     }
-
+    .chat-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+      gap: 8px;
+      margin: 14px 0;
+    }
+    .chat-summary-card {
+      background: #fff;
+      border: 1px solid #e3e7eb;
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+    }
+    .chat-summary-card strong {
+      display: block;
+      font-size: 1.35em;
+      color: #212529;
+    }
+    .chat-summary-card span {
+      color: #6c757d;
+      font-size: 0.78em;
+    }
+    .chat-summary-card.hot strong { color: #d97706; }
+    .chat-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 320px;
+      overflow-y: auto;
+    }
+    .chat-item {
+      background: #fff;
+      border: 1px solid #e3e7eb;
+      border-left: 4px solid #d97706;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .chat-item.archive { border-left-color: #adb5bd; }
+    .chat-item-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .chat-reason {
+      color: #8a5a00;
+      font-size: 0.82em;
+      margin-top: 4px;
+    }
+    .company-stats {
+      width: 100%;
+      margin-top: 8px;
+      background: #fff;
+    }
+    .company-stats th, .company-stats td {
+      padding: 7px;
+      font-size: 0.84em;
+      border: 1px solid #e9ecef;
+    }
+    .chat-import {
+      width: 100%;
+      min-height: 105px;
+      box-sizing: border-box;
+      font-family: monospace;
+      padding: 8px;
+      border: 1px solid #ced4da;
+      border-radius: 5px;
+      resize: vertical;
+    }
+   .disabled-field {
+    background-color: #f0f0f0;
+    color: #888;
+    cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
-  <h1>Агент автоматической регистрации в каталогах</h1>
+  <h1>🤖 AI - Агент автоматической регистрации в каталогах</h1>
 
   <!-- Settings bar -->
   <div class="settings-bar">
@@ -540,33 +717,151 @@ caption {
       <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14h-2v-4h2v4zm0-6h-2V7h2v4z"/></svg>
       <span class="gear-label">Активные задачи</span>
     </button>
+    <button class="btn-gear" onclick="toggleChats()">
+      <svg viewBox="0 0 24 24"><path d="M4 4h16v12H7l-3 3V4zm3 4h10V6H7v2zm0 4h7v-2H7v2z"/></svg>
+      <span class="gear-label">Чаты</span>
+    </button>
+    <button class="btn-gear" onclick="toggleFeedback()">
+       <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+       <span class="gear-label">Обратная связь</span>
+    </button>
+      <button type="button" class="btn-gear" onclick="toggleGuide()">
+      <svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5L14 3.5zM8 11h8v1.5H8V11zm0 4h8v1.5H8V15z"/></svg>
+      <span class="gear-label">Справочник</span>
+    </button>
   </div>
 
-  <!-- Settings panel (IMAP) -->
-  <div class="settings-panel" id="settingsPanel">
-    <button class="panel-close" onclick="closePanel('settingsPanel')" title="Закрыть">×</button>
-    <h3>⚙️ Настройки IMAP</h3>
-    <p><em>Опционально:</em> агент будет автоматически забирать коды подтверждения из почты.</p>
 
-    <div class="form-group">
-      <label for="apppassword">Пароль от почтового ящика:</label>
-      <input type="password" id="apppassword" name="apppassword" placeholder="Введите 16-значный пароль приложения">
-    </div>
+<!-- Settings panel (IMAP) -->
+<div class="settings-panel" id="settingsPanel">
+  <button class="panel-close" onclick="closePanel('settingsPanel')" title="Закрыть">×</button>
+  <h3>⚙️ Настройки IMAP</h3>
+  <p><em>Опционально:</em> агент будет автоматически забирать коды подтверждения из почты.</p>
 
-    <div class="form-group">
-      <label>Для mail.ru, yandex.ru и gmail.com — хост определяется автоматически</label>
-    </div>
-
-    <div class="form-group">
-      <label for="imapHost">IMAP хост:</label>
-      <input type="text" id="imapHost" name="imapHost" value="imap.gmail.com" readonly>
-    </div>
-
-    <div class="form-group">
-      <label for="port">Порт:</label>
-      <input type="number" id="port" name="port" value="993" readonly>
-    </div>
+  <!-- Чекбокс: ручной ввод кода -->
+  <div class="form-group">
+    <label>
+      <input type="checkbox" id="manualCodeInput" name="manualCodeInput" onchange="toggleManualCodeMode(this)" checked>
+      Вводить код вручную
+    </label>
   </div>
+
+  <div class="form-group">
+    <label for="apppassword">Пароль от почтового ящика:</label>
+    <input type="password" id="apppassword" name="apppassword" placeholder="Введите 16-значный пароль приложения" disabled>
+  </div>
+
+  <div class="form-group">
+    <label>Для mail.ru, yandex.ru и gmail.com — хост определяется автоматически</label>
+  </div>
+
+  <div class="form-group">
+    <label for="imapHost">IMAP хост:</label>
+    <input type="text" id="imapHost" name="imapHost" value="imap.gmail.com" readonly disabled>
+  </div>
+  <div class="form-group">
+    <label for="port">Порт:</label>
+    <input type="number" id="port" name="port" value="993" readonly disabled>
+  </div>
+    <div class="form-group">
+    <label for="pauseMs">Время задержки-паузы (мс):</label>
+    <input
+      type="number"
+      id="pauseMs"
+      name="pauseMs"
+      value="6000"
+      min="0"
+      max="120000"
+      step="100"
+      style="width: 100%; box-sizing: border-box;"
+      onchange="savePauseSetting(this)"
+    >
+    <small style="color: #666;">Используется при медленном интернете. Допустимый диапазон: 0–120000 мс. Рекомендуемый  3000 мс.</small>
+  </div>
+    <!-- Чекбокс: фоновый режим -->
+  <div class="form-group">
+    <label>
+      <input type="checkbox" id="backgroundMode" onchange="toggleBackgroundMode(this)">
+      Фоновый режим
+    </label>
+    <small style="color: #666;">Агент продолжит работу даже при свёрнутом окне браузера.</small>
+  </div>
+    <!-- Чекбокс: не закрывать окно после регистрации -->
+  <div class="form-group">
+    <label>
+      <input type="checkbox" id="keepWindowOpen" onchange="toggleKeepWindowOpen(this)">
+      Не закрывать окно после регистрации
+    </label>
+    <small style="color: #666;">Браузер останется открытым, чтобы можно было вручную завершить шаги или отладить сценарий.</small>
+  </div>
+</div>
+
+<!-- Feedback panel -->
+<div class="feedback-panel" id="feedbackPanel">
+  <button class="panel-close" onclick="closePanel('feedbackPanel')" title="Закрыть">×</button>
+  <h3>💬 Обратная связь</h3>
+  <p style="color: #555;">Расскажите, что вас волнует — мы обязательно разберёмся.</p>
+
+  <div class="form-group">
+    <label for="feedbackName">Ваше имя:</label>
+    <input type="text" id="feedbackName" name="feedbackName" style="width: 50%; box-sizing: border-box;" placeholder="Иван Иванов">
+  </div>
+
+  <div class="form-group">
+    <label for="feedbackEmail">Ваш email:</label>
+    <input type="email" id="feedbackEmail" name="feedbackEmail" style="width: 50%; box-sizing: border-box;" placeholder="example@mail.ru">
+  </div>
+
+  <div class="form-group">
+    <label for="feedbackQuestion">Ваш вопрос:</label>
+    <textarea id="feedbackQuestion" name="feedbackQuestion" rows="4" style="width: 100%; box-sizing: border-box;" placeholder="Опишите проблему или задайте вопрос"></textarea>
+  </div>
+
+  <button type="button" class="btn-submit" onclick="submitFeedback()">Отправить</button>
+  <div id="feedbackMessage" style="margin-top: 10px; color: #2e7d32; display: none;"></div>
+</div>
+
+<!-- Service guide panel -->
+<div class="helps-panel" id="guidePanel">
+  <button class="panel-close" onclick="closePanel('guidePanel')" title="Закрыть">×</button>
+  <h3>📖 Справочник по работе сервиса</h3>
+  <p>Агент помогает заполнить регистрационные формы в выбранных интернет-каталогах и сохраняет результаты в истории.</p>
+
+  <h4>1. Подготовка</h4>
+  <ol>
+    <li>Откройте раздел <strong>Настройки</strong> и при необходимости укажите пароль приложения для почты. Он нужен для получения кодов подтверждения по IMAP.</li>
+    <li>Если вы планируете вводить коды самостоятельно, включите пункт <strong>Вводить код вручную</strong>.</li>
+    <li>В поле <strong>Сайт компании</strong> укажите полный адрес сайта, например <code>https://example.com</code>.</li>
+    <li>Укажите email, который будет использоваться при регистрациях.</li>
+  </ol>
+
+  <h4>2. Выбор каталогов</h4>
+  <p>Отметьте нужные каталоги галочками или нажмите <strong>Выбрать все</strong>. Каталоги с пометкой <strong>Капча</strong> могут потребовать ручного решения CAPTCHA во время работы.</p>
+  <p>Для проверки сценария используйте каталог <strong>Тестовая страница</strong>, чтобы не отправлять реальные регистрации.</p>
+
+  <h4>3. Запуск и контроль</h4>
+  <ol>
+    <li>Нажмите <strong>Запустить регистрацию</strong>.</li>
+    <li>Следите за текущими сообщениями в панели <strong>Лог работы</strong>.</li>
+    <li>Откройте <strong>Активные задачи</strong>, чтобы посмотреть прогресс по каждому каталогу.</li>
+    <li>Если сайт попросит CAPTCHA или ручное подтверждение, выполните действие в открытом окне браузера и дождитесь продолжения.</li>
+  </ol>
+
+  <h4>4. Результаты</h4>
+  <p>После завершения результаты появятся ниже в виде карточек каталогов. В истории отображаются статус, дата, email, ссылка на профиль и текст ошибки, если регистрация не удалась.</p>
+  <p>Данные можно выгрузить кнопками <strong>CSV</strong>, <strong>XLSX</strong> или <strong>JSON</strong>.</p>
+
+  <h4>5. Полезные настройки</h4>
+  <ul>
+    <li><strong>Фоновый режим</strong> — агент продолжает работу, когда окно браузера свёрнуто.</li>
+    <li><strong>Не закрывать окно после регистрации</strong> — оставляет браузер открытым для ручной проверки.</li>
+    <li><strong>Компания</strong> — проверяет, какие данные доступны на сайте компании перед запуском.</li>
+  </ul>
+
+  <h4>Если возникла проблема</h4>
+  <p>Сначала проверьте URL, email, выбранные каталоги и сообщения в логе. Для отправки вопроса откройте <strong>Обратную связь</strong>, заполните все поля и нажмите <strong>Отправить</strong>.</p>
+</div>
+
 
   <!-- Company panel -->
   <div class="settings-panel" id="companyPanel" style="background: #f0f8e8; border-color: #a8d4a0;">
@@ -580,11 +875,6 @@ caption {
         <input type="text" id="companyWebsite" placeholder="https://example.com" style="flex: 1;">
         <button type="button" onclick="checkCompany()" id="checkCompanyBtn" style="white-space: nowrap;">🔍 Проверить</button>
       </div>
-    </div>
-
-    <div class="form-group">
-      <label for="companyEmail">Email компании (из сайта):</label>
-      <input type="email" id="companyEmail" placeholder="info@example.com" readonly style="background: #e9ecef; cursor: not-allowed;">
     </div>
 
     <div id="companyResults" style="display: none; margin-top: 12px;"></div>
@@ -616,6 +906,55 @@ caption {
     </div>
   </div>
 
+  <!-- Chats and analytics panel -->
+  <div class="settings-panel" id="chatsPanel" style="background: #fffaf0; border-color: #f0d4a0;">
+    <button class="panel-close" onclick="closePanel('chatsPanel')" title="Закрыть">×</button>
+    <h3>🔥 Горячие чаты и сводка</h3>
+    <p><em>Горячими считаются чаты с собеседованием, откликом без ответа более 3 дней или новым сообщением за последние 24 часа.</em></p>
+
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+      <button type="button" onclick="loadChatAnalytics()" style="background: #d97706; padding: 7px 12px;">🔄 Обновить</button>
+      <button type="button" onclick="downloadChatExcel()" style="background: #198754; padding: 7px 12px;">📊 Скачать Excel</button>
+      <span id="chatWebhookStatus" style="font-size: 0.85em; color: #6c757d;"></span>
+    </div>
+
+    <div id="chatSummary" class="chat-summary-grid"></div>
+    <h4 style="margin-bottom: 6px;">Сводка по компаниям</h4>
+    <div id="companyStats"></div>
+
+    <h4 style="margin-bottom: 6px;">Импорт чатов</h4>
+    <p style="font-size: 0.84em; color: #6c757d; margin-top: 0;">
+      Передайте JSON-массив или объект <code>{"chats":[...]}</code>. Поля: <code>from</code>, <code>status</code>,
+      <code>applied_at</code>, <code>last_response_at</code>, <code>new_message_at</code>, <code>conversation_url</code>.
+    </p>
+    <textarea id="chatImportInput" class="chat-import" placeholder='[{"external_id":"chat-1","from":"ООО Ромашка","status":"APPLIED","applied_at":"2026-08-25T09:00:00Z"}]'></textarea>
+    <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px;">
+      <button type="button" onclick="importChats()" style="background: #0d6efd; padding: 7px 12px;">Импортировать</button>
+      <span id="chatImportMessage" style="font-size: 0.85em;"></span>
+    </div>
+
+    <h4 style="margin-bottom: 6px;">Отчёт в Telegram / Slack / Teams</h4>
+    <p style="font-size: 0.84em; color: #6c757d; margin-top: 0;">
+      URL используется только для текущей отправки и не сохраняется в SQLite. Для автоматической отправки после импорта задайте переменную <code>NOTIFICATION_WEBHOOK_URL</code>.
+    </p>
+    <div style="display: grid; grid-template-columns: minmax(120px, 160px) 1fr; gap: 8px; align-items: center;">
+      <label for="webhookProvider" style="margin: 0;">Канал:</label>
+      <select id="webhookProvider" style="padding: 7px; border: 1px solid #ced4da; border-radius: 4px;">
+        <option value="slack">Slack</option>
+        <option value="teams">Teams</option>
+        <option value="telegram">Telegram</option>
+      </select>
+      <label for="webhookUrl" style="margin: 0;">Webhook URL:</label>
+      <input type="url" id="webhookUrl" placeholder="https://..." style="width: 100%; box-sizing: border-box;">
+      <label for="telegramChatId" style="margin: 0;">Telegram Chat ID:</label>
+      <input type="text" id="telegramChatId" placeholder="Только для Telegram" style="width: 100%; box-sizing: border-box;">
+    </div>
+    <button type="button" onclick="sendChatReport()" style="margin-top: 10px; background: #6f42c1; padding: 7px 12px;">📨 Отправить краткий отчёт</button>
+
+    <h4 style="margin-bottom: 6px;">Приоритетные чаты</h4>
+    <div id="hotChats" class="chat-list"></div>
+  </div>
+
   <form id="registrationForm">
     <div style="float: right; width: 450px; padding: 10px; background-color: #f5f5f5; border: 1px solid #ddd; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
     <div class="form-group" >
@@ -624,7 +963,7 @@ caption {
     </div>
     <div class="form-group">
       <label for="email">Email для регистрации:</label>
-      <input type="email" id="email" name="email" required placeholder="user@example.com">
+      <input type="email" id="email" name="email"  required placeholder="user@example.com">
     </div>
 
     <div class="form-group">
@@ -690,6 +1029,16 @@ caption {
       const panel = document.getElementById('settingsPanel');
       panel.classList.toggle('visible');
     }
+    
+    function toggleFeedback() {
+      const panel = document.getElementById('feedbackPanel');
+      panel.classList.toggle('visible');
+    }
+
+    function toggleGuide() {
+      const panel = document.getElementById('guidePanel');
+      panel.classList.toggle('visible');
+    }
 
     // ===== COMPANY PANEL TOGGLE =====
     function toggleCompany() {
@@ -704,6 +1053,159 @@ caption {
       if (panel.classList.contains('visible')) {
         loadActiveTasks();
       }
+    }
+
+    // ===== CHAT PRIORITIES AND ANALYTICS =====
+    function toggleChats() {
+      const panel = document.getElementById('chatsPanel');
+      panel.classList.toggle('visible');
+      if (panel.classList.contains('visible')) {
+        loadChatAnalytics();
+        loadWebhookConfig();
+      }
+    }
+
+    function formatChatDate(value) {
+      if (!value) return '—';
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleString('ru-RU');
+    }
+
+    function renderChatAnalytics(data) {
+      const summary = data.summary || {};
+      const cards = [
+        ['hot', '🔥 Горячие', summary.hot || 0],
+        ['', 'Всего чатов', summary.total || 0],
+        ['', 'Новые отклики / 24 ч', summary.newApplications || 0],
+        ['', 'Новые сообщения / 24 ч', summary.newMessages || 0],
+        ['', 'Собеседования', summary.interviews || 0],
+        ['', 'Отказы', summary.refusals || 0],
+      ];
+      document.getElementById('chatSummary').innerHTML = cards.map(([klass, label, value]) =>
+        `<div class="chat-summary-card ${klass}"><strong>${value}</strong><span>${label}</span></div>`
+      ).join('');
+
+      const companies = summary.companies || [];
+      document.getElementById('companyStats').innerHTML = companies.length
+        ? `<table class="company-stats">
+            <thead><tr><th>Компания / from</th><th>Всего</th><th>Горячие</th><th>Отклики</th><th>Собеседования</th><th>Отказы</th></tr></thead>
+            <tbody>${companies.map(company => `<tr>
+              <td>${escapeHtml(company.company)}</td>
+              <td>${company.total}</td>
+              <td>${company.hot}</td>
+              <td>${company.applications}</td>
+              <td>${company.interviews}</td>
+              <td>${company.refusals}</td>
+            </tr>`).join('')}</tbody>
+          </table>`
+        : '<div style="padding: 12px; color: #6c757d; background: #fff; border-radius: 5px;">Данных по компаниям пока нет</div>';
+
+      const hotChats = data.chats || [];
+      document.getElementById('hotChats').innerHTML = hotChats.length
+        ? hotChats.map(chat => {
+            const reason = (chat.priorityReasons || []).map(code => ({
+              INTERVIEW: 'собеседование',
+              NO_RESPONSE_3_DAYS: 'нет ответа более 3 дней',
+              NEW_MESSAGE_24_HOURS: 'новое сообщение за 24 часа'
+            }[code] || code)).join(', ');
+            const link = chat.conversation_url
+              ? `<a href="${escapeHtml(chat.conversation_url)}" target="_blank" rel="noopener">Открыть чат</a>`
+              : '';
+            return `<div class="chat-item">
+              <div class="chat-item-head"><strong>${escapeHtml(chat.company || chat.from || 'Без компании')}</strong><span>${escapeHtml(chat.status)}</span></div>
+              <div class="chat-reason">${escapeHtml(reason)}${chat.waitingDays !== null && chat.waitingDays !== undefined ? ` · ожидание ${chat.waitingDays} дн.` : ''}</div>
+              ${chat.message_preview ? `<div style="margin-top: 5px; color: #495057;">${escapeHtml(chat.message_preview)}</div>` : ''}
+              <div style="display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; font-size: 0.8em; color: #6c757d;">
+                <span>Сообщение: ${formatChatDate(chat.last_message_at || chat.new_message_at)}</span>${link}
+              </div>
+            </div>`;
+          }).join('')
+        : '<div style="padding: 20px; color: #6c757d; background: #fff; border-radius: 5px; text-align: center;">Горячих чатов пока нет</div>';
+    }
+
+    async function loadChatAnalytics() {
+      try {
+        const response = await fetch('/api/chat-analytics');
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Ошибка загрузки чатов');
+        renderChatAnalytics(data);
+      } catch (error) {
+        document.getElementById('chatSummary').innerHTML = `<div style="color: #b02a37;">${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    async function importChats() {
+      const message = document.getElementById('chatImportMessage');
+      const raw = document.getElementById('chatImportInput').value.trim();
+      if (!raw) {
+        message.style.color = '#b02a37';
+        message.textContent = 'Вставьте JSON с чатами';
+        return;
+      }
+      try {
+        const payload = JSON.parse(raw);
+        const response = await fetch('/api/chats/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Ошибка импорта');
+        message.style.color = data.errors && data.errors.length ? '#b02a37' : '#198754';
+        message.textContent = `Добавлено: ${data.imported}, обновлено: ${data.updated}${data.errors?.length ? `, ошибок: ${data.errors.length}` : ''}`;
+        renderChatAnalytics({ summary: data.summary, chats: (await (await fetch('/api/chat-analytics')).json()).chats });
+      } catch (error) {
+        message.style.color = '#b02a37';
+        message.textContent = error.message;
+      }
+    }
+
+    async function loadWebhookConfig() {
+      try {
+        const response = await fetch('/api/notification-config');
+        const data = await response.json();
+        const status = document.getElementById('chatWebhookStatus');
+        status.textContent = data.configured
+          ? `Автоотчёт включён (${data.provider})`
+          : 'Автоотчёт: URL не настроен';
+        status.style.color = data.configured ? '#198754' : '#6c757d';
+        if (data.provider) document.getElementById('webhookProvider').value = data.provider;
+      } catch (error) {
+        document.getElementById('chatWebhookStatus').textContent = 'Статус webhook недоступен';
+      }
+    }
+
+    async function sendChatReport() {
+      const payload = {
+        provider: document.getElementById('webhookProvider').value,
+        webhookUrl: document.getElementById('webhookUrl').value.trim(),
+        telegramChatId: document.getElementById('telegramChatId').value.trim()
+      };
+      const status = document.getElementById('chatWebhookStatus');
+      status.textContent = 'Отправка отчёта...';
+      try {
+        const response = await fetch('/api/notifications/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Отчёт не отправлен');
+        status.style.color = '#198754';
+        status.textContent = `Отчёт отправлен в ${data.provider}`;
+      } catch (error) {
+        status.style.color = '#b02a37';
+        status.textContent = error.message;
+      }
+    }
+
+    function downloadChatExcel() {
+      const link = document.createElement('a');
+      link.href = '/export/excel';
+      link.download = 'chat_report_' + Date.now() + '.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
 
     // ===== CLOSE PANEL =====
@@ -897,14 +1399,6 @@ caption {
       const resultsDiv = document.getElementById('companyResults');
       const btn = document.getElementById('checkCompanyBtn');
 
-      if (!website) {
-        resultsDiv.style.display = 'block';
-        resultsDiv.innerHTML = '<div style="color: #856404; background: #fff3cd; padding: 10px; border-radius: 4px;">⚠️ Введите URL сайта</div>';
-        document.getElementById('companyEmail').value = '';
-        document.getElementById('companyEmail').style.background = '#e9ecef';
-        return;
-      }
-
       // Loading state
       btn.disabled = true;
       btn.textContent = '⏳ Проверка...';
@@ -927,20 +1421,6 @@ caption {
         
         // Build results
         let html = '';
-        
-        // Заполняем поле email, если найдено
-        const emailField = document.getElementById('companyEmail');
-        const emailResult = data.results.find(r => r.key === 'email');
-        if (emailResult && emailResult.found && emailResult.value) {
-          emailField.value = emailResult.value;
-          emailField.style.background = '#d4edda';
-          emailField.style.color = '#155724';
-        } else {
-          emailField.value = '';
-          emailField.style.background = '#e9ecef';
-          emailField.style.color = '#6c757d';
-        }
-
         if (data.allFound) {
           html += '<div style="color: #155724; background: #d4edda; padding: 10px; border-radius: 4px; margin-bottom: 12px; font-weight: bold;">✅ Все данные найдены успешно!</div>';
         } else {
@@ -966,11 +1446,7 @@ caption {
         html += '</div>';
         resultsDiv.innerHTML = html;
 
-      } catch (error) {
-        resultsDiv.innerHTML = `<div style="color: #721c24; background: #f8d7da; padding: 10px; border-radius: 4px;">❌ Ошибка: ${error.message}</div>`;
-        document.getElementById('companyEmail').value = '';
-        document.getElementById('companyEmail').style.background = '#e9ecef';
-      }
+      } catch (error) { }
     }
 
     // ===== MODAL FOR ADDING DIRECTORY =====
@@ -1411,12 +1887,14 @@ caption {
     document.getElementById('registrationForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       logToConsole("🏁 Запуск агента регистрации...");
-
       const website = document.getElementById('website').value;
       const email = document.getElementById('email').value;
       const apppassword = document.getElementById('apppassword').value;
       const imapHost = document.getElementById('imapHost').value;
       const port = document.getElementById('port').value;
+      const pauseMs = normalizePauseMs(document.getElementById('pauseMs').value);
+      const manualCodeInput=document.getElementById('manualCodeInput').value;
+      savePauseSetting(document.getElementById('pauseMs'));
 
       // Получаем выбранные каталоги из чекбоксов (они внутри #directories-list)
       const checkboxes = document.querySelectorAll('input[name="directory"]:checked');
@@ -1438,7 +1916,9 @@ caption {
         imapHost,
         port: parseInt(port),
         apppassword,
-        directories
+        directories,
+        pauseMs,
+        manualCodeInput
       };
 
       logToConsole("📤 Отправка запроса на сервер...");
@@ -1475,16 +1955,94 @@ caption {
 
     // Загружаем результаты при загрузке страницы
     loadResults();
+    loadChatAnalytics();
 
 // ===== ЭКСПОРТ РЕЗУЛЬТАТОВ =====
 function exportData(format) {
   const link = document.createElement('a');
-  link.href = '/export/' + format;
-  link.download = 'registrations_' + Date.now() + '.' + (format === 'xlsx' ? 'xlsx' : format === 'csv' ? 'csv' : 'json');
+  link.href = format === 'xlsx' ? '/export/excel' : '/export/' + format;
+  link.download = (format === 'xlsx' ? 'chat_report_' : 'registrations_') + Date.now() + '.' + (format === 'xlsx' ? 'xlsx' : format === 'csv' ? 'csv' : 'json');
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 }
+function toggleManualCodeMode(checkbox) {
+    const isManual = checkbox.checked;
+    const fields = [
+      document.getElementById('apppassword'),
+      document.getElementById('imapHost'),
+      document.getElementById('port')
+    ];
+
+    fields.forEach(field => {
+      field.disabled = isManual;
+      // Визуально делаем поле серым через класс или напрямую
+      if (isManual) {
+        field.classList.add('disabled-field');
+      } else {
+        field.classList.remove('disabled-field');
+      }
+    });
+  }
+
+  function toggleBackgroundMode(checkbox) {
+    const isBackground = checkbox.checked;
+    localStorage.setItem('agent_background_mode', isBackground);
+    console.log('Фоновый режим:', isBackground ? 'включён' : 'выключен');
+  }
+
+  function toggleKeepWindowOpen(checkbox) {
+    const shouldKeepOpen = checkbox.checked;
+    localStorage.setItem('agent_keep_window_open', shouldKeepOpen);
+    console.log('Не закрывать окно после регистрации:', shouldKeepOpen ? 'включено' : 'выключено');
+  }
+      function normalizePauseMs(value) {
+      const parsed = Number(value);
+      if (!Number.isFinite(parsed)) return 6000;
+      return Math.min(120000, Math.max(0, Math.round(parsed)));
+    }
+
+    function savePauseSetting(input) {
+      const pauseMs = normalizePauseMs(input.value);
+      input.value = pauseMs;
+      localStorage.setItem('agent_pause_ms', String(pauseMs));
+    }
+
+    function loadAgentSettings() {
+      const pauseInput = document.getElementById('pauseMs');
+      const savedPauseMs = localStorage.getItem('agent_pause_ms');
+      if (pauseInput && savedPauseMs !== null) {
+        pauseInput.value = normalizePauseMs(savedPauseMs);
+      }
+    }
+
+    loadAgentSettings();
+    // --- Логика обратной связи (заглушка) ---
+  function submitFeedback() {
+    const name = document.getElementById('feedbackName').value.trim();
+    const email = document.getElementById('feedbackEmail').value.trim();
+    const question = document.getElementById('feedbackQuestion').value.trim();
+
+    // Простая валидация
+    if (!name || !email || !question) {
+      alert('Пожалуйста, заполните все поля.');
+      return;
+    }
+
+    // Заглушка: ничего не отправляем, просто показываем уведомление
+    const msgEl = document.getElementById('feedbackMessage');
+    msgEl.textContent = 'Ваш вопрос отправлен в службу поддержки. Мы свяжемся с Вами.';
+    msgEl.style.display = 'block';
+
+    // Сброс формы
+    setTimeout(() => {
+      document.getElementById('feedbackName').value = '';
+      document.getElementById('feedbackEmail').value = '';
+      document.getElementById('feedbackQuestion').value = '';
+      msgEl.style.display = 'none';
+      closePanel('feedbackPanel');
+    }, 3000);
+  }
   </script>    
 
   <!-- Modal for adding directory -->
