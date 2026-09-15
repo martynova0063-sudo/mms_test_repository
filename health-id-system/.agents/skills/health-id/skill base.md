@@ -2143,3 +2143,246 @@ class TestReproducibility:
         result = calculate_health_id(input_data, "health_id_v1.0.0")
         assert "Не является медицинским диагнозом" in result.health_id.get("disclaimer", "")
 ```
+
+## 9. Критерии качества результата
+Агент считается выполнившим задачу хорошо, если:
+
+В коде есть фиксация версии модели и хеша конфигурации.
+Реализован контроль качества входных данных и отчёт о нём.
+Соблюдено разделение медицинского и корпоративного контуров на уровне API и БД.
+Добавлены дисклеймеры о исследовательском статусе и отсутствии клинической значимости.
+Есть unit‑тесты для основных функций и примеры использования.
+Код структурирован по модулям и сопровождается комментариями, ссылающимися на разделы ТЗ.
+
+
+## 10. Архитектура модулей
+
+> Каждый модуль описан по схеме: шаблон → вход → выход → зависимости → ⚠️ критичные правила.
+> Агент обязан соблюдать критичные правила при генерации кода для любого из этих модулей.
+
+---
+
+### M1. Движок HEALTH_ID
+
+- **Шаблон:** `calculate_health_id()` + формулы + выходной контракт `HealthResult`
+- **Вход:** `HealthInput` (event_id, worker_pseudonym, measurements[], context), `model_version`, `baseline`, `history`
+- **Выход:** `HealthResult` (value, components, completeness, uncertainty, state_flags, evidence, audit)
+- **Зависимости:** `model_configs/{version}/config.yaml`, `load_model_config()`, `hash_config()`
+- **⚠️ Критичные правила:**
+  - Фиксация `model_version` и `config_snapshot_hash` (SHA-256) в каждом результате
+  - Разделение `measured` / `derived` / `context` — не смешивать в логике
+  - Частичный расчёт при неполных данных → пометка `completeness < 1.0`
+  - Дисклеймер «Не является медицинским диагнозом» — в каждый результат
+  - Воспроизводимость: тот же вход + та же версия → идентичный результат
+  - Конфигурация версии — неизменяема после публикации
+
+---
+
+### M2. Baseline (персональные коридоры)
+
+- **Шаблон:** `calculate_baseline()` с анти-утечкой
+- **Вход:** `worker_pseudonym`, `current_event_id`, `history[]`, `window_days` (default 90), `min_points` (default 3)
+- **Выход:** `Baseline` (available, features{name → mean, std, median, p5, p95, corridor_low, corridor_high, n_points, source_events}, drift_check)
+- **Зависимости:** `numpy`, `scipy.stats` (t-тест для дрейфа)
+- **⚠️ Критичные правила:**
+  - `current_event_id` **никогда** не входит в свой baseline — анти-утечка
+  - Минимум 3 качественные точки для коридора
+  - Проверка дрейфа: t-тест первой и последней трети, p < 0.05 → `baseline_drift`
+  - Каждый `source_event` зафиксирован в `source_events[]`
+
+---
+
+### M3. Классификация состояния
+
+- **Шаблон:** `classify_state()` по уникальным датам
+- **Вход:** `validated` (HealthInput), `config`, `baseline`, `history[]`
+- **Выход:** `list[StateFlag]` (flag, active, feature, value, corridor_low/high, sigma, unique_dates, date_count)
+- **Зависимости:** M2 (baseline), история из БД
+- **⚠️ Критичные правила:**
+  - `persistent_repeated_deviation` — считать по **уникальным датам**, не по числу попыток
+  - `confirmed_chronic` — только из МИС/ЭМК, **не из HEALTH_ID**
+  - `acute_deviation` — значение за пределами `corridor ± 2σ`
+  - Три категории, каждая с `active: bool` и деталями
+
+---
+
+### M4. Контроль качества видео
+
+- **Шаблон:** `check_video_quality()`
+- **Вход:** `video_path` или `list[np.ndarray]`, `face_detector`
+- **Выход:** `QualityResult` (overall: pass/warning/fail, checks{8 параметров}, blocking_issues[], warnings[])
+- **Зависимости:** `cv2`, `numpy`
+- **⚠️ Критичные правила:**
+  - 8 проверок: разрешение ≥640×480, FPS ≥15, освещённость, лицо ≥5% площади, blur, окклюзия ≤10%, углы (yaw ≤25°, pitch ≤20°, roll ≤15°), длительность ≥3 сек
+  - Покадровый анализ (выборка ~30 кадров)
+  - `fail` → блокировка, `warning` → пропуск с пометкой
+  - Все результаты — в аудит; исходные видео не хранятся
+
+---
+
+### M5. Liveness detection
+
+- **Шаблон:** `run_liveness_check()` (active + passive)
+- **Вход:** `video_frames[]`, `face_landmarks_per_frame[]` (опционально), `config`
+- **Выход:** `LivenessResult` (session_id, overall_score, status, active_score, passive_score, detected_attack, attack_indicators[], audit)
+- **Зависимости:** `cv2`, `numpy`, `hashlib`
+- **⚠️ Критичные правила:**
+  - Active (вес 0.55): моргание (EAR), поворот головы (yaw), улыбка
+  - Passive (вес 0.45): микродвижения, LBP-текстура, глубина (Sobel), rPPG (FFT зелёного канала)
+  - Детекция атаки: `photo_spoofing`, `video_spoofing`, `3d_mask`, `deepfake`
+  - Пороги: ≥0.70 confirmed, 0.50–0.70 uncertain, <0.50 failed
+  - Видеоданные не сохраняются — только хеши и метрики
+
+---
+
+### M6. Face matching
+
+- **Шаблон:** `run_face_match()` (embeddings + cosine)
+- **Вход:** `reference_photo` (np.ndarray), `video_frames[]`, `config`, `model_version`
+- **Выход:** `FaceMatchResult` (session_id, route, match_score, frame_comparisons[], reference_hash, video_hash, audit)
+- **Зависимости:** `cv2`, `numpy`, `ReferenceEmbeddingStore`
+- **⚠️ Критичные правила:**
+  - Embeddings: L2-нормализация, backend — `opencv_dnn` / `facenet` / `dlib`
+  - Косинусное сходство, агрегация max/mean/median по кадрам
+  - Выбор кадров: `best_frame` (по резкости Laplacian) или равномерно
+  - Пороги: ≥0.62 verified, 0.45–0.62 manual_review, <0.45 not_verified
+  - `ReferenceEmbeddingStore` — хранит только embeddings и хеши, не фото
+  - Фото и видео не сохраняются
+
+---
+
+### M7. Маршрутизация результатов
+
+- **Шаблон:** `route_verification()`
+- **Вход:** `match_score`, `liveness_score`, `quality_result`, `session_id`, `model_version`
+- **Выход:** `VerificationResult` (route, match_score, liveness_score, details, audit)
+- **Зависимости:** `THRESHOLDS` (настраиваемые)
+- **⚠️ Критичные правила:**
+  - `verified` — match ≥0.62 AND liveness ≥0.70 AND quality = pass
+  - `manual_review` — пограничные значения или quality = warning
+  - `not_verified` — match <0.45 OR liveness <0.50 OR quality = fail
+  - Все пороги настраиваемые, фиксируются в аудите
+
+---
+
+### M8. Human Review
+
+- **Шаблон:** `review_service` с неизменяемостью статусов
+- **Вход:** `ReviewCreate` (session_id, event_id, trigger_reason, assigned_to), `ReviewUpdate` (review_id, status, comment, evidence[])
+- **Выход:** `Review` (review_id, status, trigger_reason, created_at, resolved_at, comment, evidence[], audit)
+- **Зависимости:** M11 (HashChainAuditLog), БД (PostgreSQL)
+- **⚠️ Критичные правила:**
+  - Статусы: `pending` → `confirmed` / `rejected` / `info_requested`
+  - После `confirmed`/`rejected` — **статус замораживается**
+  - Комментарий обязателен при `confirmed` и `rejected`
+  - Evidence — хеши материалов, не сами материалы
+  - ⚠️ Несовпадение личности ≠ медицинский недопуск
+  - SLA: pending → решение за 30 минут (настраиваемо)
+
+---
+
+### M9. Дрейф данных
+
+- **Шаблон:** `detect_data_drift()` (KS + chi-square + concept drift)
+- **Вход:** `reference_df` (30 дней), `current_df` (7 дней), `model_version`
+- **Выход:** `DriftReport` (overall_severity, drifted_features[], healthy_features[], health_id_drift[], recommendation, audit)
+- **Зависимости:** `scipy.stats`, `pandas`, `numpy`
+- **⚠️ Критичные правила:**
+  - Data drift: KS-тест для численных, хи-квадрат для категориальных
+  - Concept drift: KS-тест для метрик HEALTH_ID (value, компоненты, completeness, uncertainty)
+  - Severity: high (p < 0.01), medium (p < 0.05), low
+  - Минимум 20 записей в окне
+  - Еженедельный запуск по расписанию
+
+---
+
+### M10. Валидация R0–R4
+
+- **Шаблон:** `ValidationOrchestrator` + 5 этапов
+- **Вход:** `data_by_stage` (DataFrame, внешние наборы, результаты слепого сравнения)
+- **Выход:** `ValidationResult` per stage + сводный `summary` (overall, model_status)
+- **Зависимости:** M1 (calculate_health_id), M2 (calculate_baseline), `scipy.stats`, `sklearn.metrics`, `pytest`
+- **⚠️ Критичные правила:**
+  - R0: воспроизводимость 100%, unit-тесты pass, ручная верификация формул
+  - R1: skewness < 2, kurtosis < 7, baseline CV < 30%, completeness ≥ 90%
+  - R2: KS p > 0.05, ROC-AUC > 0.70 (если метки)
+  - R3: Cohen's kappa ≥ 0.4, полезность ≥ 3.5, время ≤ +20%
+  - R4: все R0–R3 passed, нет критических рисков, решение органа
+  - Оркестратор: последовательный запуск, остановка при провале
+  - До завершения R4 — модель в статусе `research`
+  - Автогенерация markdown-отчётов
+
+---
+
+### M11. Audit log
+
+- **Шаблон:** `HashChainAuditLog` + `SystemAuditor`
+- **Вход:** `action`, `actor`, `actor_role`, `resource_type`, `resource_id`, `details`
+- **Выход:** `AuditRecord` (record_id, timestamp, action, prev_hash, record_hash, sequence)
+- **Зависимости:** `hashlib`, `json`, `pydantic`
+- **⚠️ Критичные правила:**
+  - **Hash chain:** каждая запись содержит `prev_hash` предыдущей
+  - **Append-only:** записи нельзя изменять или удалять
+  - **Tamper-evident:** `verify_chain()` проверяет целостность
+  - `SystemAuditor` — фасад: `log_calculation()`, `log_verification()`, `log_review()`, `log_model_version()`, `log_drift()`, `log_validation()`, `log_baseline()`
+  - Sanitize: numpy → Python types перед сериализацией
+  - Genesis hash: `GENESIS:000...` для первой записи
+
+---
+
+### M12. Конфигурация модели
+
+- **Шаблон:** `config.yaml` + `versions.jsonl`
+- **Вход:** YAML с компонентами, признаками, весами, нормами, порогами
+- **Выход:** `config` dict + `config_hash` (SHA-256)
+- **Зависимости:** `PyYAML`, `hash_config()`
+- **⚠️ Критичные правила:**
+  - Компоненты: hBody (0.60, 6 признаков), hMental (0.25, 3), hSocial (0.15, 2)
+  - Каждый признак: name, unit, source, normal_range, formula, contribution_weight, required
+  - Пороги: green [0.80–1.00], yellow [0.60–0.80), red [0.00–0.60)
+  - Качество: exclude_if artifact_pct > 10 / confidence < 0.7
+  - ⚠️ После публикации версии — файл замораживается
+  - `versions.jsonl` — append-only с parent-chain
+
+---
+
+### M13. API
+
+- **Шаблон:** FastAPI эндпоинты
+- **Вход:** HTTP-запросы (JSON, path/query params)
+- **Выход:** JSON (HealthResult, Review, ModelCard, DriftReport, ValidationSummary)
+- **Зависимости:** `FastAPI`, `Pydantic`, M1–M11
+- **⚠️ Критичные правила:**
+  - Эндпоинты: `/calculate`, `/results/{id}`, `/results`, `/dynamics/{worker}`, `/review` (POST/PATCH), `/review/{id}`, `/reviews/pending`, `/model-card`, `/model-card/{version}`, `/versions`, `/drift-report`, `/verify-identity`, `/verify/{session_id}`
+  - Аутентификация: JWT, роли — researcher, medworker, auditor, admin
+  - Пагинация: cursor-based, default 50, max 200
+  - Rate limiting: 100 req/min (researcher), 30 req/min (medworker)
+  - Все запросы — в audit log
+
+---
+
+### M14. Тесты
+
+- **Шаблон:** `pytest` unit + integration + e2e
+- **Вход:** фикстуры (мок-данные, мок-история, мок-видео)
+- **Выход:** pytest results (passed/failed/skipped)
+- **Зависимости:** `pytest`, `pytest-asyncio`, M1–M11
+- **⚠️ Критичные правила:**
+  - `TestNormalizedScore` — центр = 1.0, граница = 0.5, вне диапазона < 0.3
+  - `TestBinaryPenalty` — ниже порога = 1.0, выше = 0.0
+  - `TestBaseline` — анти-утечка (текущая точка не входит), insufficient history, min points
+  - `TestStateClassification` — подсчёт по уникальным датам (3 в один день = 1), триггер отклонения
+  - `TestReproducibility` — тот же вход + та же версия = идентичный результат
+  - `TestHashChainAuditLog` — целостность, genesis, sequence, query, timeline, immutability, numpy sanitize
+  - `TestSystemAuditor` — интеграция всех типов событий
+  - E2E: `test_full_pipeline.py` — от intake до result + review
+
+---
+
+## Что это даёт в практике
+
+- Агент в Replit будет **автоматически применять нужные правила** (например, не смешивать контуры, фиксировать версии, ставить дисклеймеры).
+- Ты сможешь писать задачи в более свободной форме («сделай расчёт индекса», «добавь проверку качества»), а агент будет опираться на эти навыки.
+- Если позже появятся новые требования (новые пороги, новые проверки), ты просто обновишь `skill.md`, и агент начнёт их применять.
+
+Если скажешь, какие именно задачи планируешь ставить агенту в ближайшее время (например, «сначала база данных», «потом API», «потом тесты»), я могу адаптировать `skill.md` под этот фокус.
