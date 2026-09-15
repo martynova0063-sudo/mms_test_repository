@@ -356,11 +356,9 @@ health_id_system/
 ### 3.3. 🧮 Версионированный движок расчёта HEALTH_ID
 #### 3.3.1. 📐 Формула индекса (исследовательская версия)
 
-
 $$
 \text{HEALTH\_ID} = w_{\text{body}} \cdot h_{\text{body}} + w_{\text{mental}} \cdot h_{\text{mental}} + w_{\text{social}} \cdot h_{\text{social}}
 $$
-
 
 **Веса исследовательской версии:**
 
