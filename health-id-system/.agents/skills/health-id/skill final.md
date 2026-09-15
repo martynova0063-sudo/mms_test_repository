@@ -1,0 +1,1 @@
+# финальные шаблоны — face matching на embeddings и аудит-лог с hash chain.
