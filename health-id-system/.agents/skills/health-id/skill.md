@@ -2215,3 +2215,110 @@ class ValidationOrchestrator:
 
         return summary
 ```
+## Шаблон файла-протокола для каждого этапа
+Для каждого этапа в папке validation/{stage}/ должен лежать файл protocol.md. Вот шаблон:
+# Протокол валидации: {STAGE_NAME}
+
+## Описание этапа
+
+{DESCRIPTION}
+
+## Цель
+
+{GOAL}
+
+## Данные
+
+- **Источник:** {DATA_SOURCE}
+- **Объём:** {DATA_VOLUME}
+- **Период:** {DATA_PERIOD}
+- **Примечание:** {DATA_NOTES}
+
+## Критерии прохода
+
+| # | Критерий | Порог | Метод проверки |
+|---|---|---|---|
+| 1 | {CRITERION_1} | {THRESHOLD_1} | {METHOD_1} |
+| 2 | {CRITERION_2} | {THRESHOLD_2} | {METHOD_2} |
+| ... | ... | ... | ... |
+
+## Процедура
+
+1. {STEP_1}
+2. {STEP_2}
+3. {STEP_3}
+4. {STEP_N}
+
+## Ответственные
+
+- **Исполнитель:** {EXECUTOR}
+- **Проверяющий:** {REVIEWER}
+- **Коллегиальный орган:** {BOARD}
+
+## Статус
+
+- [ ] Запланировано
+- [ ] В работе
+- [ ] Завершено
+
+## Результат
+
+- **Отчёт:** `report.md`
+- **Статус:** PASSED / FAILED
+- **Дата завершения:** {DATE}
+
+---
+
+⚠️ До завершения всех этапов R0–R4 модель остаётся в статусе `research`.
+Все результаты — исследовательские, не предназначены для клинических решений.
+
+##  Шаблон чек-листа критериев (checklist.yaml)
+
+# validation/R0_analytical/checklist.yaml
+```yaml
+stage: "R0_analytical"
+description: "Аналитическая валидация"
+model_version_required: true
+
+criteria:
+  - id: "reproducibility"
+    name: "Воспроизводимость расчёта"
+    threshold: "100%"
+    method: "Повторный расчёт 100 событий, сравнение значений"
+    required: true
+
+  - id: "unit_tests"
+    name: "Unit-тесты"
+    threshold: "100% pass"
+    method: "pytest tests/unit/ -v"
+    required: true
+
+  - id: "formula_verification"
+    name: "Ручная верификация формул"
+    threshold: "100% совпадение"
+    method: "Независимый расчёт 100 событий, сравнение с движком"
+    required: true
+
+  - id: "config_integrity"
+    name: "Целостность конфигурации"
+    threshold: "hash совпадает"
+    method: "Сравнение хеша config.yaml с published hash"
+    required: true
+
+sign_off:
+  executor:
+    name: ""
+    role: "Разработчик"
+    date: ""
+    signature: ""
+  reviewer:
+    name: ""
+    role: "Исследователь"
+    date: ""
+    signature: ""
+  board:
+    name: ""
+    role: "Коллегиальный орган"
+    date: ""
+    decision: ""  # approved | rejected
+```
