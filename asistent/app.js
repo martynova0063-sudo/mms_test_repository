@@ -695,6 +695,7 @@ function writeChatSheet(workbook, sheetName, rows, styles) {
     'Направление',
     'Текст сообщения',
     'Ссылка на чат',
+    'Название вакансии'
   ];
   headers.forEach((header, index) => {
     worksheet.cell(1, index + 1).string(header).style(styles.header);
@@ -721,6 +722,7 @@ function writeChatSheet(workbook, sheetName, rows, styles) {
       row.last_message_direction || '',
       row.message_preview || '',
       row.conversation_url || '',
+      row.vacancy || '',
     ];
     values.forEach((value, index) => {
       worksheet.cell(line, index + 1).string(String(value)).style(rowStyle);
@@ -736,6 +738,7 @@ function writeChatSheet(workbook, sheetName, rows, styles) {
 }
 
 // Экспорт чатов в Excel с обязательными листами «Приоритетные» и «Архив».
+// Экспорт чатов в Excel с листами по приоритету и статусам.
 app.get('/export/excel', async (req, res) => {
   try {
     const chats = await getChats();
@@ -774,10 +777,89 @@ app.get('/export/excel', async (req, res) => {
           right: { style: 'thin' },
         },
       }),
+      all: workbook.createStyle({
+        font: { size: 11 },
+        fill: { type: 'pattern', patternType: 'solid', fgColor: '#FFFFFF' },
+        alignment: { vertical: 'center', wrapText: true },
+        border: {
+          top: { style: 'thin' },
+          bottom: { style: 'thin' },
+          left: { style: 'thin' },
+          right: { style: 'thin' },
+        },
+      }),
+      applied: workbook.createStyle({
+        font: { size: 11 },
+        fill: { type: 'pattern', patternType: 'solid', fgColor: '#DDEBF7' },
+        alignment: { vertical: 'center', wrapText: true },
+        border: {
+          top: { style: 'thin' },
+          bottom: { style: 'thin' },
+          left: { style: 'thin' },
+          right: { style: 'thin' },
+        },
+      }),
+      interview: workbook.createStyle({
+        font: { size: 11 },
+        fill: { type: 'pattern', patternType: 'solid', fgColor: '#E2EFDA' },
+        alignment: { vertical: 'center', wrapText: true },
+        border: {
+          top: { style: 'thin' },
+          bottom: { style: 'thin' },
+          left: { style: 'thin' },
+          right: { style: 'thin' },
+        },
+      }),
+      refusal: workbook.createStyle({
+        font: { size: 11 },
+        fill: { type: 'pattern', patternType: 'solid', fgColor: '#FCE4D6' },
+        alignment: { vertical: 'center', wrapText: true },
+        border: {
+          top: { style: 'thin' },
+          bottom: { style: 'thin' },
+          left: { style: 'thin' },
+          right: { style: 'thin' },
+        },
+      }),
     };
 
+    // 1. Все чаты — единый лист
+    writeChatSheet(workbook, 'Все чаты', chats, { ...styles, hot: styles.all, archive: styles.all });
+
+    // 2. Приоритетные (горячие)
     writeChatSheet(workbook, 'Приоритетные', chats.filter((chat) => chat.isHot), styles);
+
+    // 3. Архив (не горячие)
     writeChatSheet(workbook, 'Архив', chats.filter((chat) => !chat.isHot), styles);
+
+    // 4. По статусам
+    const statusMap = {
+      'APPLIED':    { sheet: 'Отклики',       styleKey: 'applied' },
+      'INTERVIEW':  { sheet: 'Собеседования', styleKey: 'interview' },
+      'REFUSAL':    { sheet: 'Отказы',        styleKey: 'refusal' },
+    };
+
+    for (const [statusKey, cfg] of Object.entries(statusMap)) {
+      const filtered = chats.filter(
+        (chat) => (chat.status || '').toUpperCase() === statusKey,
+      );
+      if (filtered.length > 0) {
+        writeChatSheet(workbook, cfg.sheet, filtered, {
+          ...styles,
+          hot: styles[cfg.styleKey],
+          archive: styles[cfg.styleKey],
+        });
+      }
+    }
+
+    // 5. Прочие статусы (всё, что не попало в APPLIED / INTERVIEW / REFUSAL)
+    const knownStatuses = new Set(Object.keys(statusMap));
+    const others = chats.filter(
+      (chat) => !knownStatuses.has((chat.status || '').toUpperCase()),
+    );
+    if (others.length > 0) {
+      writeChatSheet(workbook, 'Прочие', others, { ...styles, hot: styles.all, archive: styles.all });
+    }
 
     res.setHeader(
       'Content-Type',
@@ -806,6 +888,296 @@ app.get('/export/json', (req, res) => {
     res.json(rows);
   });
 });
+
+// ============================================================
+// ЭКСПОРТ ЗАЯВОК ПО ФОРМАТУ УИИ (applications)
+// ============================================================
+
+function getWeekNumber(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+
+function formatDateRu(dateString) {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  if (Number.isNaN(d.getTime())) return String(dateString);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}.${month}.${year}`;
+}
+
+function extractResourceFromUrl(url) {
+  if (!url) return '-';
+  try {
+    const urlObj = new URL(url);
+    const host = urlObj.hostname;
+    // Для Telegram показываем канал: t.me/pydevjob
+    if (host === 't.me' && urlObj.pathname.split('/').filter(Boolean).length > 0) {
+      return `t.me/${urlObj.pathname.split('/')[1]}`;
+    }
+    return host;
+  } catch {
+    return String(url);
+  }
+}
+
+// ============================================================
+// ЭКСПОРТ ЗАЯВОК ПО ФОРМАТУ УИИ (applications)
+// ============================================================
+
+// Создаём таблицу applications, если её ещё нет
+db.run(`
+    CREATE TABLE IF NOT EXISTS applications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      vacancy TEXT NOT NULL,
+      company TEXT NOT NULL,
+      is_viewed INTEGER DEFAULT 0,
+      employer_status TEXT DEFAULT 'Не просмотрен',
+      response_rate INTEGER DEFAULT 0,
+      chat_id INTEGER,
+      chat_url TEXT,
+      boost_url TEXT,
+      applied_at TEXT NOT NULL,
+      applied_dt TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (chat_id) REFERENCES chats(id) ON DELETE SET NULL
+    )
+  `, (err) => {
+  if (err) serverLog.error('❌ Не удалось создать таблицу applications:', err.message);
+  else serverLog.info('✅ Таблица applications готова');
+});
+
+// Вспомогательная функция: номер недели в году (ISO 8601)
+function getWeekNumber(d) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+
+// Вспомогательная функция: форматирование даты в ДД.ММ.ГГГГ
+function formatDateRu(dateString) {
+  if (!dateString) return '';
+  const d = new Date(dateString);
+  if (Number.isNaN(d.getTime())) return String(dateString);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}.${month}.${year}`;
+}
+
+// Вспомогательная функция: извлечение ресурса из URL
+function extractResourceFromUrl(url) {
+  if (!url) return '-';
+  try {
+    const urlObj = new URL(url);
+    const host = urlObj.hostname;
+    if (host === 't.me' && urlObj.pathname.split('/').filter(Boolean).length > 0) {
+      return `t.me/${urlObj.pathname.split('/')[1]}`;
+    }
+    return host;
+  } catch {
+    return String(url);
+  }
+}
+
+// Группировка заявок по неделям на основе applied_dt
+function groupApplicationsByWeek(applications) {
+  const sorted = [...applications].sort(
+    (a, b) => new Date(a.applied_dt || a.applied_at) - new Date(b.applied_dt || b.applied_at),
+  );
+
+  const grouped = {};
+  for (const app of sorted) {
+    const dateStr = app.applied_dt || app.applied_at;
+    if (!dateStr) continue;
+    const dateObj = new Date(dateStr);
+    if (Number.isNaN(dateObj.getTime())) continue;
+    const year = dateObj.getFullYear();
+    const week = getWeekNumber(dateObj);
+    const weekKey = `${year}-W${String(week).padStart(2, '0')}`;
+    if (!grouped[weekKey]) {
+      grouped[weekKey] = { label: `Неделя ${week} (${year})`, items: [], year, week };
+    }
+    grouped[weekKey].items.push(app);
+  }
+  return grouped;
+}
+
+// Экспорт заявок в Excel по формату УИИ
+app.get('/export/applications-excel', async (req, res) => {
+  try {
+    const applications = await dbAll(
+      'SELECT * FROM applications ORDER BY applied_dt ASC, applied_at ASC',
+    );
+
+    if (!applications.length) {
+      return res.status(404).json({ error: 'Нет данных для экспорта' });
+    }
+
+    const grouped = groupApplicationsByWeek(applications);
+
+    const workbook = new excel.Workbook();
+    const worksheet = workbook.addWorksheet('Отклики');
+
+    // Стили
+    const headerStyle = workbook.createStyle({
+      font: { bold: true, color: '#FFFFFF', size: 12 },
+      fill: { type: 'pattern', patternType: 'solid', fgColor: '#4472C4' },
+      alignment: { horizontal: 'center', vertical: 'center' },
+      border: {
+        top: { style: 'thin' },
+        bottom: { style: 'thin' },
+        left: { style: 'thin' },
+        right: { style: 'thin' },
+      },
+    });
+
+    const weekHeaderStyle = workbook.createStyle({
+      font: { bold: true, size: 12, color: '#FFFFFF' },
+      fill: { type: 'pattern', patternType: 'solid', fgColor: '#38761D' },
+      alignment: { horizontal: 'left', vertical: 'center' },
+      border: {
+        top: { style: 'thin' },
+        bottom: { style: 'thin' },
+        left: { style: 'thin' },
+        right: { style: 'thin' },
+      },
+    });
+
+    const cellStyle = workbook.createStyle({
+      font: { size: 11 },
+      alignment: { vertical: 'center' },
+      border: {
+        top: { style: 'thin' },
+        bottom: { style: 'thin' },
+        left: { style: 'thin' },
+        right: { style: 'thin' },
+      },
+    });
+
+    const summaryStyle = workbook.createStyle({
+      font: { bold: true, size: 11, color: '#1F4E79' },
+      fill: { type: 'pattern', patternType: 'solid', fgColor: '#DDEBF7' },
+      alignment: { vertical: 'center' },
+      border: {
+        top: { style: 'medium' },
+        bottom: { style: 'medium' },
+        left: { style: 'thin' },
+        right: { style: 'thin' },
+      },
+    });
+
+    // Заголовки таблицы
+    const headers = [
+      'Отклики',
+      'Дата отклика',
+      'Ресурс',
+      'Ссылка на вакансию',
+      'Название вакансии',
+      'Резюме',
+      'СП отправлено',
+      'Результат',
+    ];
+
+    let rowIndex = 1;
+
+    // Шапка таблицы
+    headers.forEach((header, index) => {
+      worksheet.cell(rowIndex, index + 1).string(header).style(headerStyle);
+    });
+    worksheet.row(rowIndex).setHeight(24);
+    rowIndex++;
+
+    // Счётчик накопительным итогом
+    let cumulativeCount = 0;
+
+    // Данные по неделям
+    for (const [, weekData] of Object.entries(grouped)) {
+      // Заголовок недели (объединяем ячейки A:H)
+      worksheet
+        .cell(rowIndex, 1, rowIndex, headers.length, true)
+        .string(weekData.label)
+        .style(weekHeaderStyle);
+      rowIndex++;
+
+      // Данные откликов внутри недели
+      weekData.items.forEach((app, index) => {
+        const resource = extractResourceFromUrl(app.chat_url || app.boost_url);
+        const vacancyLink = app.boost_url || app.chat_url || '-';
+        const cpSent = (app.employer_status && app.employer_status !== 'Не просмотрен')
+          ? 'TRUE' : 'FALSE';
+
+        worksheet.cell(rowIndex, 1).number(index + 1).style(cellStyle);
+        worksheet.cell(rowIndex, 2).string(formatDateRu(app.applied_dt || app.applied_at)).style(cellStyle);
+        worksheet.cell(rowIndex, 3).string(resource).style(cellStyle);
+        worksheet.cell(rowIndex, 4).string(vacancyLink).style(cellStyle);
+        worksheet.cell(rowIndex, 5).string(app.vacancy || '-').style(cellStyle);
+        worksheet.cell(rowIndex, 6).string('TRUE').style(cellStyle);
+        worksheet.cell(rowIndex, 7).string(cpSent).style(cellStyle);
+        worksheet.cell(rowIndex, 8).string(app.employer_status || '-').style(cellStyle);
+        rowIndex++;
+      });
+
+      // Накопительный итог
+      cumulativeCount += weekData.items.length;
+
+      // Подсчёт «выполнено за месяц» — все заявки того же года и месяца,
+      // что первая дата недели
+      const firstDate = new Date(weekData.items[0].applied_dt || weekData.items[0].applied_at);
+      const monthYearKey = `${firstDate.getFullYear()}-${firstDate.getMonth()}`;
+      let monthCount = 0;
+      for (const [, otherWeek] of Object.entries(grouped)) {
+        for (const item of otherWeek.items) {
+          const itemDate = new Date(item.applied_dt || item.applied_at);
+          if (`${itemDate.getFullYear()}-${itemDate.getMonth()}` === monthYearKey) {
+            monthCount++;
+          }
+        }
+      }
+
+      // Строка итогов недели
+      worksheet.cell(rowIndex, 1).string('Выполнено').style(summaryStyle);
+      worksheet.cell(rowIndex, 2).number(cumulativeCount).style(summaryStyle);
+      worksheet.cell(rowIndex, 3).string('Выполнено за неделю').style(summaryStyle);
+      worksheet.cell(rowIndex, 4).number(weekData.items.length).style(summaryStyle);
+      worksheet.cell(rowIndex, 5).string('Выполнено за месяц').style(summaryStyle);
+      worksheet.cell(rowIndex, 6).number(monthCount).style(summaryStyle);
+      worksheet.cell(rowIndex, 7).string('').style(summaryStyle);
+      worksheet.cell(rowIndex, 8).string('').style(summaryStyle);
+      rowIndex++;
+
+      // Пустая строка между неделями
+      rowIndex++;
+    }
+
+    // Ширина колонок
+    const colWidths = [10, 15, 20, 35, 30, 10, 14, 20];
+    colWidths.forEach((width, index) => {
+      worksheet.column(index + 1).setWidth(width);
+    });
+
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=applications_checklist_${Date.now()}.xlsx`,
+    );
+    const buffer = await workbook.writeToBuffer();
+    res.end(buffer);
+  } catch (error) {
+    serverLog.error(`❌ Ошибка экспорта applications: ${error.message}`);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 // ============================================================
 // API ДЛЯ ПОЛУЧЕНИЯ ЛОГОВ

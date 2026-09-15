@@ -8,6 +8,9 @@ const ExcelJS = require('exceljs');
 const { OpenAI } = require('openai');
 const RegistrationDB = require('../registration-db');
 
+const { generateCoverLetter } =require('./cover-letter-generator.js');
+const { extractProfileContacts } =require('./hh-utils.js');
+
 const { extractHhVacancyContext, extractAllHhVacancyContext, processAllNegotiations, processAllNegotiationsWithPagination, collectChatMessages, extractMessagesFromPage, }= require('./hh-utils');
 
 const DEFAULT_PAUSE_MS = 6000;
@@ -77,7 +80,7 @@ async function selectCheckboxByLabelText(page, labelText) {
 /**
  * Обрабатывает кнопку «Приложить письмо» и заполняет сопроводительное письмо
  */
-async function handleCoverLetterToggle(page, pauseMs = DEFAULT_PAUSE_MS) {
+async function handleCoverLetterToggle(page, email, vacancyTitle, pauseMs = DEFAULT_PAUSE_MS) {
   try{
     const buttons2 = page.locator('[data-qa="vacancy-response-letter-toggle"]');
    // await page.waitForTimeout(6000); // Пауза перед проверкой количества
@@ -100,20 +103,15 @@ async function handleCoverLetterToggle(page, pauseMs = DEFAULT_PAUSE_MS) {
     const textarea = page.locator('textarea', {hasAttribute: `aria-labelledby=${labelId}`,});
    // await textarea.waitFor({ state: 'visible', timeout: 10000 });
 
-    const coverLetterText = `Добрый день!
-Мой коммерческий опыт работы в разработки на Python 3 года, Java 6 лет, работаю с нейросетями и около 10 лет с различными базами данных. Прошла обучение и получила сертификаты: AI/ML -  разработчика, cоздание AI-агента и дообучения RAG. Владею профильными программированием на JavaScript, CSS, HTML. Знаю фреймворки такие как SpringBoot, JMIX, FastAPI, Django, React, Node.js. Есть опыт работы с Linux и Unix-системами, Kafka, Jenkins, Grafana, JasperReport Studio, Docker, Portainer, микросервисной архитектуры и развёртывания контейнеров, DevOps инжиниринга. Системами контроля версии Git, TFS.
+    const contactInfo = {
+                    phone: profileContacts.phone,
+                    email: profileContacts.email,
+                    telegram: profileContacts.telegram,
+                    maxLink: profileContacts.max,
+                  };
 
-На предыдущих местах работы участвовала в проектах по созданию нейросетей, AI-агентов, система компьютерного зрения, занималась разработкой серверного обеспечения на Python/Java,  перехода на новые платформы, стабилизации версий, написания отчетов, сервисов и импорта данных.  Есть опыт работы в банках, внедрения АБС.
-
-На текущем месте я много работала с Java-стеком и закрыла несколько крупных задач по оптимизации производительности. Сейчас хочу развиваться дальше: брать более сложные архитектурные задачи и активнее использовать Python для автоматизации и анализа данных. Ищу проект, где смогу применять оба языка и расти как full stack разработчик в бэкенде.
-
-Могу предоставить благодарственные письма и рекомендации.
-Рассматриваю трудоустройство по ТК РФ, ИП или договору ГПХ.
-
-Благодарю за внимание к моему резюме. Готова пройти собеседование по телефону, онлайн или  другим удобным для вас способом.
-
-С уважением, Мария. +7 917 163 83 67, 63_marie@mail.ru, @ru63_Marie_Martynova (телеграмм), MAX: https://max.ru/u/f9LHodD0cOLUmWifmSV-QguZ3Mj280h8Sx3Xu0PXvoRyZJErbjg1tJauJfA`;
-
+    const coverLetterText = generateCoverLetter(vacancyTitle, contactInfo);
+    console.log(coverLetterText);
     await textarea.fill(coverLetterText);
     serverLog.info('✅ Сопроводительное письмо введено');
 
@@ -138,40 +136,40 @@ async function handleCoverLetterToggle(page, pauseMs = DEFAULT_PAUSE_MS) {
     await page.screenshot({ path: 'submit-enabled.png' });
 
     // После отправки ждём, что окно всё ещё видно (если оно должно закрыться само, а не закрылось)
-    serverLog.info('✅ После отправки ждём, что окно всё ещё видно');
+    console.log('✅ После отправки ждём, что окно всё ещё видно');
    // await modalOverlay.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
     // Проверяем, осталось ли окно видимым
     const isModalStillVisible = await modalOverlay.isVisible();
 
     if (isModalStillVisible) {
-      serverLog.warn('⚠️ Модальное окно не закрылось автоматически — пытаемся закрыть принудительно');
-      serverLog.info('✅ Ищем именно кнопку закрытия внутри модалки');   
+      console.log('⚠️ Модальное окно не закрылось автоматически — пытаемся закрыть принудительно');
+      console.log('✅ Ищем именно кнопку закрытия внутри модалки');   
     // Ищем именно кнопку закрытия внутри модалки. Частые варианты:
     // 1. Кнопка с текстом/иконкой close
     // 2. Кнопка в блоке secondary-actions
       const closeButton = modalOverlay.locator('button, [role="button"]').filter({hasText: /закрыть|close|×/i});
-      serverLog.info('✅ Кнопка с текстом/иконкой close');
+      console.log('✅ Кнопка с текстом/иконкой close');
       const hasCloseButton = await closeButton.isVisible();
-      serverLog.info('✅ Кнопка в блоке secondary-actions');
+      console.log('✅ Кнопка в блоке secondary-actions');
      // await waitForPause(page, pauseMs);
       if (hasCloseButton) { 
-        serverLog.info('✅ Зашли в блок if');
+        console.log('✅ Зашли в блок if');
         await closeButton.click({ force: true });
-        serverLog.info('✅ Кнопка закрытия найдена и нажата');
+        console.log('✅ Кнопка закрытия найдена и нажата');
       } else {
-         serverLog.info('✅ Зашли в блок else');
+         console.log('✅ Зашли в блок else');
        //  await page.waitForTimeout(6000);
          // Альтернатива: попробовать нажать Esc, если модалка реагирует на него
          await page.press('Escape');
-         serverLog.info('✅ Отправлен Escape для закрытия модального окна');
+         console.log('✅ Отправлен Escape для закрытия модального окна');
       }
-    serverLog.info('✅ Вышли из блока if else');  
+    console.log('✅ Вышли из блока if else');  
    // await waitForPause(page, pauseMs);
     // Убеждаемся, что окно закрылось
    // await modalOverlay.waitFor({ state: 'hidden', timeout: 10000 });
-    serverLog.info('✅ Модальное окно закрыто');
-    } else {  serverLog.info('✅ Модальное окно закрылось автоматически');}
+    console.log('✅ Модальное окно закрыто');
+    } else {  console.log('✅ Модальное окно закрылось автоматически');}
     return true;
   } catch (error) {
       serverLog.error('❌ Ошибка в handleCoverLetterToggle:', error);
@@ -521,12 +519,12 @@ async function fillTelegramField(page) {
   }
 }
 
-async function clickRespond(page, hooks = {}) {
+async function clickRespond(page, profileContacts, hooks = {}) {
       const buttons = await page.locator('span', { hasText: 'Откликнуться' });
       const count = Math.min(await buttons.count(), 5);
-      for (let i = 0; i < 1/*count*/; i++) {
+      for (let i = 0; i < 5/*count*/; i++) {
              const responseButton = buttons.nth(i);              
-            /* const vacancy = await extractHhVacancyContext(page, responseButton);
+             const vacancy = await extractHhVacancyContext(page, responseButton);
              await db.createApplicationWithChat({
                         vacancy: vacancy.vacancyTitle || 'Неизвестная вакансия',
                         company: vacancy.company || 'Неизвестная компания',
@@ -545,7 +543,7 @@ async function clickRespond(page, hooks = {}) {
                         applied_at: new Date().toISOString(),
                       })
                      .then(({ chatId, applicationId }) => {serverLog.info(`✅ Создан чат #${chatId}, отклик #${applicationId} для вакансии "${vacancy.vacancyTitle}"`);})
-                     .catch(err => serverLog.error(`❌ Ошибка записи в БД: ${err.message}`));*/
+                     .catch(err => serverLog.error(`❌ Ошибка записи в БД: ${err.message}`));
 
              await responseButton.click();
              serverLog.info('✅ Клик по кнопке отклика выполнен. Ждём появления модалки с textarea');
@@ -562,23 +560,18 @@ async function clickRespond(page, hooks = {}) {
              // Ищем label и textarea внутри модалки, а не по всей странице
              const modalContent = modalOverlay;
              const labelLocator = modalContent.locator('label').filter({ hasText: regex });
+             const vacancyTitle = vacancy.vacancyTitle;
+             const contactInfo = {
+                    phone: profileContacts.phone,
+                    email: profileContacts.email,
+                    telegram: profileContacts.telegram,
+                    maxLink: profileContacts.max,
+                  };
 
-             const coverLetterText = `Добрый день!
-Мой коммерческий опыт работы в разработки на Python 3 года, Java 6 лет, работаю с нейросетями и около 10 лет с различными базами данных. Прошла обучение и получила сертификаты: AI/ML -  разработчика, cоздание AI-агента и дообучения RAG. Владею профильными программированием на JavaScript, CSS, HTML. Знаю фреймворки такие как SpringBoot, JMIX, FastAPI, Django, React, Node.js. Есть опыт работы с Linux и Unix-системами, Kafka, Jenkins, Grafana, JasperReport Studio, Docker, Portainer, микросервисной архитектуры и развёртывания контейнеров, DevOps инжиниринга. Системами контроля версии Git, TFS.
-
-На предыдущих местах работы участвовала в проектах по созданию нейросетей, AI-агентов, система компьютерного зрения, занималась разработкой серверного обеспечения на Python/Java,  перехода на новые платформы, стабилизации версий, написания отчетов, сервисов и импорта данных.  Есть опыт работы в банках, внедрения АБС.
-
-На текущем месте я много работала с Java-стеком и закрыла несколько крупных задач по оптимизации производительности. Сейчас хочу развиваться дальше: брать более сложные архитектурные задачи и активнее использовать Python для автоматизации и анализа данных. Ищу проект, где смогу применять оба языка и расти как full stack разработчик в бэкенде.
-
-Могу предоставить благодарственные письма и рекомендации.
-Рассматриваю трудоустройство по ТК РФ, ИП или договору ГПХ.
-
-Благодарю за внимание к моему резюме. Готова пройти собеседование по телефону, онлайн или  другим удобным для вас способом.
-
-С уважением, Мария. +7 917 163 83 67, 63_marie@mail.ru, @ru63_Marie_Martynova (телеграмм), MAX: https://max.ru/u/f9LHodD0cOLUmWifmSV-QguZ3Mj280h8Sx3Xu0PXvoRyZJErbjg1tJauJfA`;
-
-      // Единая кнопка отправки — оба варианта data-qa
-      const submitButton = page.locator('[data-qa="vacancy-response-letter-submit"], [data-qa="vacancy-response-submit-popup"]');
+             const coverLetterText = generateCoverLetter(vacancyTitle, contactInfo);
+             console.log(coverLetterText);
+             // Единая кнопка отправки — оба варианта data-qa
+             const submitButton = page.locator('[data-qa="vacancy-response-letter-submit"], [data-qa="vacancy-response-submit-popup"]');
 
       // Ждём появления модалки с таймаутом 15 сек
       let modalAppeared = false;
@@ -586,96 +579,88 @@ async function clickRespond(page, hooks = {}) {
         await modalOverlay.waitFor({ state: 'visible', timeout: 15000 });
         modalAppeared = true;
         serverLog.info('✅ Модальное окно открыто');
-          // Проверяем, есть ли textarea в модалке — если нет, значит, можно сразу сабмитить
-  const textarea = page.locator('[data-qa="vacancy-response-letter-input"]'); // подставь свой селектор
-  serverLog.info('Проверяем, есть ли textarea в модалке — если нет, значит, можно сразу сабмитить');
-  const isTextareaPresent = await textarea.isVisible({ timeout: 2000 }).catch(() => false);
-  serverLog.info('Если вакансия в другой стране');
+        // Проверяем, есть ли textarea в модалке — если нет, значит, можно сразу сабмитить
+        const textarea = page.locator('[data-qa="vacancy-response-letter-input"]'); // подставь свой селектор
+        serverLog.info('Проверяем, есть ли textarea в модалке — если нет, значит, можно сразу сабмитить');
+        const isTextareaPresent = await textarea.isVisible({ timeout: 2000 }).catch(() => false);
+        serverLog.info('Если вакансия в другой стране');
   
-  if (!isTextareaPresent) {
-    serverLog.info('extarea не найден в модалке — кликаем Submit напрямую');
-    await submitButton.click();
-    // Сохраняем успешный результат в базу
-   
-    return; // дальше не идём, форма уже отправлена
-  }
+        if (!isTextareaPresent) {
+            serverLog.info('extarea не найден в модалке — кликаем Submit напрямую');
+            await submitButton.click();
+            // Сохраняем успешный результат в базу   
+            return; // дальше не идём, форма уже отправлена
+        }
       } catch { serverLog.info('Модальное окно не появилось — возможно, отклик отправлен напрямую');}
 
-     if (modalAppeared) {
-       // Ждём появления textarea (с таймаутом)
-       let textarea;
-       try {
-       // Сначала пробуем найти через aria-labelledby
+      if (modalAppeared) {
+        // Ждём появления textarea (с таймаутом)
+        let textarea;
+        try {
+         // Сначала пробуем найти через aria-labelledby
          const labelEl = labelLocator.first();
          await labelEl.waitFor({ state: 'visible', timeout: 10000 });
          const labelId = await labelEl.getAttribute('id');
-
          if (labelId) {textarea = page.locator(`textarea[aria-labelledby="${labelId}"]`);
          } else { // Запасной вариант — просто textarea внутри модалки
           textarea = modalContent.locator('textarea');
-          }
+         }
 
          await textarea.waitFor({ state: 'visible', timeout: 10000 });
          await textarea.fill(coverLetterText);
          serverLog.info('✅ Сопроводительное письмо введено');
-       } catch (e) {
+        } catch (e) {
           serverLog.warn(`⚠️ Не удалось найти/заполнить textarea: ${e.message}`);
          // Если textarea нет, возможно, модалка другого типа — пробуем всё равно нажать кнопку
-       }
+        }
+        // Ждём кнопку отправки и кликаем
+        await submitButton.waitFor({ state: 'visible', timeout: 30000 });
+        const isEnabled = await submitButton.isEnabled();
+        serverLog.info(`🔍 Кнопка отправки активна: ${isEnabled}`);
 
-       // Ждём кнопку отправки и кликаем
-       await submitButton.waitFor({ state: 'visible', timeout: 30000 });
+        if (!isEnabled) {
+          serverLog.warn('⚠️ Кнопка отправки не активна — возможно, письмо не заполнено или есть валидация');
+          // Ждём активации
+          await submitButton.waitFor({ state: 'visible', timeout: 15000 });
+        }
 
-       const isEnabled = await submitButton.isEnabled();
-       serverLog.info(`🔍 Кнопка отправки активна: ${isEnabled}`);
+        await submitButton.click({ timeout: 10000 });
+        serverLog.info('✅ Клик по кнопке отправки выполнен');
 
-       if (!isEnabled) {
-         serverLog.warn('⚠️ Кнопка отправки не активна — возможно, письмо не заполнено или есть валидация');
-        // Ждём активации
-        await submitButton.waitFor({ state: 'visible', timeout: 15000 });
-       }
-
-       await submitButton.click({ timeout: 10000 });
-       serverLog.info('✅ Клик по кнопке отправки выполнен');
-
-      // Ждём закрытия модалки — подтверждение, что отклик ушёл
-      await modalOverlay.waitFor({ state: 'detached', timeout: 30000 });
-      serverLog.info('✅ Модальное окно закрыто — отклик отправлен');
+        // Ждём закрытия модалки — подтверждение, что отклик ушёл
+        await modalOverlay.waitFor({ state: 'detached', timeout: 30000 });
+        serverLog.info('✅ Модальное окно закрыто — отклик отправлен');
       
-    } else {
+      } else {
       // Если модалки не было — возможно, отклик уже отправлен
       // Проверяем, не появилась ли кнопка отправки напрямую
-     try {
-       await submitButton.waitFor({ state: 'visible', timeout: 5000 });
-       await submitButton.click({ timeout: 10000 });
-       serverLog.info('✅ Клик по кнопке отправки (без модалки)');
-      
-     } catch {serverLog.info('Кнопка отправки не найдена — отклик, вероятно, уже отправлен');  }
-  }
+      try {
+        await submitButton.waitFor({ state: 'visible', timeout: 5000 });
+        await submitButton.click({ timeout: 10000 });
+        serverLog.info('✅ Клик по кнопке отправки (без модалки)');
+        } catch {serverLog.info('Кнопка отправки не найдена — отклик, вероятно, уже отправлен');  }
+      }
 
-     // Небольшая пауза перед следующей итерацией
-     await page.waitForTimeout(2000);
+      // Небольшая пауза перед следующей итерацией
+      await page.waitForTimeout(2000);
                
-                 // Ждём появления новой страницы (с таймаутом)
-               let newPage = null;
-               try {
-                 newPage = await new Promise((resolve, reject) => {
-                 const timeoutId = setTimeout(() => reject(new Error('timeout')), 60000);
-                 context.on('page', (p) => {
-                 clearTimeout(timeoutId);
-                 resolve(p);  });
-                });
-               await newPage.waitForLoadState('networkidle', { timeout: 30000 });
-               await fillSalaryField(newPage);
-               await fillTelegramField(newPage);
-              } catch (e) {
-                serverLog.warn('Новая страница не открылась (таймаут или событие не сработало). Пропускаем заполнение полей.');
-              }
-             // await handleCoverLetterToggle(page);
-              // Использование:
-              await retry(() => handleCoverLetterToggle(page));
-              await page.waitForTimeout(6000);
-            // await handleCoverLetterToggle(page);
+      // Ждём появления новой страницы (с таймаутом)
+      let newPage = null;
+      try {
+          newPage = await new Promise((resolve, reject) => {
+          const timeoutId = setTimeout(() => reject(new Error('timeout')), 60000);
+          context.on('page', (p) => {
+          clearTimeout(timeoutId);
+          resolve(p);  });
+          });
+          await newPage.waitForLoadState('networkidle', { timeout: 30000 });
+          await fillSalaryField(newPage);
+          await fillTelegramField(newPage);
+      } catch (e) {serverLog.warn('Новая страница не открылась (таймаут или событие не сработало). Пропускаем заполнение полей.');}
+      // await handleCoverLetterToggle(page);
+      // Использование:
+      await retry(() => handleCoverLetterToggle(page, email, vacancy.vacancyTitle));
+      await page.waitForTimeout(6000);
               //https://samara.hh.ru/applicant/vacancy_response?vacancyId=136463514&startedWithQuestion=false&hhtmFrom=main
               //Senior Data Engineer в Онлайн-школа Тетрика
               //Ищем textarea, у которого родитель (или сосед) содержит текст «зарплатные ожидания»      
@@ -863,22 +848,28 @@ async function registerInDirectory(
 
       // Нажимаем кнопку «Дальше» по тексту внутри span
        await page.waitForSelector('button[data-qa="submit-button"]', { timeout: 0 });
+
        await page.click('button[data-qa="submit-button"]', { force: true });
        serverLog.info(`   ✅ Email введён, кнопка «Дальше» нажата`);
-       await page.waitForTimeout(6000);
-       const pinInput = await page.locator('[data-qa="magritte-pincode-input-field"]');
-         
+       await page.waitForTimeout(9000);
+       const pinInput = await page.locator('[data-qa="magritte-pincode-input-field"]');         
       serverLog.info(`   📝 Введите код подтверждения вручную`);
       await page.waitForTimeout(9000); // даём компоненту время на реакцию   
       const confirmationCode = '0000';
       if (!manualCodeInput) {confirmationCode=getConfirmationCode(email, 'imap.gmail.com', '993', apppassword, page, pinInput); }    
+      const profileContacts = await extractProfileContacts(page);
+      await page.waitForTimeout(9000);
+      console.log(`Контакты профиля: ${profileContacts.phone || '—'} | ${profileContacts.email || '—'}`);
+      await page.click('a.supernova-logo-wrapper');
+      await clickRespond(page, profileContacts, hooks);
+      //Обновление всей страницы
+      await page.click('a.supernova-logo-wrapper');
     //await clickRespond(page, hooks);
-    //Обновление всей страницы
-   // await page.click('a.supernova-logo-wrapper');
-   // await clickRespond(page, hooks);
-    await page.getByText('Отклики', { exact: true }).click();
+    //await page.click('a.supernova-logo-wrapper');
+    //await clickRespond(page, hooks);
+  //  await page.getByText('Отклики', { exact: true }).click();
     //  Обход всех откликов, извлечение и сохранение
-    await processAllNegotiationsWithPagination(page, db, extractAllHhVacancyContext);
+   // await processAllNegotiationsWithPagination(page, db, extractAllHhVacancyContext);
     //await processAllNegotiations(page, db, extractAllHhVacancyContext);
     // Добавляем экспорт сообщений перед анализом чата
     serverLog.info('📊 Собираем список всех сообщений...');

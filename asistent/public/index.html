@@ -64,110 +64,6 @@
       background: rgba(0,0,0,0.1);
       color: #333;
     }
-     /* ===== Help gear button & panel ===== */
-    .helps-bar {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 10px;
-    }
-    .btn-gear {
-      background: none;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      padding: 6px 14px;
-      cursor: pointer;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: background 0.2s;
-      background: #f8f9fa;
-    }
-    .btn-gear:hover { background: #e9ecef; }
-    .btn-gear svg { width: 18px; height: 18px; fill: #555; }
-    .btn-gear .gear-label { font-weight: bold; color: #333; }
-
-    .helps-panel {
-      display: none;
-      background: #f4e8fd;
-      border: 1px solid #bcaecf;
-      border-radius: 6px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    .helps-panel.visible { display: block; }
-    .helps-panel { position: relative; }
-    .helps-panel h3 { margin-top: 0; }
-    .panel-close {
-      position: absolute;
-      top: 8px;
-      right: 12px;
-      background: none;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      color: #666;
-      padding: 4px 8px;
-      border-radius: 4px;
-      line-height: 1;
-      transition: background 0.2s, color 0.2s;
-    }
-    .panel-close:hover {
-      background: rgba(0,0,0,0.1);
-      color: #333;
-    }
-/* ===== Feedback gear button & panel ===== */
-    .feedback-bar {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 10px;
-    }
-    .btn-gear {
-      background: none;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      padding: 6px 14px;
-      cursor: pointer;
-      font-size: 14px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: background 0.2s;
-      background: #f8f9fa;
-    }
-    .btn-gear:hover { background: #e9ecef; }
-    .btn-gear svg { width: 18px; height: 18px; fill: #555; }
-    .btn-gear .gear-label { font-weight: bold; color: #333; }
-
-    .feedback-panel {
-      display: none;
-      background: #fde8f5;
-      border: 1px solid #f0a8a8;
-      border-radius: 6px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    .feedback-panel.visible { display: block; }
-    .feedback-panel { position: relative; }
-    .feedback-panel h3 { margin-top: 0; }
-    .panel-close {
-      position: absolute;
-      top: 8px;
-      right: 12px;
-      background: none;
-      border: none;
-      font-size: 20px;
-      cursor: pointer;
-      color: #666;
-      padding: 4px 8px;
-      border-radius: 4px;
-      line-height: 1;
-      transition: background 0.2s, color 0.2s;
-    }
-    .panel-close:hover {
-      background: rgba(0,0,0,0.1);
-      color: #333;
-    }
 
     /* ===== Modal ===== */
     .modal-overlay {
@@ -724,11 +620,7 @@ caption {
     <button class="btn-gear" onclick="toggleFeedback()">
        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
        <span class="gear-label">Обратная связь</span>
-    </button>
-      <button type="button" class="btn-gear" onclick="toggleGuide()">
-      <svg viewBox="0 0 24 24"><path d="M6 2h9l5 5v15H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5L14 3.5zM8 11h8v1.5H8V11zm0 4h8v1.5H8V15z"/></svg>
-      <span class="gear-label">Справочник</span>
-    </button>
+  </button>
   </div>
 
 
@@ -741,14 +633,14 @@ caption {
   <!-- Чекбокс: ручной ввод кода -->
   <div class="form-group">
     <label>
-      <input type="checkbox" id="manualCodeInput" name="manualCodeInput" onchange="toggleManualCodeMode(this)" checked>
+      <input type="checkbox" id="manualCodeInput" onchange="toggleManualCodeMode(this)">
       Вводить код вручную
     </label>
   </div>
 
   <div class="form-group">
     <label for="apppassword">Пароль от почтового ящика:</label>
-    <input type="password" id="apppassword" name="apppassword" placeholder="Введите 16-значный пароль приложения" disabled>
+    <input type="password" id="apppassword" name="apppassword" placeholder="Введите 16-значный пароль приложения">
   </div>
 
   <div class="form-group">
@@ -757,13 +649,14 @@ caption {
 
   <div class="form-group">
     <label for="imapHost">IMAP хост:</label>
-    <input type="text" id="imapHost" name="imapHost" value="imap.gmail.com" readonly disabled>
+    <input type="text" id="imapHost" name="imapHost" value="imap.gmail.com" readonly>
   </div>
+
   <div class="form-group">
     <label for="port">Порт:</label>
-    <input type="number" id="port" name="port" value="993" readonly disabled>
+    <input type="number" id="port" name="port" value="993" readonly>
   </div>
-    <div class="form-group">
+  <div class="form-group">
     <label for="pauseMs">Время задержки-паузы (мс):</label>
     <input
       type="number"
@@ -776,7 +669,7 @@ caption {
       style="width: 100%; box-sizing: border-box;"
       onchange="savePauseSetting(this)"
     >
-    <small style="color: #666;">Используется при медленном интернете. Допустимый диапазон: 0–120000 мс. Рекомендуемый  3000 мс.</small>
+    <small style="color: #666;">Используется вместо фиксированной паузы 6000 мс. Допустимый диапазон: 0–120000 мс.</small>
   </div>
     <!-- Чекбокс: фоновый режим -->
   <div class="form-group">
@@ -797,71 +690,29 @@ caption {
 </div>
 
 <!-- Feedback panel -->
-<div class="feedback-panel" id="feedbackPanel">
+<div class="settings-panel" id="feedbackPanel">
   <button class="panel-close" onclick="closePanel('feedbackPanel')" title="Закрыть">×</button>
   <h3>💬 Обратная связь</h3>
   <p style="color: #555;">Расскажите, что вас волнует — мы обязательно разберёмся.</p>
 
   <div class="form-group">
     <label for="feedbackName">Ваше имя:</label>
-    <input type="text" id="feedbackName" name="feedbackName" style="width: 50%; box-sizing: border-box;" placeholder="Иван Иванов">
+    <input type="text" id="feedbackName" name="feedbackName" placeholder="Иван Иванов">
   </div>
 
   <div class="form-group">
     <label for="feedbackEmail">Ваш email:</label>
-    <input type="email" id="feedbackEmail" name="feedbackEmail" style="width: 50%; box-sizing: border-box;" placeholder="example@mail.ru">
+    <input type="email" id="feedbackEmail" name="feedbackEmail" placeholder="example@mail.ru">
   </div>
 
   <div class="form-group">
     <label for="feedbackQuestion">Ваш вопрос:</label>
-    <textarea id="feedbackQuestion" name="feedbackQuestion" rows="4" style="width: 100%; box-sizing: border-box;" placeholder="Опишите проблему или задайте вопрос"></textarea>
+    <textarea id="feedbackQuestion" name="feedbackQuestion" rows="4" placeholder="Опишите проблему или задайте вопрос"></textarea>
   </div>
 
   <button type="button" class="btn-submit" onclick="submitFeedback()">Отправить</button>
   <div id="feedbackMessage" style="margin-top: 10px; color: #2e7d32; display: none;"></div>
 </div>
-
-<!-- Service guide panel -->
-<div class="helps-panel" id="guidePanel">
-  <button class="panel-close" onclick="closePanel('guidePanel')" title="Закрыть">×</button>
-  <h3>📖 Справочник по работе сервиса</h3>
-  <p>Агент помогает заполнить регистрационные формы в выбранных интернет-каталогах и сохраняет результаты в истории.</p>
-
-  <h4>1. Подготовка</h4>
-  <ol>
-    <li>Откройте раздел <strong>Настройки</strong> и при необходимости укажите пароль приложения для почты. Он нужен для получения кодов подтверждения по IMAP.</li>
-    <li>Если вы планируете вводить коды самостоятельно, включите пункт <strong>Вводить код вручную</strong>.</li>
-    <li>В поле <strong>Сайт компании</strong> укажите полный адрес сайта, например <code>https://example.com</code>.</li>
-    <li>Укажите email, который будет использоваться при регистрациях.</li>
-  </ol>
-
-  <h4>2. Выбор каталогов</h4>
-  <p>Отметьте нужные каталоги галочками или нажмите <strong>Выбрать все</strong>. Каталоги с пометкой <strong>Капча</strong> могут потребовать ручного решения CAPTCHA во время работы.</p>
-  <p>Для проверки сценария используйте каталог <strong>Тестовая страница</strong>, чтобы не отправлять реальные регистрации.</p>
-
-  <h4>3. Запуск и контроль</h4>
-  <ol>
-    <li>Нажмите <strong>Запустить регистрацию</strong>.</li>
-    <li>Следите за текущими сообщениями в панели <strong>Лог работы</strong>.</li>
-    <li>Откройте <strong>Активные задачи</strong>, чтобы посмотреть прогресс по каждому каталогу.</li>
-    <li>Если сайт попросит CAPTCHA или ручное подтверждение, выполните действие в открытом окне браузера и дождитесь продолжения.</li>
-  </ol>
-
-  <h4>4. Результаты</h4>
-  <p>После завершения результаты появятся ниже в виде карточек каталогов. В истории отображаются статус, дата, email, ссылка на профиль и текст ошибки, если регистрация не удалась.</p>
-  <p>Данные можно выгрузить кнопками <strong>CSV</strong>, <strong>XLSX</strong> или <strong>JSON</strong>.</p>
-
-  <h4>5. Полезные настройки</h4>
-  <ul>
-    <li><strong>Фоновый режим</strong> — агент продолжает работу, когда окно браузера свёрнуто.</li>
-    <li><strong>Не закрывать окно после регистрации</strong> — оставляет браузер открытым для ручной проверки.</li>
-    <li><strong>Компания</strong> — проверяет, какие данные доступны на сайте компании перед запуском.</li>
-  </ul>
-
-  <h4>Если возникла проблема</h4>
-  <p>Сначала проверьте URL, email, выбранные каталоги и сообщения в логе. Для отправки вопроса откройте <strong>Обратную связь</strong>, заполните все поля и нажмите <strong>Отправить</strong>.</p>
-</div>
-
 
   <!-- Company panel -->
   <div class="settings-panel" id="companyPanel" style="background: #f0f8e8; border-color: #a8d4a0;">
@@ -915,6 +766,7 @@ caption {
     <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
       <button type="button" onclick="loadChatAnalytics()" style="background: #d97706; padding: 7px 12px;">🔄 Обновить</button>
       <button type="button" onclick="downloadChatExcel()" style="background: #198754; padding: 7px 12px;">📊 Скачать Excel</button>
+      <button type="button" onclick="downloadApplicationsChecklistExcel()" style="background: #38761d; padding: 7px 12px;">📥 Excel по формату УИИ</button>
       <span id="chatWebhookStatus" style="font-size: 0.85em; color: #6c757d;"></span>
     </div>
 
@@ -959,7 +811,7 @@ caption {
     <div style="float: right; width: 450px; padding: 10px; background-color: #f5f5f5; border: 1px solid #ddd; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
     <div class="form-group" >
       <label for="website">Cайт компании:</label>
-      <input type="text" id="website" name="website" required placeholder="https://example.com">
+      <input type="text" id="website" name="website"  required placeholder="https://example.com">
     </div>
     <div class="form-group">
       <label for="email">Email для регистрации:</label>
@@ -1032,11 +884,6 @@ caption {
     
     function toggleFeedback() {
       const panel = document.getElementById('feedbackPanel');
-      panel.classList.toggle('visible');
-    }
-
-    function toggleGuide() {
-      const panel = document.getElementById('guidePanel');
       panel.classList.toggle('visible');
     }
 
@@ -1203,6 +1050,15 @@ caption {
       const link = document.createElement('a');
       link.href = '/export/excel';
       link.download = 'chat_report_' + Date.now() + '.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function downloadApplicationsChecklistExcel() {
+      const link = document.createElement('a');
+      link.href = '/export/applications-excel';
+      link.download = 'applications_checklist_' + Date.now() + '.xlsx';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -1887,13 +1743,14 @@ caption {
     document.getElementById('registrationForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       logToConsole("🏁 Запуск агента регистрации...");
+
       const website = document.getElementById('website').value;
       const email = document.getElementById('email').value;
       const apppassword = document.getElementById('apppassword').value;
       const imapHost = document.getElementById('imapHost').value;
       const port = document.getElementById('port').value;
       const pauseMs = normalizePauseMs(document.getElementById('pauseMs').value);
-      const manualCodeInput=document.getElementById('manualCodeInput').value;
+      const manualCodeInput = document.getElementById('manualCodeInput').checked;
       savePauseSetting(document.getElementById('pauseMs'));
 
       // Получаем выбранные каталоги из чекбоксов (они внутри #directories-list)
@@ -1996,7 +1853,8 @@ function toggleManualCodeMode(checkbox) {
     localStorage.setItem('agent_keep_window_open', shouldKeepOpen);
     console.log('Не закрывать окно после регистрации:', shouldKeepOpen ? 'включено' : 'выключено');
   }
-      function normalizePauseMs(value) {
+
+    function normalizePauseMs(value) {
       const parsed = Number(value);
       if (!Number.isFinite(parsed)) return 6000;
       return Math.min(120000, Math.max(0, Math.round(parsed)));
@@ -2017,6 +1875,7 @@ function toggleManualCodeMode(checkbox) {
     }
 
     loadAgentSettings();
+
     // --- Логика обратной связи (заглушка) ---
   function submitFeedback() {
     const name = document.getElementById('feedbackName').value.trim();

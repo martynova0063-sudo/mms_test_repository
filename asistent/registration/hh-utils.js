@@ -2,6 +2,60 @@ const { serverLog } = require('../logger');
 const { Page } = require('playwright');
 
 /**
+ * Переходит на страницу профиля и извлекает все контакты.
+ * @param {import('playwright').Page} page
+ * @returns {Promise<object>}
+ */
+async function extractProfileContacts(page) {
+  const profileUrl = 'https://hh.ru/applicant/profile/me?hhtmFrom=main&hhtmFromLabel=header';
+
+  try {
+    await page.goto(profileUrl, { waitUntil: 'domcontentloaded' });
+    await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+
+    // Ждём появления хотя бы одного контактного элемента
+    await page.waitForSelector('[data-qa^="profile-contact-item-"]', { timeout: 10000 }).catch(() => {});
+
+    // Универсальный извлекатель: ищет карточку по data-qa и берёт второе cell-text-content
+    async function getContactValue(dataQa) {
+      const card = page.locator(`[data-qa="${dataQa}"]`);
+      if (!(await card.count())) return null;
+
+      const cellTexts = await card.locator('[data-qa="cell-text-content"]').allInnerTexts();
+      if (cellTexts.length >= 2) {
+        return cellTexts[1].trim();
+      }
+      return null;
+    }
+
+    // Собираем все контакты
+    const phone    = await getContactValue('profile-contact-item-phone');
+    const email    = await getContactValue('profile-contact-item-email');
+    const telegram = await getContactValue('profile-contact-item-telegram');
+    const max      = await getContactValue('profile-contact-item-max');
+    const whatsapp = await getContactValue('profile-contact-item-whatsapp');
+    const viber    = await getContactValue('profile-contact-item-viber');
+
+    const contacts = { phone, email, telegram, max, whatsapp, viber };
+
+    // Логируем только те, что найдены
+    const found = Object.entries(contacts)
+      .filter(([, v]) => v)
+      .map(([k, v]) => `${k}=${v}`)
+      .join(', ');
+
+    console.log(`  Профиль: ${found || 'контакты не найдены'}`);
+    return contacts;
+
+  } catch (err) {
+    console.error(`  Ошибка извлечения профиля: ${err.message}`);
+    return { phone: null, email: null, telegram: null, max: null, whatsapp: null, viber: null };
+  }
+}
+
+
+
+/**
  * Извлекает данные со страницы вакансии (fallback, если responseButton не найден).
  */
 // --- Исправление 1: extractVacancyDataFromPage — один аргумент-объект ---
@@ -176,14 +230,32 @@ if (vacancyUrl) {
     await vacancyPage.goto(vacancyUrl, { waitUntil: 'domcontentloaded' });
     await vacancyPage.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
 
-    // Извлекаем данные напрямую со страницы вакансии
-    // (extractAllHhVacancyContext создана для SERP, тут её селекторы не работают)
-    vacancyContext = await extractVacancyDataFromPage(vacancyPage, vacancyUrl, vacancyId);
+    // --- Проверяем, доступна ли вакансия ---
+    const isVacancyBlocked = await vacancyPage.locator(
+      'text=Вам недоступна эта вакансия'
+    ).count().catch(() => 0);
 
-    // Дополняем данными из карточки отклика, если что-то не нашлось
-    if (!vacancyContext.vacancyTitle) vacancyContext.vacancyTitle = vacancyTitle;
-    if (!vacancyContext.company) vacancyContext.company = company;
-    if (!vacancyContext.employerId && employerId) vacancyContext.employerId = employerId;
+    if (isVacancyBlocked > 0) {
+      console.log('  ⚠️ Вакансия недоступна: "Вам недоступна эта вакансия"');
+      vacancyContext = {
+        vacancyTitle,
+        vacancyUrl,
+        vacancyId,
+        external_id: vacancyId,
+        company,
+        employerId,
+        conversationUrl: page.url(),
+        source: 'hh.ru',
+        vacancyBlocked: true,   // ← флаг
+      };
+    } else {
+      // Извлекаем данные со страницы вакансии
+      vacancyContext = await extractVacancyDataFromPage(vacancyPage, vacancyUrl, vacancyId);
+
+      if (!vacancyContext.vacancyTitle) vacancyContext.vacancyTitle = vacancyTitle;
+      if (!vacancyContext.company) vacancyContext.company = company;
+      if (!vacancyContext.employerId && employerId) vacancyContext.employerId = employerId;
+    }
 
     console.log(`  Контекст: ${vacancyContext.vacancyTitle} | ${vacancyContext.area || '—'} | ${vacancyContext.salary || '—'}`);
 
@@ -204,31 +276,45 @@ if (vacancyUrl) {
   }
 }
 
+
 // --- Сбор сообщений из чата ---
 const { messages: chatMessages, chatStatus } = await collectChatMessages(page, i);
 
-// Логируем статус
-if (chatStatus) {
-  console.log(`  Статус чата: ${chatStatus}`);
+// Если вакансия недоступна — задаём статус
+let finalChatStatus = chatStatus;
+if (vacancyContext?.vacancyBlocked) {
+  finalChatStatus = 'Вам недоступна эта вакансия';
+  console.log(`  Статус: ${finalChatStatus}`);
 }
-
 // --- Сохранение в БД ---
 // --- Сохранение в БД с проверкой дубликатов ---
 try {
   const extId = vacancyContext?.vacancyId || vacancyId;
   const vacTitle = vacancyContext?.vacancyTitle || vacancyTitle;
   const compName = vacancyContext?.company || company;
-
-  // Парсим дату отклика из карточки
   const { applied_at: respDate, applied_dt: respDateOnly } = parseHhDate(date);
 
-  // 1. Проверяем, есть ли уже чат по этому отклику
   const existingChat = await db.findChatByExternalId(extId);
 
   if (existingChat) {
     console.log(`  Чат уже существует (chatId: ${existingChat.id}) — пропускаем создание`);
 
-    // 2. Чат есть — проверяем сообщения на новизну
+    // Обновляем статус, если он изменился
+    if (finalChatStatus && finalChatStatus !== existingChat.status) {
+      await new Promise((resolve) => {
+        db.db.run(
+          'UPDATE chats SET status = ?, updated_at = datetime(\'now\') WHERE id = ?',
+          [finalChatStatus, existingChat.id],
+          (err) => {
+            if (err) console.error(`  Ошибка обновления статуса: ${err.message}`);
+            else console.log(`  Статус чата обновлён: ${finalChatStatus}`);
+            resolve();
+          }
+        );
+      });
+    }
+
+    // Проверяем сообщения на новизну
     if (chatMessages && chatMessages.length > 0) {
       const existingTexts = await db.getExistingMessageTexts(existingChat.id);
       let newCount = 0;
@@ -240,13 +326,7 @@ try {
             db.db.run(
               `INSERT INTO chat_messages (chat_id, sender, text, content, msg_date, created_at)
                VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-              [
-                existingChat.id,                 // ← правильно: существующий chatId
-                msg.sender || null,
-                text,
-                text,
-                respDateOnly                    // дата отклика как дата сообщения
-              ],
+              [existingChat.id, msg.sender || null, text, text, respDateOnly],
               (err) => {
                 if (err) console.error(`  Ошибка сохранения сообщения: ${err.message}`);
                 else newCount++;
@@ -262,33 +342,16 @@ try {
       } else {
         console.log(`  Новых сообщений нет (все ${chatMessages.length} уже сохранены)`);
       }
-    } else {
-      console.log('  Сообщений в чате нет — пропускаем');
     }
 
-    // 3. Обновляем статус чата, если получили новый
-    if (chatStatus && chatStatus !== existingChat.status) {
-      await new Promise((resolve) => {
-        db.db.run(
-          'UPDATE chats SET status = ?, updated_at = datetime(\'now\') WHERE id = ?',
-          [chatStatus, existingChat.id],
-          (err) => {
-            if (err) console.error(`  Ошибка обновления статуса чата: ${err.message}`);
-            else console.log(`  Статус чата обновлён: ${chatStatus}`);
-            resolve();
-          }
-        );
-      });
-    }
   } else {
-    // 4. Чата нет — создаём чат и отклик
     console.log('  Чат не найден — создаём новую запись');
 
     const chatRecord = {
       external_id: extId,
       conversation_url: vacancyContext?.vacancyUrl || vacancyUrl,
       company: compName,
-      status: chatStatus || status || 'UNKNOWN',
+      status: finalChatStatus || status || 'UNKNOWN',
       applied_at: respDate,
       applied_dt: respDateOnly,
     };
@@ -297,7 +360,7 @@ try {
       vacancy: vacTitle,
       company: compName,
       is_viewed: false,
-      employer_status: chatStatus || status || 'Не просмотрен',
+      employer_status: finalChatStatus || status || 'Не просмотрен',
       response_rate: 0,
       chat_url: vacancyContext?.vacancyUrl || vacancyUrl,
       boost_url: null,
@@ -308,20 +371,13 @@ try {
     const { chatId, applicationId } = await db.createApplicationWithChat(appRecord, chatRecord);
     console.log(`  Сохранено в БД ✓ (chatId: ${chatId}, applicationId: ${applicationId})`);
 
-    // Сохраняем сообщения для нового чата
     if (chatMessages && chatMessages.length > 0) {
       for (const msg of chatMessages) {
         await new Promise((resolve) => {
           db.db.run(
             `INSERT INTO chat_messages (chat_id, sender, text, content, msg_date, created_at)
              VALUES (?, ?, ?, ?, ?, datetime('now'))`,
-            [
-              chatId,                          // ← правильно: новый chatId
-              msg.sender || null,
-              msg.text || msg.content || null,   // ← берём из msg, а не из внешней переменной
-              msg.text || msg.content || null,
-              todayLocalDate()                  // текущая дата для новых сообщений
-            ],
+            [chatId, msg.sender || null, msg.text || msg.content || null, msg.text || msg.content || null, todayLocalDate()],
             (err) => {
               if (err) console.error(`  Ошибка сохранения сообщения: ${err.message}`);
               resolve();
@@ -334,7 +390,6 @@ try {
   }
 } catch (dbErr) {
   console.error(`  Ошибка БД: ${dbErr.message}`);
-  // Не делай ROLLBACK через exec('ROLLBACK') — транзакция управляется внутри createApplicationWithChat
 }
 
     } catch (err) { console.error(`  Ошибка при обработке отклика ${i + 1}: ${err.message}`);}
@@ -357,7 +412,6 @@ async function collectChatMessages(page, itemIndex) {
     return { messages: [], chatStatus: null };
   }
 
-  // Прокручиваем в зону видимости
   await chatButton.scrollIntoViewIfNeeded().catch(() => {});
   await page.waitForTimeout(300);
 
@@ -393,9 +447,26 @@ async function collectChatMessages(page, itemIndex) {
   let chatStatus = null;
 
   try {
+    // --- Сначала проверяем статус на самой странице (не в iframe) ---
+    // "Вам недоступна эта вакансия" — появляется на странице, а не в iframe
+    const pageStatusSelectors = [
+      'text=Вам недоступна эта вакансия',
+      '[data-qa="applicant-login-card"]',
+    ];
+
+    for (const sel of pageStatusSelectors) {
+      const count = await page.locator(sel).count().catch(() => 0);
+      if (count > 0) {
+        chatStatus = 'Вам недоступна эта вакансия';
+        console.log(`  ⚠️ Статус чата: ${chatStatus}`);
+        await closeChatWidget(page);
+        return { messages: [], chatStatus };
+      }
+    }
+
     const iframe = page.frameLocator('.chatik-integration-iframe');
 
-    // --- Проверяем статус "Работодатель отключил переписку" ---
+    // --- Проверяем статус "Работодатель отключил переписку" внутри iframe ---
     const notAllowedSelectors = [
       '.not-allowed-warning--NbfXlvyYL8lTX5fY',
       '[class*="not-allowed-warning"]',
@@ -448,12 +519,10 @@ async function collectChatMessages(page, itemIndex) {
     console.error(`  Ошибка чтения iframe: ${err.message}`);
   }
 
-  // --- Гарантированно закрываем виджет ---
   await closeChatWidget(page);
 
   return { messages, chatStatus };
 }
-
 
 /**
  * Закрывает виджет чата.
@@ -834,6 +903,7 @@ async function processAllNegotiationsWithPagination(page, db, extractAllHhVacanc
 
 module.exports = {
   extractHhVacancyContext,
+  extractProfileContacts,
   extractAllHhVacancyContext,
   saveHhApplication,
   processAllNegotiations, 
