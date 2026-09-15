@@ -260,11 +260,7 @@ audit_record = {
 
 ### 5.1. Формула (исследовательская версия v1)
 
-
-$$
-\text{HEALTH\_ID} = h_{\text{Body}} \times 0{,}60 + h_{\text{Mental}} \times 0{,}25 + h_{\text{Social}} \times 0{,}15
-$$
-
+HEALTH_ID = $w_{\text{body}}$ * $h_{\text{body}}$ + $w_{\text{mental}}$ * $h_{\text{mental}}$ + $w_{\text{social}}$ * $h_{\text{social}}$ 
 
 | Компонент | Вес | Источник данных |
 | --- | --- | --- |
