@@ -1,4 +1,1066 @@
-# Шаблон контроля качества видео для верификации
+---
+name: health_id_replit_agent
+description: Навыки для разработки исследовательской системы биометрической верификации и расчёта HEALTH_ID в Replit. Агент должен соблюдать регуляторные требования, принципы прослеживаемости, версионирования моделей и разделения контуров.
+tags:
+  - biometrics
+  - health-index
+  - research-mode
+  - regulatory-compliance
+  - replit
+---
+
+# Навыки (Skills) для агента в проекте HEALTH_ID (Replit)
+
+## 1. Общие принципы и ограничения
+
+- **Режим «только исследовательский»**: агент обязан во всех выходных контрактах, комментариях к коду и документации явно указывать, что система не является медицинским изделием и не предназначена для клинических решений до завершения валидации R0–R4.
+- **Разделение медицинского и корпоративного контуров**: агент должен проектировать API и БД так, чтобы медицинские данные (показатели, HEALTH_ID, выводы) не попадали в корпоративный контур; передаётся только статус верификации (`verified/manual_review/not_verified`) и ID сессии.
+- **Прослеживаемость и воспроизводимость**: любой расчёт должен сопровождаться фиксацией версии модели, хеша конфигурации и входных данных; агент обязан добавлять в код логику сохранения этих артефактов в аудит.
+- **Регуляторные требования**: агент должен учитывать 323‑ФЗ, 152‑ФЗ, ПП РФ №866 и другие акты из ТЗ; в коде и комментариях избегать формулировок, которые могут трактоваться как юридически значимая идентификация личности.
+
+## 2. Работа с биометрией и верификацией
+
+- **Face Matching**: при реализации использовать подход на основе face embeddings и косинусного расстояния; порог по умолчанию — `cosine_similarity ≥ 0.62`, с возможностью конфигурации.
+- **Liveness Detection**: агент должен реализовывать комбинированный подход (активный + пассивный liveness) и фиксировать тип обнаруженной атаки, если применимо.
+- **Контроль качества видео**: агент обязан внедрить набор проверок (разрешение, FPS, освещённость, видимость лица, размытие, окклюзии, углы, длительность) и сохранять результаты в аудит; не хранить исходные видео и эталонные фото, только хеши и метаданные.
+- **Маршрутизация результатов**: агент должен реализовать логику маршрутизации в зависимости от `match_score` и статуса liveness/качества (авто‑пропуск, human review, отказ) и явно документировать пороги в коде.
+
+## 3. Движок расчёта HEALTH_ID
+
+- **Версионирование модели**: агент обязан хранить конфигурацию модели в неизменяемом виде (например, YAML/JSON) с версией и хешем; при расчёте фиксировать `model_version` и `config_snapshot_hash`.
+- **Формула и веса**: использовать формулу `HEALTH_ID = hBody × 0.60 + hMental × 0.25 + hSocial × 0.15` и строго следовать описанию компонентов и весов из ТЗ.
+- **Источники данных**: агент должен явно помечать каждый признак как `measured` (измерено), `derived` (вычислено) или `context` (контекст) и не смешивать их в логике расчёта.
+- **Неполные данные**: агент должен поддерживать частичный расчёт при недостатке данных, но обязательно отмечать уровень полноты (`completeness`) и неопределённость (`uncertainty`).
+- **Дисклеймер**: агент обязан включать явный дисклеймер в выходной контракт: «Исследовательский результат. Не является медицинским диагнозом».
+
+## 4. Приём и контроль качества входных данных
+
+- **Валидация и чек‑лист**: агент должен реализовать набор проверок (происхождение, целостность, единицы измерения, качество сигнала, процент артефактов, полнота, протокол, временные рамки, дубликаты) и возвращать структурированный отчёт о качестве.
+- **Обработка ошибок**: пакеты с `fail` не должны попадать в расчёт, но фиксируются в аудите; пакеты с `warning` допускаются к расчёту с пометкой неполноты.
+
+## 5. Персональные коридоры (baseline) и классификация
+
+- **Исключение текущей точки**: агент обязан исключать текущее измерение из расчёта персонального коридора (baseline) для предотвращения утечки данных.
+- **Статистика**: агент должен рассчитывать среднее, стандартное отклонение, медиану, процентили и границы коридора; фиксировать количество точек и окно наблюдения.
+- **Классификация состояния**: агент должен применять правила классификации (острое отклонение, устойчивое повторное отклонение, хроническое) и не использовать HEALTH_ID как единственный источник для выводов о состоянии.
+
+## 6. Реализация в Replit и технологический стек
+
+- **Стек**: Python (FastAPI), PostgreSQL (для аудита и метаданных), Replit Database (если используется), Drizzle ORM или аналогичная ORM/query builder, библиотеки для работы с изображениями и embeddings.
+- **Структура проекта**: агент должен придерживаться модульной структуры (биометрия, движок HEALTH_ID, приём данных, baseline, классификация, API, аудит) и размещать код в соответствующих папках.
+- **Тестирование**: агент должен добавлять unit‑тесты для ключевых функций (расчёт HEALTH_ID, валидация входных данных, логика маршрутизации) и интеграционные тесты с моками внешних зависимостей.
+- **Безопасность**: агент не должен хранить чувствительные данные в коде или переменных окружения; использовать секреты через Replit Secrets; избегать хардкода ключей и паролей.
+
+## 7. Примеры триггеров для активации навыков
+
+Агент должен применять эти навыки, когда в задаче встречаются формулировки:
+
+- «реализуй расчёт HEALTH_ID»
+- «добавь биометрическую верификацию»
+- «настрой маршрутизацию результатов верификации»
+- «внедри контроль качества данных»
+- «сделай воспроизводимый расчёт с прослеживаемостью»
+- «соблюди регуляторные требования для дистанционных медосмотров»
+
+## 8. Примеры шаблонов и фрагментов кода
+
+### Шаблон функции расчёта HEALTH_ID
+
+```python
+def calculate_health_id(input_data: HealthInput, model_version: str) -> HealthResult:
+    # 1. Загрузка неизменяемой конфигурации версии
+    config = load_model_config(model_version)
+    
+    # 2. Валидация входных данных
+    validated = validate_input(input_data, config)
+    
+    # 3. Расчёт компонентов
+    hBody = calculate_component(validated, config.components.hBody)
+    hMental = calculate_component(validated, config.components.hMental)
+    hSocial = calculate_component(validated, config.components.hSocial)
+    
+    # 4. Расчёт итогового индекса
+    health_id = (
+        hBody.score * config.components.hBody.weight +
+        hMental.score * config.components.hMental.weight +
+        hSocial.score * config.components.hSocial.weight
+    )
+    
+    # 5. Оценка неопределённости и полноты
+    uncertainty = estimate_uncertainty(validated, hBody, hMental, hSocial)
+    completeness = calculate_completeness(validated)
+    
+    # 6. Формирование выходного контракта
+    result = HealthResult(
+        value=health_id,
+        model_version=model_version,
+        config_snapshot_hash=hash_config(config),
+        components={
+            "hBody": {"value": hBody.score, "weight": 0.60, "contribution": hBody.score * 0.60},
+            "hMental": {"value": hMental.score, "weight": 0.25, "contribution": hMental.score * 0.25},
+            "hSocial": {"value": hSocial.score, "weight": 0.15, "contribution": hSocial.score * 0.15},
+        },
+        completeness=completeness,
+        uncertainty=uncertainty,
+        disclaimer="Исследовательский результат. Не является медицинским диагнозом.",
+    )
+    return result
+```
+
+
+# Примеры шаблонов и фрагментов кода
+## Шаблон функции расчёта HEALTH_ID
+```python
+"""
+Движок расчёта интегрального индекса здоровья HEALTH_ID.
+Исследовательская версия. Не является медицинским изделием.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import uuid
+from datetime import datetime, timezone
+from typing import Any, Literal
+
+import numpy as np
+from pydantic import BaseModel, Field
+
+# ─── Схемы данных ────────────────────────────────────────────────
+
+class FeatureInput(BaseModel):
+    """Один измеренный признак."""
+    name: str
+    value: float | None
+    unit: str
+    source: Literal["measured", "derived", "context"]
+    device_id: str | None = None
+    device_model: str | None = None
+    measurement_protocol: str | None = None
+    confidence: float = 1.0
+    artifact_pct: float = 0.0
+    timestamp: str
+
+
+class HealthInput(BaseModel):
+    """Входной пакет данных для расчёта HEALTH_ID."""
+    event_id: str
+    worker_pseudonym: str
+    timestamp: str
+    measurements: list[FeatureInput]
+    context: dict[str, Any] = Field(default_factory=dict)
+
+
+class ComponentResult(BaseModel):
+    """Результат расчёта одного компонента (hBody, hMental, hSocial)."""
+    name: str
+    score: float
+    weight: float
+    contribution: float
+    contribution_pct: float
+    features: list[dict[str, Any]]
+
+
+class EvidenceTrace(BaseModel):
+    """Полный trace расчёта для прослеживаемости."""
+    input_ids: list[str]
+    quality_reports: list[dict[str, Any]]
+    formulas_applied: list[str]
+    norms_used: dict[str, Any]
+    contribution_trace: dict[str, Any]
+    baseline_used: dict[str, Any] | None
+    model_card_ref: str
+
+
+class HealthResult(BaseModel):
+    """Выходной контракт — результат расчёта HEALTH_ID."""
+    result_id: str
+    event_id: str
+    worker_pseudonym: str
+    timestamp: str
+
+    health_id: dict[str, Any]
+    components: dict[str, ComponentResult]
+    completeness: dict[str, Any]
+    uncertainty: dict[str, Any]
+    state_flags: list[dict[str, Any]]
+    evidence: EvidenceTrace
+    audit: dict[str, Any]
+
+
+# ─── Загрузка конфигурации версии модели ─────────────────────────
+
+def load_model_config(model_version: str) -> dict[str, Any]:
+    """
+    Загружает неизменяемую конфигурацию модели по версии.
+    Конфигурация хранится в model_configs/{version}/config.yaml
+    и после публикации не изменяется.
+    """
+    import yaml
+    from pathlib import Path
+
+    config_path = Path(f"model_configs/{model_version}/config.yaml")
+    if not config_path.exists():
+        raise FileNotFoundError(
+            f"Конфигурация модели {model_version} не найдена. "
+            f"Проверьте путь: {config_path}"
+        )
+
+    with open(config_path, "r", encoding="utf-8") as f:
+        config = yaml.safe_load(f)
+
+    # Проверка целостности конфигурации
+    config_hash = hash_config(config)
+    expected_hash = _get_published_hash(model_version)
+    if expected_hash and config_hash != expected_hash:
+        raise RuntimeError(
+            f"Хеш конфигурации {model_version} не совпадает с опубликованным. "
+            f"Возможно, файл был изменён после публикации."
+        )
+
+    return config
+
+
+def hash_config(config: dict[str, Any]) -> str:
+    """Вычисляет SHA-256 хеш конфигурации для фиксации версии."""
+    config_str = json.dumps(config, sort_keys=True, ensure_ascii=False)
+    return f"sha256:{hashlib.sha256(config_str.encode()).hexdigest()}"
+
+
+def _get_published_hash(model_version: str) -> str | None:
+    """Получает опубликованный хеш из журнала версий."""
+    from pathlib import Path
+
+    journal_path = Path("model_configs/versions.jsonl")
+    if not journal_path.exists():
+        return None
+
+    with open(journal_path, "r", encoding="utf-8") as f:
+        for line in f:
+            entry = json.loads(line.strip())
+            if entry["version"] == model_version:
+                return entry.get("config_hash")
+    return None
+
+
+# ─── Валидация входных данных ─────────────────────────────────────
+
+def validate_input(
+    input_data: HealthInput,
+    config: dict[str, Any],
+) -> tuple[HealthInput, dict[str, Any]]:
+    """
+    Валидирует входные данные против конфигурации модели.
+    Возвращает валидированные данные и отчёт о качестве.
+    """
+    quality_report = {
+        "overall": "pass",
+        "checks": [],
+        "actionable_flags": [],
+        "exclusion_flags": [],
+    }
+
+    config_features = _flatten_config_features(config)
+    provided_features = {f.name for f in input_data.measurements if f.value is not None}
+    required_features = {f["name"] for f in config_features if f.get("required", True)}
+
+    # Проверка полноты
+    missing = required_features - provided_features
+    if missing:
+        quality_report["checks"].append({
+            "name": "completeness",
+            "status": "warning",
+            "detail": f"missing: {', '.join(sorted(missing))}",
+            "missing_count": len(missing),
+        })
+        quality_report["actionable_flags"].append("incomplete")
+        if quality_report["overall"] == "pass":
+            quality_report["overall"] = "pass_with_warnings"
+
+    # Проверка единиц измерения
+    feature_units = {f.name: f.unit for f in input_data.measurements if f.value is not None}
+    config_units = {f["name"]: f["unit"] for f in config_features}
+    unit_mismatches = []
+    for name, unit in feature_units.items():
+        if name in config_units and unit != config_units[name]:
+            unit_mismatches.append(f"{name}: expected {config_units[name]}, got {unit}")
+
+    if unit_mismatches:
+        quality_report["checks"].append({
+            "name": "units",
+            "status": "warning",
+            "detail": "; ".join(unit_mismatches),
+        })
+        quality_report["actionable_flags"].append("unit_mismatch")
+        if quality_report["overall"] == "pass":
+            quality_report["overall"] = "pass_with_warnings"
+
+    # Проверка качества сигнала
+    low_quality = [
+        f.name for f in input_data.measurements
+        if f.value is not None and f.confidence < 0.7
+    ]
+    if low_quality:
+        quality_report["checks"].append({
+            "name": "signal_quality",
+            "status": "warning",
+            "detail": f"low confidence: {', '.join(low_quality)}",
+        })
+        quality_report["actionable_flags"].append("low_quality")
+        if quality_report["overall"] == "pass":
+            quality_report["overall"] = "pass_with_warnings"
+
+    # Проверка артефактов
+    high_artifact = [
+        f.name for f in input_data.measurements
+        if f.value is not None and f.artifact_pct > 10
+    ]
+    if high_artifact:
+        quality_report["checks"].append({
+            "name": "artifacts",
+            "status": "fail",
+            "detail": f"artifact_pct > 10: {', '.join(high_artifact)}",
+        })
+        quality_report["exclusion_flags"].append("high_artifact")
+        quality_report["overall"] = "fail"
+
+    if not quality_report["checks"]:
+        quality_report["checks"].append({
+            "name": "all", "status": "pass", "detail": "all checks passed"
+        })
+
+    return input_data, quality_report
+
+
+def _flatten_config_features(config: dict[str, Any]) -> list[dict[str, Any]]:
+    """Разворачивает иерархическую конфигурацию в плоский список признаков."""
+    features = []
+    for comp_key, comp in config["components"].items():
+        for feat in comp["features"]:
+            feat_copy = dict(feat)
+            feat_copy["component"] = comp_key
+            features.append(feat_copy)
+    return features
+
+
+# ─── Расчёт компонентов ──────────────────────────────────────────
+
+def normalized_score(
+    value: float,
+    normal_range: list[float],
+    feature_name: str,
+) -> tuple[float, str]:
+    """
+    Нормализация значения в диапазон [0, 1].
+    Значение в центре диапазона → 1.0.
+    Значение на границе → 0.5.
+    Значение за пределами → линейное убывание до 0.
+    """
+    low, high = normal_range
+    mid = (low + high) / 2
+    half_range = (high - low) / 2
+
+    if half_range == 0:
+        score = 1.0 if value == mid else 0.0
+    else:
+        deviation = abs(value - mid) / half_range
+        if deviation <= 1.0:
+            score = 1.0 - 0.5 * deviation
+        else:
+            # За пределами диапазона — линейное убывание
+            score = max(0.0, 0.5 - 0.5 * (deviation - 1.0) / 2.0)
+
+    formula_str = (
+        f"normalized_score({value}, [{low}, {high}]) = {score:.4f}"
+    )
+    return score, formula_str
+
+
+def binary_penalty(
+    value: float,
+    threshold: float,
+    feature_name: str = "",
+) -> tuple[float, str]:
+    """
+    Бинарный штраф: 1.0 если значение ниже порога, 0.0 если равно или выше.
+    """
+    score = 1.0 if value < threshold else 0.0
+    formula_str = f"binary_penalty({value}, threshold={threshold}) = {score:.2f}"
+    return score, formula_str
+
+
+def calculate_component(
+    validated: HealthInput,
+    component_config: dict[str, Any],
+) -> ComponentResult:
+    """
+    Рассчитывает один компонент HEALTH_ID (hBody, hMental, hSocial).
+    """
+    feature_map = {f.name: f for f in validated.measurements}
+
+    feature_results = []
+    weighted_sum = 0.0
+    total_weight = 0.0
+    formulas_applied = []
+
+    for feat_config in component_config["features"]:
+        feat_name = feat_config["name"]
+        feat_input = feature_map.get(feat_name)
+
+        if feat_input is None or feat_input.value is None:
+            # Пропуск отсутствующего признака
+            feature_results.append({
+                "name": feat_name,
+                "raw_value": None,
+                "source": feat_config.get("source", "unknown"),
+                "normalized_score": None,
+                "normal_range": feat_config.get("normal_range"),
+                "contribution_weight": feat_config["contribution_weight"],
+                "contribution": 0.0,
+                "quality": None,
+                "missing": True,
+            })
+            continue
+
+        # Выбор функции нормализации
+        formula_type = feat_config.get("formula", "normalized_score")
+        if formula_type == "normalized_score":
+            score, formula_str = normalized_score(
+                feat_input.value,
+                feat_config["normal_range"],
+                feat_name,
+            )
+        elif formula_type == "binary_penalty":
+            score, formula_str = binary_penalty(
+                feat_input.value,
+                feat_config.get("threshold", 0.0),
+                feat_name,
+            )
+        else:
+            raise ValueError(f"Неизвестная формула: {formula_type}")
+
+        formulas_applied.append(formula_str)
+
+        contribution = score * feat_config["contribution_weight"]
+        weighted_sum += contribution
+        total_weight += feat_config["contribution_weight"]
+
+        feature_results.append({
+            "name": feat_name,
+            "raw_value": feat_input.value,
+            "unit": feat_input.unit,
+            "source": feat_input.source,
+            "normalized_score": round(score, 4),
+            "normal_range": feat_config.get("normal_range"),
+            "contribution_weight": feat_config["contribution_weight"],
+            "contribution": round(contribution, 4),
+            "quality": {
+                "confidence": feat_input.confidence,
+                "artifact_pct": feat_input.artifact_pct,
+            },
+            "missing": False,
+        })
+
+    # Нормализация с учётом пропущенных признаков
+    component_score = weighted_sum / total_weight if total_weight > 0 else 0.0
+
+    component_weight = component_config["weight"]
+    contribution = component_score * component_weight
+
+    return ComponentResult(
+        name=component_config.get("name", "unknown"),
+        score=round(component_score, 4),
+        weight=component_weight,
+        contribution=round(contribution, 4),
+        contribution_pct=round(component_weight * 100, 2),
+        features=feature_results,
+    ), formulas_applied
+
+
+# ─── Оценка полноты и неопределённости ────────────────────────────
+
+def calculate_completeness(validated: HealthInput, config: dict[str, Any]) -> dict[str, Any]:
+    """Рассчитывает долю присутствующих обязательных признаков."""
+    config_features = _flatten_config_features(config)
+    required = [f for f in config_features if f.get("required", True)]
+    required_names = {f["name"] for f in required}
+
+    provided = {
+        f.name for f in validated.measurements
+        if f.value is not None
+    }
+
+    present = required_names & provided
+    missing = required_names - provided
+    overall = len(present) / len(required_names) if required_names else 1.0
+
+    return {
+        "overall": round(overall, 4),
+        "required_features_present": len(present),
+        "required_features_total": len(required_names),
+        "missing": sorted(missing),
+        "missing_impact": _assess_missing_impact(missing, config),
+    }
+
+
+def _assess_missing_impact(missing: set[str], config: dict[str, Any]) -> str:
+    """Оценивает влияние отсутствующих признаков на результат."""
+    if not missing:
+        return "none"
+    for comp_key, comp in config["components"].items():
+        comp_features = {f["name"] for f in comp["features"]}
+        if missing & comp_features:
+            missing_in_comp = missing & comp_features
+            if len(missing_in_comp) == len(comp_features):
+                return f"{comp_key} cannot be calculated"
+            return f"{comp_key} partially estimated"
+    return "minimal"
+
+
+def estimate_uncertainty(
+    validated: HealthInput,
+    components: list[ComponentResult],
+) -> dict[str, Any]:
+    """
+    Оценивает неопределённость результата.
+    Источники: пропущенные признаки, низкая confidence, артефакты.
+    """
+    sources = []
+    total_impact = 0.0
+
+    for feat in validated.measurements:
+        if feat.value is None:
+            continue
+        if feat.confidence < 0.7:
+            impact = (0.7 - feat.confidence) * 0.1
+            sources.append({
+                "type": "measurement_confidence",
+                "feature": feat.name,
+                "impact": round(impact, 4),
+            })
+            total_impact += impact
+
+        if feat.artifact_pct > 5:
+            impact = (feat.artifact_pct - 5) / 100 * 0.05
+            sources.append({
+                "type": "artifact",
+                "feature": feat.name,
+                "impact": round(impact, 4),
+            })
+            total_impact += impact
+
+    # Добавление неопределённости от пропущенных признаков
+    for comp in components:
+        missing_count = sum(1 for f in comp.features if f.get("missing"))
+        if missing_count > 0:
+            impact = missing_count * 0.03
+            sources.append({
+                "type": "missing_feature",
+                "component": comp.name,
+                "count": missing_count,
+                "impact": round(impact, 4),
+            })
+            total_impact += impact
+
+    return {
+        "overall": round(min(total_impact, 1.0), 4),
+        "sources": sources,
+    }
+
+
+# ─── Классификация состояния ──────────────────────────────────────
+
+def classify_state(
+    validated: HealthInput,
+    config: dict[str, Any],
+    baseline: dict[str, Any] | None = None,
+    history: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Классифицирует состояние работника по трём категориям:
+    - acute_deviation
+    - persistent_repeated_deviation
+    - confirmed_chronic (только из МИС/ЭМК)
+    """
+    flags = []
+
+    # Проверка острого отклонения
+    if baseline and baseline.get("available"):
+        for feat_name, corridor in baseline["features"].items():
+            if not corridor.get("available"):
+                continue
+            feat_input = next(
+                (f for f in validated.measurements if f.name == feat_name),
+                None,
+            )
+            if feat_input is None or feat_input.value is None:
+                continue
+
+            low = corridor["corridor_low"]
+            high = corridor["corridor_high"]
+            sigma = corridor["std"] if corridor["std"] > 0 else 1.0
+
+            if feat_input.value > high + 2 * sigma or feat_input.value < low - 2 * sigma:
+                deviation_type = "above_corridor" if feat_input.value > high else "below_corridor"
+                z_score = abs(feat_input.value - corridor["mean"]) / sigma
+                flags.append({
+                    "flag": "acute_deviation",
+                    "active": True,
+                    "feature": feat_name,
+                    "value": feat_input.value,
+                    "corridor_low": round(low, 2),
+                    "corridor_high": round(high, 2),
+                    "deviation_type": deviation_type,
+                    "sigma": round(z_score, 2),
+                })
+
+    if not any(f["flag"] == "acute_deviation" and f["active"] for f in flags):
+        flags.append({"flag": "acute_deviation", "active": False, "details": None})
+
+    # Проверка устойчивого повторного отклонения
+    if history:
+        unique_dates_with_deviation = set()
+        for event in history:
+            if event.get("has_acute_deviation"):
+                # ⚠️ Считаем по уникальным датам, а не по числу попыток
+                date_only = event["timestamp"][:10]  # YYYY-MM-DD
+                unique_dates_with_deviation.add(date_only)
+
+        if len(unique_dates_with_deviation) >= 3:
+            flags.append({
+                "flag": "persistent_repeated_deviation",
+                "active": True,
+                "unique_dates": sorted(unique_dates_with_deviation),
+                "date_count": len(unique_dates_with_deviation),
+                "note": "Counted by unique dates, not by number of attempts",
+            })
+        else:
+            flags.append({
+                "flag": "persistent_repeated_deviation",
+                "active": False,
+                "details": f"only {len(unique_dates_with_deviation)} unique dates with deviation",
+            })
+    else:
+        flags.append({
+            "flag": "persistent_repeated_deviation",
+            "active": False,
+            "details": "no history available",
+        })
+
+    # Хроническое состояние — только из МИС/ЭМК
+    chronic_from_mis = validated.context.get("chronic_conditions", [])
+    if chronic_from_mis:
+        flags.append({
+            "flag": "confirmed_chronic",
+            "active": True,
+            "source": "MIS/EMK",
+            "conditions": chronic_from_mis,
+            "note": "Source: MIS/EMK only. NOT from HEALTH_ID calculation.",
+        })
+    else:
+        flags.append({
+            "flag": "confirmed_chronic",
+            "active": False,
+            "details": None,
+        })
+
+    return flags
+
+
+# ─── Сборка evidence ─────────────────────────────────────────────
+
+def build_evidence(
+    input_data: HealthInput,
+    config: dict[str, Any],
+    components: list[tuple[ComponentResult, list[str]]],
+    quality_report: dict[str, Any],
+    baseline: dict[str, Any] | None = None,
+) -> EvidenceTrace:
+    """Собирает полный evidence trace для прослеживаемости."""
+    all_formulas = []
+    contribution_trace = {}
+
+    for comp, formulas in components:
+        all_formulas.extend(formulas)
+        contribution_trace[comp.name] = {
+            "score": comp.score,
+            "weight": comp.weight,
+            "product": round(comp.score * comp.weight, 4),
+            "features": {
+                f["name"]: {
+                    "score": f.get("normalized_score"),
+                    "weight": f.get("contribution_weight"),
+                    "product": f.get("contribution"),
+                }
+                for f in comp.features
+            },
+        }
+
+    total = sum(c.score * c.weight for c, _ in components)
+    contribution_trace["total"] = round(total, 4)
+
+    return EvidenceTrace(
+        input_ids=[input_data.event_id],
+        quality_reports=[quality_report],
+        formulas_applied=all_formulas,
+        norms_used={
+            f["name"]: f.get("normal_range")
+            for f in _flatten_config_features(config)
+        },
+        contribution_trace=contribution_trace,
+        baseline_used={
+            "available": baseline.get("available", False),
+            "n_historical_points": baseline.get("n_points", 0),
+            "window_days": baseline.get("window_days", 90),
+            "excluded_event": baseline.get("excluded_event"),
+        } if baseline else None,
+        model_card_ref=config.get("model_version", "unknown"),
+    )
+
+
+# ─── Главная функция ──────────────────────────────────────────────
+
+def calculate_health_id(
+    input_data: HealthInput,
+    model_version: str,
+    baseline: dict[str, Any] | None = None,
+    history: list[dict[str, Any]] | None = None,
+) -> HealthResult:
+    """
+    Полный пайплайн расчёта HEALTH_ID.
+
+    Параметры:
+        input_data: входной пакет данных ПрМО
+        model_version: версия модели (например, 'health_id_v1.0.0')
+        baseline: персональные коридоры (с уже исключённой текущей точкой)
+        history: история событий для классификации повторных отклонений
+
+    Возвращает:
+        HealthResult — выходной контракт с полным evidence
+    """
+    # 1. Загрузка неизменяемой конфигурации версии
+    config = load_model_config(model_version)
+
+    # 2. Валидация входных данных
+    validated, quality_report = validate_input(input_data, config)
+
+    # Если качество — fail, не выполняем расчёт
+    if quality_report["overall"] == "fail":
+        return _build_failed_result(
+            input_data, model_version, quality_report, config
+        )
+
+    # 3. Расчёт компонентов
+    comp_results = []
+    for comp_key in ["hBody", "hMental", "hSocial"]:
+        comp_config = config["components"][comp_key]
+        comp_config["name"] = comp_key
+        comp_result, formulas = calculate_component(validated, comp_config)
+        comp_results.append((comp_result, formulas))
+
+    # 4. Расчёт итогового индекса
+    health_id_value = sum(
+        c.score * c.weight for c, _ in comp_results
+    )
+
+    # 5. Оценка неопределённости и полноты
+    uncertainty = estimate_uncertainty(validated, [c for c, _ in comp_results])
+    completeness = calculate_completeness(validated, config)
+
+    # 6. Классификация состояния
+    state_flags = classify_state(validated, config, baseline, history)
+
+    # 7. Определение категории (green / yellow / red)
+    thresholds = config.get("thresholds", {})
+    category = _determine_category(health_id_value, thresholds)
+
+    # 8. Формирование evidence
+    evidence = build_evidence(
+        input_data=validated,
+        config=config,
+        components=comp_results,
+        quality_report=quality_report,
+        baseline=baseline,
+    )
+
+    # 9. Формирование выходного контракта
+    config_hash = hash_config(config)
+    result_id = f"res_{uuid.uuid4().hex[:12]}"
+
+    result = HealthResult(
+        result_id=result_id,
+        event_id=input_data.event_id,
+        worker_pseudonym=input_data.worker_pseudonym,
+        timestamp=datetime.now(timezone.utc).isoformat(),
+        health_id={
+            "value": round(health_id_value, 4),
+            "category": category,
+            "model_version": model_version,
+            "config_snapshot_hash": config_hash,
+            "disclaimer": "Исследовательский результат. Не является медицинским диагнозом.",
+        },
+        components={
+            comp.name: comp for comp, _ in comp_results
+        },
+        completeness=completeness,
+        uncertainty=uncertainty,
+        state_flags=state_flags,
+        evidence=evidence,
+        audit={
+            "calculation_timestamp": datetime.now(timezone.utc).isoformat(),
+            "config_snapshot_hash": config_hash,
+            "quality_report_hash": hashlib.sha256(
+                json.dumps(quality_report, sort_keys=True).encode()
+            ).hexdigest()[:16],
+            "reproducible": True,
+        },
+    )
+
+    return result
+
+
+def _determine_category(value: float, thresholds: dict[str, list[float]]) -> str:
+    """Определяет категорию HEALTH_ID по порогам."""
+    if not thresholds:
+        return "unknown"
+    green = thresholds.get("green", [0.80, 1.00])
+    yellow = thresholds.get("yellow", [0.60, 0.80])
+    red = thresholds.get("red", [0.00, 0.60])
+
+    if green[0] <= value <= green[1]:
+        return "green"
+    elif yellow[0] <= value < yellow[1]:
+        return "yellow"
+    elif red[0] <= value < red[1]:
+        return "red"
+    return "unknown"
+
+
+def _build_failed_result(
+    input_data: HealthInput,
+    model_version: str,
+    quality_report: dict[str, Any],
+    config: dict[str, Any],
+) -> HealthResult:
+    """Формирует результат при провале контроля качества."""
+    return HealthResult(
+        result_id=f"res_{uuid.uuid4().hex[:12]}",
+        event_id=input_data.event_id,
+        worker_pseudonym=input_data.worker_pseudonym,
+        timestamp=datetime.now(timezone.utc).isoformat(),
+        health_id={
+            "value": None,
+            "category": "not_calculated",
+            "model_version": model_version,
+            "config_snapshot_hash": hash_config(config),
+            "disclaimer": "Исследовательский результат. Не является медицинским диагнозом.",
+            "reason": "quality_check_failed",
+        },
+        components={},
+        completeness={"overall": 0.0, "missing": [], "missing_impact": "n/a"},
+        uncertainty={"overall": 1.0, "sources": [
+            {"type": "quality_failure", "impact": 1.0}
+        ]},
+        state_flags=[],
+        evidence=EvidenceTrace(
+            input_ids=[input_data.event_id],
+            quality_reports=[quality_report],
+            formulas_applied=[],
+            norms_used={},
+            contribution_trace={},
+            baseline_used=None,
+            model_card_ref=model_version,
+        ),
+        audit={
+            "calculation_timestamp": datetime.now(timezone.utc).isoformat(),
+            "config_snapshot_hash": hash_config(config),
+            "reproducible": True,
+            "quality_status": "fail",
+        },
+    )
+```
+##  Шаблон расчёта персональных коридоров (baseline)
+```python
+"""
+Расчёт персональных коридоров (baseline) с защитой от утечки данных.
+Ключевой принцип: текущее измерение НИКОГДА не входит в свой baseline.
+"""
+from __future__ import annotations
+
+import numpy as np
+from datetime import datetime, timedelta
+from typing import Any
+
+
+def calculate_baseline(
+    worker_pseudonym: str,
+    current_event_id: str,
+    history: list[dict[str, Any]],
+    window_days: int = 90,
+    min_points: int = 3,
+    quality_filter: str = "pass",
+) -> dict[str, Any]:
+    """
+    Рассчитывает персональные коридоры для работника.
+
+    Параметры:
+        worker_pseudonym: псевдоним работника
+        current_event_id: ID текущего события (ИСКЛЮЧАЕТСЯ из baseline)
+        history: история событий
+        window_days: окно наблюдения в днях
+        min_points: минимум точек для построения коридора
+        quality_filter: фильтр качества ("pass" / "pass_with_warnings" / "any")
+
+    Возвращает:
+        Словарь с коридорами по каждому признаку
+    """
+    # Фильтрация по работнику
+    worker_history = [
+        h for h in history
+        if h.get("worker_pseudonym") == worker_pseudonym
+    ]
+
+    # ⚠️ КРИТИЧЕСКОЕ ИСКЛЮЧЕНИЕ текущей точки
+    worker_history = [
+        h for h in worker_history
+        if h.get("event_id") != current_event_id
+    ]
+
+    # Фильтр по окну времени
+    cutoff_date = datetime.now() - timedelta(days=window_days)
+    worker_history = [
+        h for h in worker_history
+        if _parse_date(h.get("timestamp", "")) >= cutoff_date
+    ]
+
+    # Фильтр по качеству
+    if quality_filter != "any":
+        worker_history = [
+            h for h in worker_history
+            if h.get("quality_status", "pass") in (
+                ["pass"] if quality_filter == "pass"
+                else ["pass", "pass_with_warnings"]
+            )
+        ]
+
+    if len(worker_history) < min_points:
+        return {
+            "available": False,
+            "reason": "insufficient_history",
+            "n_points": len(worker_history),
+            "min_points": min_points,
+            "excluded_event": current_event_id,
+            "window_days": window_days,
+        }
+
+    # Сбор значений по признакам
+    baseline = {"available": True, "features": {}}
+    all_feature_names = set()
+    for h in worker_history:
+        measurements = h.get("measurements", {})
+        all_feature_names.update(measurements.keys())
+
+    for feature_name in all_feature_names:
+        values = []
+        source_events = []
+
+        for h in worker_history:
+            measurements = h.get("measurements", {})
+            if feature_name in measurements and measurements[feature_name] is not None:
+                values.append(measurements[feature_name])
+                source_events.append(h["event_id"])
+
+        if len(values) < min_points:
+            baseline["features"][feature_name] = {
+                "available": False,
+                "reason": "insufficient_points",
+                "n_points": len(values),
+            }
+            continue
+
+        arr = np.array(values, dtype=float)
+        mean = float(np.mean(arr))
+        std = float(np.std(arr, ddof=1)) if len(arr) > 1 else 0.0
+        median = float(np.median(arr))
+
+        baseline["features"][feature_name] = {
+            "available": True,
+            "mean": round(mean, 4),
+            "std": round(std, 4),
+            "median": round(median, 4),
+            "p5": round(float(np.percentile(arr, 5)), 4),
+            "p95": round(float(np.percentile(arr, 95)), 4),
+            "corridor_low": round(mean - 2 * std, 4) if std > 0 else round(mean * 0.9, 4),
+            "corridor_high": round(mean + 2 * std, 4) if std > 0 else round(mean * 1.1, 4),
+            "n_points": len(values),
+            "source_events": source_events,
+            "window_days": window_days,
+            "excluded_event": current_event_id,
+        }
+
+    baseline["n_points"] = len(worker_history)
+    baseline["window_days"] = window_days
+    baseline["excluded_event"] = current_event_id
+
+    # Проверка дрейфа baseline
+    baseline["drift_check"] = _check_baseline_drift(worker_history)
+
+    return baseline
+
+
+def _check_baseline_drift(history: list[dict[str, Any]]) -> dict[str, Any]:
+    """
+    Проверяет дрейф baseline: сравнивает первую и последнюю трети истории.
+    Если средние различаются значимо (t-тест, p < 0.05) — помечает дрейф.
+    """
+    if len(history) < 6:
+        return {"checked": False, "reason": "insufficient_data"}
+
+    from scipy import stats
+
+    third = len(history) // 3
+    first_third = history[:third]
+    last_third = history[-third:]
+
+    # Сбор значений для сравнения (по первому доступному признаку)
+    drift_flags = []
+    all_features = set()
+    for h in history:
+        all_features.update(h.get("measurements", {}).keys())
+
+    for feat in all_features:
+        v1 = [h["measurements"][feat] for h in first_third
+              if h.get("measurements", {}).get(feat) is not None]
+        v2 = [h["measurements"][feat] for h in last_third
+              if h.get("measurements", {}).get(feat) is not None]
+
+        if len(v1) < 2 or len(v2) < 2:
+            continue
+
+        t_stat, p_value = stats.ttest_ind(v1, v2, equal_var=False)
+        if p_value < 0.05:
+            drift_flags.append({
+                "feature": feat,
+                "p_value": round(p_value, 4),
+                "direction": "increase" if np.mean(v2) > np.mean(v1) else "decrease",
+            })
+
+    return {
+        "checked": True,
+        "drift_detected": len(drift_flags) > 0,
+        "drifted_features": drift_flags,
+    }
+
+
+def _parse_date(date_str: str) -> datetime:
+    """Парсит ISO-8601 дату с обработкой ошибок."""
+    try:
+        return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+    except (ValueError, AttributeError):
+        return datetime.min
+```
+##  Шаблон контроля качества видео для верификации
+```python
 """
 Контроль качества видеопотока для биометрической верификации.
 Все результаты сохраняются в аудит. Исходные видео не хранятся.
@@ -220,8 +1282,8 @@ def check_video_quality(
         result.overall = "pass"
 
     return result
-
-# Шаблон маршрутизации результатов верификации
+```
+## Шаблон маршрутизации результатов верификации
 ```python
 """
 Маршрутизация результатов биометрической верификации.
