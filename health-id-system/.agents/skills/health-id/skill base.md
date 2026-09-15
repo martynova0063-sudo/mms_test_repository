@@ -64,6 +64,113 @@ tags:
 
 ## 8. Примеры шаблонов и фрагментов кода
 
+### 4.1. Схема базы данных (основные таблицы)
+```sql
+-- Верификации
+CREATE TABLE verifications (
+    verification_id UUID PRIMARY KEY,
+    worker_pseudonym VARCHAR(64) NOT NULL,
+    event_id VARCHAR(128),
+    status VARCHAR(20) NOT NULL CHECK (status IN ('verified', 'manual_review', 'not_verified')),
+    face_match_score FLOAT,
+    liveness_score FLOAT,
+    quality_score FLOAT,
+    pipeline_version VARCHAR(32) NOT NULL,
+    config_hash VARCHAR(64) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    processed_at TIMESTAMP,
+    full_result JSONB NOT NULL
+);
+
+-- Версии модели
+CREATE TABLE model_versions (
+    version_id UUID PRIMARY KEY,
+    model_version VARCHAR(64) UNIQUE NOT NULL,
+    parent_version VARCHAR(64),
+    change_type VARCHAR(10) NOT NULL,
+    change_description TEXT,
+    config_snapshot JSONB NOT NULL,
+    config_hash VARCHAR(64) NOT NULL,
+    created_by VARCHAR(128) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    status VARCHAR(20) NOT NULL DEFAULT 'experimental'
+);
+
+-- Расчёты HEALTH_ID
+CREATE TABLE health_id_calculations (
+    calculation_id UUID PRIMARY KEY,
+    worker_pseudonym VARCHAR(64) NOT NULL,
+    event_id VARCHAR(128),
+    model_version VARCHAR(64) NOT NULL REFERENCES model_versions(model_version),
+    config_hash VARCHAR(64) NOT NULL,
+    health_id_value FLOAT NOT NULL,
+    completeness FLOAT NOT NULL,
+    uncertainty_score FLOAT NOT NULL,
+    is_acute BOOLEAN DEFAULT FALSE,
+    is_persistent BOOLEAN DEFAULT FALSE,
+    is_chronic BOOLEAN DEFAULT FALSE,
+    full_result JSONB NOT NULL,
+    evidence JSONB NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    FOREIGN KEY (model_version) REFERENCES model_versions(model_version)
+);
+
+-- Review tasks
+CREATE TABLE review_tasks (
+    review_id UUID PRIMARY KEY,
+    calculation_id UUID NOT NULL REFERENCES health_id_calculations(calculation_id),
+    status VARCHAR(20) NOT NULL CHECK (status IN ('pending', 'confirmed', 'rejected')),
+    priority VARCHAR(10) NOT NULL CHECK (priority IN ('routine', 'urgent')),
+    trigger VARCHAR(50) NOT NULL,
+    reviewer_id VARCHAR(128),
+    reviewer_qualification VARCHAR(128),
+    comment TEXT,
+    decision_rationale TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    reviewed_at TIMESTAMP,
+    audit_trail JSONB NOT NULL DEFAULT '[]'
+);
+
+-- Baseline
+CREATE TABLE baselines (
+    baseline_id UUID PRIMARY KEY,
+    worker_pseudonym VARCHAR(64) NOT NULL,
+    model_version VARCHAR(64) NOT NULL,
+    baseline_version VARCHAR(64) NOT NULL,
+    n_historical_points INT NOT NULL,
+    current_point_excluded BOOLEAN NOT NULL DEFAULT TRUE,
+    corridors JSONB NOT NULL,
+    fallback_used BOOLEAN NOT NULL DEFAULT FALSE,
+    fallback_reason TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- Журнал аудита
+CREATE TABLE audit_log (
+    audit_id UUID PRIMARY KEY,
+    entity_type VARCHAR(50) NOT NULL,
+    entity_id UUID NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    actor VARCHAR(128) NOT NULL,
+    actor_role VARCHAR(50) NOT NULL,
+    timestamp TIMESTAMP NOT NULL DEFAULT NOW(),
+    details JSONB,
+    ip_address INET,
+    user_agent TEXT
+);
+
+-- Дрейф данных
+CREATE TABLE drift_reports (
+    report_id UUID PRIMARY KEY,
+    model_version VARCHAR(64) NOT NULL,
+    period_start DATE NOT NULL,
+    period_end DATE NOT NULL,
+    metrics JSONB NOT NULL,
+    alerts JSONB,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+```
+
 ### Шаблон функции расчёта HEALTH_ID
 
 ```python
