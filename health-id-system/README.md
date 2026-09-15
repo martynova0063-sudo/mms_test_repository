@@ -897,22 +897,25 @@ class DriftMonitor:
 
 ### 3.7. 🔌 API
 #### 3.7.1. 🌐 Эндпоинты
+#### 3.7.1. 🌐 Эндпоинты
+
 | Метод | Путь | Назначение | Контур |
-| --- | --- |
-| POST | `/api/v1/verify` | Запуск биометрической верификации | 🏥 Медицинский |
-| GET | `/api/v1/verify/{id}` | Получение результата верификации | 🏥 Медицинский
-| POST | `/api/v1/data/intake` | Приём данных из МИС ЕЦОЗ | 🏥 Медицинский
-| POST | `/api/v1/health_id/calculate` | Расчёт HEALTH_ID | 🏥 Медицинский
-| GET | `/api/v1/health_id/{calculation_id}` | Получение результата расчёта |  Медицинский
-| GET | `/api/v1/health_id/{worker_pseudonym}/dynamics` | Динамика состояния работника |  Медицинский
-| POST | `/api/v1/review` | Создание review task | 🏥 Медицинский
-| GET | `/api/v1/review/pending` | Список ожидающих review | 🏥 Медицинский
-| PUT | `/api/v1/review/{id}` | Обновление статуса review | 🏥 Медицинский
-| GET | `/api/v1/model/card/{version}` | Получение model card | 🏥 Оба
-| GET | `/api/v1/model/versions` | Журнал версий | 🏥 Оба
-| GET | `/api/v1/model/drift/report` | Отчёт о дрейфе данных | 🏥 Медицинский
-| GET | `/api/v1/health_id/{calculation_id}/evidence` | Полный evidence расчёта | 🏥 Медицинский
-| GET | `/api/v1/health_id/export` | Экспорт данных исследования (обезличенных) | 🔬 Исследовательский
+| --- | --- | --- | --- |
+| `POST` | `/api/v1/verify` | Запуск биометрической верификации | 🏥 Медицинский |
+| `GET` | `/api/v1/verify/{id}` | Получение результата верификации | 🏥 Медицинский |
+| `POST` | `/api/v1/data/intake` | Приём данных из МИС ЕЦОЗ | 🏥 Медицинский |
+| `POST` | `/api/v1/health_id/calculate` | Расчёт `HEALTH_ID` | 🏥 Медицинский |
+| `GET` | `/api/v1/health_id/{calculation_id}` | Получение результата расчёта | 🏥 Медицинский |
+| `GET` | `/api/v1/health_id/{worker_pseudonym}/dynamics` | Динамика состояния работника | 🏥 Медицинский |
+| `POST` | `/api/v1/review` | Создание review task | 🏥 Медицинский |
+| `GET` | `/api/v1/review/pending` | Список ожидающих review | 🏥 Медицинский |
+| `PUT` | `/api/v1/review/{id}` | Обновление статуса review | 🏥 Медицинский |
+| `GET` | `/api/v1/model/card/{version}` | Получение model card | 🏥 Оба |
+| `GET` | `/api/v1/model/versions` | Журнал версий | 🏥 Оба |
+| `GET` | `/api/v1/model/drift/report` | Отчёт о дрейфе данных | 🏥 Медицинский |
+| `GET` | `/api/v1/health_id/{calculation_id}/evidence` | Полный evidence расчёта | 🏥 Медицинский |
+| `GET` | `/api/v1/health_id/export` | Экспорт данных исследования (обезличенных) | 🔬 Исследовательский |
+
 
 #### 3.7.2. 🔐 Аутентификация и авторизация
 
@@ -928,10 +931,10 @@ class DriftMonitor:
 | 🛡️ `admin` | Управление версиями, конфигурациями |
 
 #### 3.7.3. ⏱️ Ограничения API
-🚦 Rate limiting: 100 запросов/мин на пользователя;
-📦 Максимальный размер видеофайла: 50 MB;
-📦 Максимальный размер JSON-пакета данных: 5 MB;
-⏳ Timeout обработки: 30 секунд для верификации, 10 секунд для расчёта HEALTH_ID.
+- 🚦 Rate limiting: 100 запросов/мин на пользователя;
+- 📦 Максимальный размер видеофайла: 50 MB;
+- 📦 Максимальный размер JSON-пакета данных: 5 MB;
+- ⏳ Timeout обработки: 30 секунд для верификации, 10 секунд для расчёта HEALTH_ID.
 
 
 ## 4. 🗄️ Требования к данным
