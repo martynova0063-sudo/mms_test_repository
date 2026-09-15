@@ -115,46 +115,75 @@ flowchart TD
 | **API-слой** | REST API (FastAPI) — эндпоинты, аутентификация, rate limiting |
 | **Инфраструктура** | PostgreSQL · Audit Log · Vault |
 
-3.2. Разделение контуров
-text
-┌──────────────────────────────┐    ┌──────────────────────────────┐
-│      МЕДИЦИНСКИЙ КОНТУР      │    │    КОРПОРАТИВНЫЙ КОНТУР      │
-│                              │    │                              │
-│ • Данные ПрМО (витальные)    │    │ • Идентификатор работника    │
-│ • Расчёт HEALTH_ID           │    │ • Подразделение, должность   │
-│ • Human review (медработник) │    │ • Расписание осмотров        │
-│ • Evidence и аудит           │    │ • Статус прохождения         │
-│ • Медицинское заключение     │    │                              │
-│                              │    │  ┌────────────────────────┐ │
-│   🔒 Передача только через   │    │  │ Передаются: verified/  │ │
-│   📋 санкционированный API   │◀──▶│  │ manual_review/         │ │
-│   📋 с минимально необходимым│    │  │ not_verified           │ │
-│   объёмом данных             │    │  │ + ID сессии верификации │ │
-│                              │    │  └────────────────────────┘ │
-│   ❌ НЕ передаются: значения  │    │                              │
-│   показателей, диагнозы,     │    │   ❌ НЕ передаются:           │
-│   HEALTH_ID, метрики         │    │   медицинские данные          │
-└──────────────────────────────┘    └──────────────────────────────┘
-Правило: корпоративный контур получает только статус верификации личности и ID сессии. Медицинский контур не получает корпоративных атрибутов. Факт несовпадения личности не является медицинским недопуском.
+### 3.2. Разделение контуров
 
-4. Модуль 1: Биометрическая верификация личности 👤
-4.1. Функциональные требования
-4.1.1. Проверка соответствия лица (Face Matching)
-Параметр	Требование
-Вход 1	Видеопоток с веб-камеры (min 640×480, 15 fps)
-Вход 2	Эталонная фотография (ID-фото из МИС)
-Алгоритм	Face embedding + косинусное расстояние
-Порог совпадения	Настраиваемый, default: cosine_similarity ≥ 0.62
-Результат	match_score (0.0–1.0) + matched: bool
-4.1.2. Liveness Detection
-Метод	Описание
-Active liveness	Инструкция пользователю: повернуть голову, улыбнуться, моргнуть
-Passive liveness	Анализ микродвижений, текстуры кожи, глубины (depth)
-Комбинированный	Оба метода, решение — взвешенное
-⚠️ Требование к liveness: минимальная устойчивость к атакам: фото-спуфинг, видеоспуфинг, 3D-маска. В исследовательском режиме фиксируется тип атаки, если обнаружена.
+```mermaid
+flowchart LR
+    subgraph MED["🏥 Медицинский контур"]
+        direction TB
+        M1["Данные ПрМО (витальные)"]
+        M2["Расчёт HEALTH_ID"]
+        M3["Human review (медработник)"]
+        M4["Evidence и аудит"]
+        M5["Медицинское заключение"]
+    end
 
-4.1.3. Контроль качества видео
-python
+    subgraph CORP["🏢 Корпоративный контур"]
+        direction TB
+        C1["Идентификатор работника"]
+        C2["Подразделение, должность"]
+        C3["Расписание осмотров"]
+        C4["Статус прохождения"]
+    end
+
+    MED <-. "🔒 санкционированный API<br/>минимально необходимый объём" .-> CORP
+```
+
+**Что передаётся между контурами:**
+
+| 🏥 Медицинский → Корпоративный | 🏢 Корпоративный → Медицинский |
+| --- | --- |
+| `verified` / `manual_review` / `not_verified` | Идентификатор работника |
+| ID сессии верификации | Расписание осмотров (время, тип) |
+
+**Что НЕ передаётся:**
+
+| 🏥 Из медицинского контура | 🏢 Из корпоративного контура |
+| --- | --- |
+| ❌ Значения показателей | ❌ Медицинские данные |
+| ❌ Диагнозы | ❌ Результаты расчёта `HEALTH_ID` |
+| ❌ `HEALTH_ID` | |
+| ❌ Метрики evidence | |
+
+**Правило:** корпоративный контур получает только статус верификации личности и ID сессии. Медицинский контур не получает корпоративных атрибутов. Факт несовпадения личности не является медицинским недопуском.
+
+## 4. Модуль 1: Биометрическая верификация личности 👤
+
+### 4.1. Функциональные требования
+
+#### 4.1.1. Проверка соответствия лица (Face Matching)
+
+| Параметр | Требование |
+| --- | --- |
+| Вход 1 | Видеопоток с веб-камеры (min 640×480, 15 fps) |
+| Вход 2 | Эталонная фотография (ID-фото из МИС) |
+| Алгоритм | Face embedding + косинусное расстояние |
+| Порог совпадения | Настраиваемый, default: `cosine_similarity ≥ 0.62` |
+| Результат | `match_score` (0.0–1.0) + `matched: bool` |
+
+#### 4.1.2. Liveness Detection
+
+| Метод | Описание |
+| --- | --- |
+| Active liveness | Инструкция пользователю: повернуть голову, улыбнуться, моргнуть |
+| Passive liveness | Анализ микродвижений, текстуры кожи, глубины (depth) |
+| Комбинированный | Оба метода, решение — взвешенное |
+
+⚠️ **Требование к liveness:** минимальная устойчивость к атакам: фото-спуфинг, видеоспуфинг, 3D-маска. В исследовательском режиме фиксируется тип атаки, если обнаружена.
+
+#### 4.1.3. Контроль качества видео
+
+```python
 QUALITY_CHECKS = {
     "resolution": {"min": (640, 480), "actual": None},
     "fps": {"min": 15, "actual": None},
@@ -165,39 +194,50 @@ QUALITY_CHECKS = {
     "angle": {"max_yaw": 25, "max_pitch": 20, "max_roll": 15, "actual": None},
     "duration": {"min_sec": 3, "actual": None},
 }
-Каждый чек возвращает pass / fail / warning. Результаты сохраняются в аудит.
+```
 
-4.2. Маршрутизация результатов
-text
-                        ┌──────────────┐
-                        │  Верификация │
-                        └──────┬───────┘
-                               │
-              ┌────────────────┼────────────────┐
-              ▼                ▼                ▼
-     ┌────────────┐   ┌──────────────┐   ┌─────────────┐
-     │  VERIFIED  │   │ MANUAL_REVIEW│   │NOT_VERIFIED │
-     │            │   │              │   │             │
-     │ match≥0.62 │   │ 0.45≤match  │   │ match<0.45  │
-     │ liveness✅ │   │ <0.62 ИЛИ   │   │ ИЛИ         │
-     │ quality✅  │   │ liveness⚠️  │   │ liveness❌  │
-     │            │   │            │   │             │
-     │ → Авто-    │   │ → Human     │   │ → Отказ,    │
-     │   пропуск  │   │   Review    │   │   повтор    │
-     └────────────┘   └──────┬─────┘   └─────────────┘
-                             │
-                    ┌────────┼────────┐
-                    ▼                  ▼
-            ┌────────────┐    ┌─────────────┐
-            │ CONFIRMED  │    │  REJECTED   │
-            │ (медработ- │    │ (медработ-  │
-            │  ник подт- │    │  ник откл.  │
-            │  вердил)   │    │  совпадение)│
-            └────────────┘    └─────────────┘
-4.3. Аудит верификации
+Каждый чек возвращает `pass` / `fail` / `warning`. Результаты сохраняются в аудит.
+
+### 4.2. Маршрутизация результатов
+
+```mermaid
+flowchart TD
+    V["🎯 Верификация"] --> R
+
+    subgraph R["Результаты верификации"]
+        VERIFIED["✅ VERIFIED<br/>match ≥ 0.62<br/>liveness ✅<br/>quality ✅<br/>→ Авто-пропуск"]
+        MANUAL["⚠️ MANUAL_REVIEW<br/>0.45 ≤ match &lt; 0.62<br/>ИЛИ liveness ⚠️<br/>→ Human Review"]
+        NOT_VERIFIED["❌ NOT_VERIFIED<br/>match &lt; 0.45<br/>ИЛИ liveness ❌<br/>→ Отказ, повтор"]
+    end
+
+    V --> VERIFIED
+    V --> MANUAL
+    V --> NOT_VERIFIED
+
+    MANUAL --> CONFIRMED["✅ CONFIRMED<br/>(медработник подтвердил)"]
+    MANUAL --> REJECTED["❌ REJECTED<br/>(медработник откл. совпадение)"]
+```
+
+**Условия маршрутизации:**
+
+| Статус | Условие | Действие |
+| --- | --- | --- |
+| `verified` | `match ≥ 0.62` + liveness ✅ + quality ✅ | Авто-пропуск |
+| `manual_review` | `0.45 ≤ match < 0.62` ИЛИ liveness ⚠️ | Передача на Human Review |
+| `not_verified` | `match < 0.45` ИЛИ liveness ❌ | Отказ, повторный запрос видео |
+
+**Результат Human Review:**
+
+| Статус | Описание |
+| --- | --- |
+| `confirmed` | Медработник подтвердил совпадение личности |
+| `rejected` | Медработник отклонил совпадение личности |
+
+### 4.3. Аудит верификации
+
 Каждая сессия верификации фиксирует:
 
-text
+```python
 audit_record = {
     "session_id": "uuid",
     "timestamp": "ISO-8601",
@@ -212,20 +252,31 @@ audit_record = {
     "model_version": "face_v1.2.0",
     "config_snapshot": "hash(config)",
 }
+```
+
 ⚠️ Видеоданные и эталонные фото не хранятся. Сохраняются только хеши и метаданные. В исследовательском режиме допускается временное хранение обезличенных фрагментов для отладки с автоудалением через 24 часа.
 
-5. Модуль 2: Движок расчёта HEALTH_ID 🧮
-5.1. Формула (исследовательская версия v1)
-text
-HEALTH_ID = hBody × 0.60 + hMental × 0.25 + hSocial × 0.15
-Компонент	Вес	Источник данных
-hBody	0.60	Витальные показатели: ЧСС, АД (сист./диаст.), температура, сатурация, алкоголь
-hMental	0.25	Оценка адекватности (медработник), связность речи, реакция зрачков
-hSocial	0.15	Контекст: регулярность осмотров, пропуски, условия труда
-5.2. Версионирование модели
-Каждая версия модели фиксируется в model_card со следующими атрибутами:
+## 5. Модуль 2: Движок расчёта HEALTH_ID 🧮
 
-yaml
+### 5.1. Формула (исследовательская версия v1)
+
+
+$$
+\text{HEALTH\_ID} = h_{\text{Body}} \times 0{,}60 + h_{\text{Mental}} \times 0{,}25 + h_{\text{Social}} \times 0{,}15
+$$
+
+
+| Компонент | Вес | Источник данных |
+| --- | --- | --- |
+| `hBody` | 0,60 | Витальные показатели: ЧСС, АД (сист./диаст.), температура, сатурация, алкоголь |
+| `hMental` | 0,25 | Оценка адекватности (медработник), связность речи, реакция зрачков |
+| `hSocial` | 0,15 | Контекст: регулярность осмотров, пропуски, условия труда |
+
+### 5.2. Версионирование модели
+
+Каждая версия модели фиксируется в `model_card` со следующими атрибутами:
+
+```yaml
 model_version: "health_id_v1.0.0"
 status: "research"  # research | validated | deprecated
 created_at: "2026-09-15"
@@ -244,35 +295,35 @@ components:
           max_artifact_pct: 5
         formula: "normalized_score(feature_value, normal_range)"
         contribution_weight: 0.25
-      
+
       - name: "blood_pressure_systolic"
         unit: "mmHg"
         source: "measured"
         normal_range: [100, 130]
         formula: "normalized_score(feature_value, normal_range)"
         contribution_weight: 0.25
-      
+
       - name: "blood_pressure_diastolic"
         unit: "mmHg"
         source: "measured"
         normal_range: [60, 85]
         formula: "normalized_score(feature_value, normal_range)"
         contribution_weight: 0.20
-      
+
       - name: "temperature"
         unit: "°C"
         source: "measured"
         normal_range: [36.1, 37.2]
         formula: "normalized_score(feature_value, normal_range)"
         contribution_weight: 0.15
-      
+
       - name: "spo2"
         unit: "%"
         source: "measured"
         normal_range: [95, 100]
         formula: "normalized_score(feature_value, normal_range)"
         contribution_weight: 0.10
-      
+
       - name: "alcohol_test"
         unit: "mg/l"
         source: "measured"
@@ -289,14 +340,14 @@ components:
         normal_range: [7, 10]
         formula: "normalized_score(feature_value, normal_range)"
         contribution_weight: 0.40
-      
+
       - name: "speech_coherence"
         unit: "0-10"
         source: "derived"     # анализ речи
         normal_range: [7, 10]
         formula: "normalized_score(feature_value, normal_range)"
         contribution_weight: 0.35
-      
+
       - name: "pupil_reaction"
         unit: "0-10"
         source: "measured"
@@ -312,7 +363,7 @@ components:
         source: "context"
         formula: "compliance_ratio(expected, actual)"
         contribution_weight: 0.50
-      
+
       - name: "missed_examinations"
         unit: "count"
         source: "context"
@@ -321,7 +372,7 @@ components:
 
 thresholds:
   green: [0.80, 1.00]    # норма
-  yellow: [0.60, 0.80)   # внимание
+  yellow: [0.60, 0.80)  # внимание
   red: [0.00, 0.60)      # отклонение
 
 uncertainty:
@@ -335,47 +386,53 @@ quality_rules:
   flag_if:
     - "unit_mismatch"
     - "measurement_protocol_violation"
-5.3. Требования к движку
-Требование	Реализация
-📌 Фиксация версии	model_version обязательна для каждого расчёта. Версии неизменяемы.
-🔒 Неизменяемость конфигурации	После публикации версии model_card — заморозка. Изменения → новая версия.
-📊 Прослеживаемость	Для каждого результата сохраняется config_snapshot_hash — хеш полной конфигурации версии
-🧪 Воспроизводимость	Повторный расчёт с теми же входными данными и той же версией → идентичный результат
-⚠️ Разделение данных	source: measured — измерено прибором/медработником; source: derived — вычислено; source: context — контекстная информация
-📋 Отделение от диагноза	HEALTH_ID не является диагнозом. В выходном контракте — явный дисклеймер.
-5.4. Алгоритм расчёта
-python
+```
+
+### 5.3. Требования к движку
+
+| Требование | Реализация |
+| --- | --- |
+| 📌 Фиксация версии | `model_version` обязательна для каждого расчёта. Версии неизменяемы. |
+| 🔒 Неизменяемость конфигурации | После публикации версии `model_card` — заморозка. Изменения → новая версия. |
+| 📊 Прослеживаемость | Для каждого результата сохраняется `config_snapshot_hash` — хеш полной конфигурации версии. |
+| 🧪 Воспроизводимость | Повторный расчёт с теми же входными данными и той же версией → идентичный результат. |
+| ⚠️ Разделение данных | `source: measured` — измерено прибором/медработником; `source: derived` — вычислено; `source: context` — контекстная информация. |
+| 📋 Отделение от диагноза | `HEALTH_ID` не является диагнозом. В выходном контракте — явный дисклеймер. |
+
+### 5.4. Алгоритм расчёта
+
+```python
 def calculate_health_id(input_data: HealthInput, model_version: str) -> HealthResult:
     """
     Полный пайплайн расчёта HEALTH_ID.
     """
     # 1. Загрузка неизменяемой конфигурации версии
     config = load_model_config(model_version)
-    
+
     # 2. Валидация входных данных
     validated = validate_input(input_data, config)
-    
+
     # 3. Расчёт компонентов
     hBody = calculate_component(validated, config.components.hBody)
     hMental = calculate_component(validated, config.components.hMental)
     hSocial = calculate_component(validated, config.components.hSocial)
-    
+
     # 4. Расчёт итогового индекса
     health_id = (
         hBody.score * config.components.hBody.weight +
         hMental.score * config.components.hMental.weight +
         hSocial.score * config.components.hSocial.weight
     )
-    
+
     # 5. Оценка неопределённости
     uncertainty = estimate_uncertainty(validated, hBody, hMental, hSocial)
-    
+
     # 6. Оценка полноты данных
     completeness = calculate_completeness(validated)
-    
+
     # 7. Проверка классификации состояния
     state_flags = classify_state(validated, model_version)
-    
+
     # 8. Формирование evidence
     evidence = build_evidence(
         input_data=validated,
@@ -383,7 +440,7 @@ def calculate_health_id(input_data: HealthInput, model_version: str) -> HealthRe
         components=[hBody, hMental, hSocial],
         contribution_trace=True
     )
-    
+
     # 9. Формирование выходного контракта
     result = HealthResult(
         value=health_id,
@@ -400,8 +457,10 @@ def calculate_health_id(input_data: HealthInput, model_version: str) -> HealthRe
         evidence=evidence,
         disclaimer="Исследовательский результат. Не является медицинским диагнозом.",
     )
-    
+
     return result
+```
+
 6. Модуль 3: Приём и контроль качества входных данных 📥
 6.1. Источник данных
 Данные поступают из МИС ЕЦОЗ в виде событий ПрМО. Структура входного пакета:
