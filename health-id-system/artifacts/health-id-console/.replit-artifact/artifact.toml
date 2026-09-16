@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/health-id-console/"
+title = "HEALTH_ID Research Console"
+description = "Research console for remote periodic medical examination data: reproducible HEALTH_ID calculations, personal baselines, verification review, evidence traceability, and model governance."
+version = "1.0.0"
+id = "artifacts/health-id-console"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/health-id-console" ]
+localPort = 22643
+
+[services.development]
+run = "pnpm --filter @workspace/health-id-console run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/health-id-console", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/health-id-console/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22643"
+BASE_PATH = "/health-id-console/"
