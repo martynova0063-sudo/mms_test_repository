@@ -1386,8 +1386,8 @@ skill.md содержит шаблоны для всех ключевых под
 | Backend | Python 3.12 + FastAPI | Асинхронность, типизация, автодокументация |
 | БД | PostgreSQL 16 (Replit DB) | Реляционная, транзакции, JSONB |
 | ORM | SQLAlchemy 2.0 + Alembic | Миграции, типобезопасность |
-| Наука | NumPy, SciPy, Pandas | Расчёты, статистика, дрейф |
-| ML / CV | OpenCV, face-recognition, MediaPipe | Верификация лица, liveness |
+| Машинное обучение(ML) | NumPy, SciPy, Pandas | Расчёты, статистика, дрейф |
+| Компьютерное зрение(CV) | OpenCV, face-recognition, MediaPipe | Верификация лица, liveness |
 | Валидация | Pydantic v2 | Схемы данных, контроль типов |
 | Тесты | pytest + pytest-asyncio | Unit + integration |
 | Конфиг | YAML + Pydantic Settings | `model_card`, `config.yaml` |
