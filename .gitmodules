@@ -1,0 +1,3 @@
+[submodule "Open-Source-Face-Recognition-SDK"]
+    path = Open-Source-Face-Recognition-SDK
+    url = https://github.com/<owner>/Open-Source-Face-Recognition-SDK.git
