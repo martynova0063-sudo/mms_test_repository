@@ -15,6 +15,10 @@ from ..db.schema import init_schema
 from biometric_verification.db.connection import get_db, engine
 from sqlalchemy.orm import Session
 from sqlalchemy import select, text
+from dataclasses import asdict
+
+from ..core.liveness_detection import run_liveness_detection
+
 
 from pathlib import Path
 import os
@@ -123,6 +127,25 @@ async def verify(
                     p.unlink()
                 except:
                     pass
+
+
+@app.post("/liveness-check", summary="Проверка живого присутствия")
+async def liveness_check_upload(video: UploadFile = File(...)):
+    import tempfile, os
+    config = ModelConfig()
+
+    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
+        tmp.write(await video.read())
+        temp_path = tmp.name
+
+    try:
+        result = run_liveness_detection(temp_path, config)
+        d = result.dict() if hasattr(result, "dict") else asdict(result)  # подставь asdict если используешь dataclasses
+        if hasattr(result, "liveness_signals"):
+            d["liveness_signals"] = {k: asdict(v) for k, v in result.liveness_signals.items()}
+        return d
+    finally:
+        os.unlink(temp_path)  # удаляем временный файл                
 
 @app.get("/review-tasks", summary="Список review tasks, отсортированных по приоритету.")
 async def list_review_tasks(

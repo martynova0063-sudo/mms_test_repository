@@ -1,6 +1,7 @@
 """Оркестратор — BiometricVerifier."""
 from __future__ import annotations
 import uuid, json, dataclasses
+import numpy as np
 from dataclasses import dataclass, field, asdict
 from typing import Any
 from datetime import datetime, timezone
@@ -15,6 +16,7 @@ from .health_id import compute_health_id, HealthIDOutput
 from .review_tasks import generate_review_tasks, ReviewTask
 from .drift_detection import detect_drift, DriftReport
 from .face_detector import FaceDetectorFactory
+from .siamese_liveness import SiameseLivenessChecker
 
 def _to_serializable(obj):
     if dataclasses.is_dataclass(obj):
@@ -47,6 +49,26 @@ class FullVerificationResult:
 class BiometricVerifier:
     def __init__(self, config: ModelConfig | None = None):
         self.config = config or ModelConfig()
+
+        # Liveness: сиамская сеть как альтернативный или дополнительный метод
+        self.siamese_liveness = None
+        if self.config.liveness_method == "siamese":
+            self.siamese_liveness = SiameseLivenessChecker(
+                model_path=self.config.siamese_model_path,
+                threshold=self.config.liveness_threshold,
+            )
+
+    def _check_liveness(self, video_path: str, reference_frame: np.ndarray) -> dict:
+        # Если сиамская сеть включена — используем её
+        if self.siamese_liveness:
+            return self.siamese_liveness.check_video(
+                video_path=video_path,
+                reference_frame=reference_frame,
+                sample_every_n_frames=10,
+            )
+
+        # Иначе — существующий rPPG-метод
+        return self._rppg_liveness(video_path)        
 
     def verify(self, photo_path: str, video_path: str,
                worker_pseudonym: str, event_id: str = "",
