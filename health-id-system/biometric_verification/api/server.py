@@ -3,7 +3,8 @@ from __future__ import annotations
 import json, uuid
 from typing import Any
 from datetime import datetime, timezone
-from fastapi import FastAPI, HTTPException, Query, Body, Depends, Form, File,  UploadFile
+from fastapi import FastAPI, HTTPException, Query, Body, Depends, Form, File,  UploadFile, status
+import hashlib
 from pydantic import BaseModel, Field
 from ..config.settings import ModelConfig
 from ..core.verification import BiometricVerifier
@@ -17,7 +18,11 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, text
 from dataclasses import asdict
 
+from ..schemas.schemas import CreateModelVersionRequest  # относительный импорт
+
 from ..core.liveness_detection import run_liveness_detection
+
+from .config_descriptions import enrich_config, group_config_by_category
 
 
 from pathlib import Path
@@ -322,7 +327,198 @@ async def get_metrics(dsn: str = Query(...), days: int = Query(7, ge=1, le=90)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- Helpers ---
+@app.get("/governance/model-config", summary="Конфигурация текущей модели")
+async def get_model_config(db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    import json
+
+    # Точный запрос под твою схему из pgAdmin
+    row = db.execute(text("""
+        SELECT 
+            version_id, 
+            model_version, 
+            config_snapshot, 
+            created_at, 
+            status
+        FROM model_versions
+        WHERE change_type = 'initial'      -- Используем поле status вместо is_active
+        ORDER BY created_at DESC
+        LIMIT 1
+    """)).fetchone()
+
+    if not row:
+        # Если активной нет, можно вернуть последнюю экспериментальную или ошибку
+        raise HTTPException(status_code=404, detail="Активная версия модели не найдена")
+
+    # config_snapshot в PostgreSQL (jsonb) приходит как dict в Python, если драйвер настроен верно.
+    # Если вдруг придет строка, раскомментируй json.loads ниже.
+    config_raw = row.config_snapshot
+    if isinstance(config_raw, str):
+        config = json.loads(config_raw)
+    else:
+        config = config_raw or {}
+
+    return {
+        "version_id": str(row.version_id), # UUID лучше отдавать строкой
+        "model_version": row.model_version,
+        "status": row.status,
+        "created_at": row.created_at.isoformat() if row.created_at else None,
+      #  "config": config, # это строка лишняя
+        "config_enriched": enrich_config(config), # Функция из config_descriptions.py
+    }
+
+@app.post("/governance/model-config", summary="Создать новую версию конфигурации модели")
+async def create_model_version(
+    payload: CreateModelVersionRequest,
+    db: Session = Depends(get_db)
+):
+    # 1. Проверка на дублирование initial-версии
+    if payload.change_type == "initial":
+        existing = db.execute(text("""
+            SELECT version_id FROM model_versions WHERE change_type = :ct
+        """), {"ct": "initial"}).fetchone()
+        if existing:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Версия с change_type='initial' уже существует. Для обновлений используйте другие change_type."
+            )
+
+    # 2. Определение parent_version_id
+    parent_version_id = payload.parent_version_id
+    if not parent_version_id:
+        # Если родитель не указан, берём последнюю активную версию
+        latest_active = db.execute(text("""
+            SELECT version_id FROM model_versions
+            WHERE status = :status
+            ORDER BY created_at DESC
+            LIMIT 1
+        """), {"status": "active"}).fetchone()
+        if latest_active:
+            parent_version_id = str(latest_active.version_id)
+        else:
+            # Если активной нет и это не initial — ошибка
+            if payload.change_type != "initial":
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Не указана parent_version_id и нет активной версии для наследования."
+                )
+
+    # 3. Вычисление config_hash (SHA256 от отсортированного JSON)
+    config_json_str = json.dumps(payload.config, sort_keys=True)
+    config_hash = hashlib.sha256(config_json_str.encode("utf-8")).hexdigest()
+
+    # 4. Определение статуса
+    if payload.change_type == "initial":
+        status_val = "active"
+    elif payload.force_active:
+        # Опционально: можно добавить логику проверки, что текущая active не будет затёрта
+        status_val = "active"
+    else:
+        status_val = "experiment"
+
+    # 5. Генерация version_id
+    version_id = str(uuid.uuid4())
+    model_version_str = payload.config.get("model_version", f"face_v{datetime.utcnow().strftime('%Y%m%d%H%M%S')}")
+
+    # 6. Вставка в БД
+    insert_sql = """
+        INSERT INTO model_versions (
+            version_id, model_version, parent_version, change_type,
+            change_description, config_snapshot, config_hash,
+            created_by, created_at, status
+        ) VALUES (
+            :version_id, :model_version, :parent_version, :change_type,
+            :change_description, :config_snapshot, :config_hash,
+            :created_by, :created_at, :status
+        )
+    """
+    db.execute(text(insert_sql), {
+        "version_id": version_id,
+        "model_version": model_version_str,
+        "parent_version": parent_version_id,
+        "change_type": payload.change_type,
+        "change_description": payload.change_description,
+        "config_snapshot": payload.config,  # dict → jsonb
+        "config_hash": config_hash,
+        "created_by": payload.created_by,
+        "created_at": datetime.utcnow(),
+        "status": status_val,
+    })
+    db.commit()
+
+    return {
+        "version_id": version_id,
+        "model_version": model_version_str,
+        "change_type": payload.change_type,
+        "status": status_val,
+        "parent_version_id": parent_version_id,
+        "config_hash": config_hash,
+        "created_at": datetime.utcnow().isoformat(),
+        "message": "Версия модели успешно создана"
+    }
+
+
+@app.post(
+    "/governance/model-config/{version_id}/activate",
+    summary="Активировать версию модели",
+)
+async def activate_model_version(
+    version_id: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Переключает указанную версию в статус 'active'.
+    Текущую активную версию (если есть) уводит в 'archived'.
+
+    Версия должна существовать и не быть уже архивной.
+    """
+
+    # 1. Проверяем, что целевая версия существует
+    target = db.execute(text("""
+        SELECT version_id, model_version, status, change_type
+        FROM model_versions
+        WHERE version_id = :vid
+    """), {"vid": version_id}).fetchone()
+
+    if not target:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Версия {version_id} не найдена"
+        )
+
+    # 2. Если уже активна — ничего делать не нужно
+    if target.status == "active":
+        return {
+            "version_id": str(target.version_id),
+            "model_version": target.model_version,
+            "status": "active",
+            "message": "Версия уже активна, изменений не требуется"
+        }
+
+    # 3. Архивируем все текущие активные версии
+    db.execute(text("""
+        UPDATE model_versions
+        SET status = 'archived'
+        WHERE status = 'active'
+    """))
+
+    # 4. Активируем целевую версию
+    db.execute(text("""
+        UPDATE model_versions
+        SET status = 'active'
+        WHERE version_id = :vid
+    """), {"vid": version_id})
+
+    db.commit()
+
+    return {
+        "version_id": str(target.version_id),
+        "model_version": target.model_version,
+        "status": "active",
+        "change_type": target.change_type,
+        "message": "Версия успешно активирована, предыдущая активная архивирована"
+    }
+
 
 def _to_jsonable(obj):
     if isinstance(obj, dict):
