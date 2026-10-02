@@ -1040,7 +1040,6 @@ results = verify_worker_with_history(
     verifier=_verifier,
     db_session=db,
 )
-
 # Прогон по всем сотрудникам
 all_workers = builder.get_all_workers()
 for worker_id in all_workers:
