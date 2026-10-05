@@ -2,6 +2,8 @@
 from __future__ import annotations
 import cv2, numpy as np
 
+from ..config.settings import ModelConfig
+
 def _lbp_histogram(gray: np.ndarray, radius: int = 1) -> np.ndarray:
     n = 8 * radius
     padded = cv2.copyMakeBorder(gray, radius, radius, radius, radius, cv2.BORDER_REFLECT)
@@ -33,26 +35,31 @@ def _simple_lbp(gray: np.ndarray, radius: int, n: int) -> np.ndarray:
     hist /= (hist.sum() + 1e-8)
     return hist
 
-def compute_embedding(image: np.ndarray) -> np.ndarray:
-    """Вычисляет embedding из изображения (BGR или Gray)."""
+def compute_embedding(image: np.ndarray, config: ModelConfig | None = None) -> np.ndarray:
     if image.ndim == 3:
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     else:
         gray = image
-    gray = cv2.resize(gray, (64, 64))
-    # HOG
-    win_size = (64, 64)
+
+    # Читаем параметры из конфига или используем дефолты
+    size = getattr(config, "embedding_size", 64)
+    radius = getattr(config, "lbp_radius", 1)
+    n_points = getattr(config, "lbp_n_points", 8)
+    nbins = getattr(config, "hog_nbins", 9)
+
+    gray = cv2.resize(gray, (size, size))
+
+    win_size = (size, size)
     block_size = (16, 16)
     block_stride = (8, 8)
     cell_size = (8, 8)
-    nbins = 9
+
     hog = cv2.HOGDescriptor(win_size, block_size, block_stride, cell_size, nbins)
     hog_desc = hog.compute(gray).flatten()
-    # LBP
-    lbp_hist = _simple_lbp(gray, 1, 8)
-    # Комбинация
+
+    lbp_hist = _simple_lbp(gray, radius, n_points)
+
     embedding = np.concatenate([hog_desc, lbp_hist])
-    # L2-нормализация
     norm = np.linalg.norm(embedding)
     if norm > 0:
         embedding = embedding / norm

@@ -200,7 +200,7 @@ flowchart TD
 | **Модуль 5** | Классификация состояния (acute / persistent / chronic) |
 | **Модуль 6** | Выходной контракт + объяснимость (evidence trace) |
 | **Модуль 7** | Human Review — клиническая проверка медработником |
-| **Модуль 8** | Model Governance — model card, версии, валидация, дрейф |
+| **Модуль 8** | Governance — управление (model card, версии, валидация, дрейф) |
 | **API-слой** | REST API (FastAPI) — эндпоинты, аутентификация, rate limiting |
 | **Инфраструктура** | PostgreSQL · Audit Log · Vault |
 

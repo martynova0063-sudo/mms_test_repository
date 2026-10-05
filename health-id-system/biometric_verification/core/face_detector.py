@@ -29,10 +29,24 @@ class HaarFaceDetector:
     def detect(self, frame: np.ndarray) -> list[FaceBox]:
         if self._cascade is None:
             return []
+
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        faces = self._cascade.detectMultiScale(gray, 1.3, 5,
-            minSize=(30, 30), flags=cv2.CASCADE_SCALE_IMAGE)
-        return [FaceBox(x=int(x), y=int(y), w=int(w), h=int(h)) for x, y, w, h in faces]
+
+        # minSize=(30, 30) уже отсекает очень мелкие лица, но дополнительная фильтрация обязательна
+        raw_boxes = self._cascade.detectMultiScale(
+            gray,
+            scaleFactor=1.3,  # чуть больше 1.1 — меньше ложных срабатываний
+            minNeighbors=4,   # 3–5 — хороший баланс
+            minSize=(30, 30),
+            flags=cv2.CASCADE_SCALE_IMAGE,)
+
+        faces: list[FaceBox] = []
+        for x, y, w, h in raw_boxes:
+            # Жёсткая защита: ширина и высота должны быть >= 1
+            if w < 1 or h < 1: continue
+            faces.append(FaceBox(x=int(x), y=int(y), w=int(w), h=int(h)))
+
+        return faces
 
 class SkinColorDetector:
     def detect(self, frame: np.ndarray) -> list[FaceBox]:

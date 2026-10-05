@@ -44,6 +44,13 @@ class ModelConfig:
     embedding_method: str = "hog_lbp"      # метод извлечения признаков лица комбинация HOG+LBP
     detector_backend: str = "haar"         # детектор лиц
 
+    # мультифейс проверка (верификация 1:1)
+    max_faces_per_frame: int = 1             # максимум лиц в кадре; при превышении — кадр отбрасывается
+    # стратегии "max" |"skip_frame" | "select_closest_to_reference"
+    multi_face_strategy: str = "skip_frame"  # берём самое крупное лицо| жёстки и надежный вариант пропускает кадр|выбираем именно то лицо, которое ближе к эталону сотрудника -дороже по вычислениям
+    multi_face_warn_threshold: float = 0.30  # если доля кадров с >1 лицом превышает 30% — warning в quality
+    multi_face_block_threshold: float = 0.50 # если превышает 50% — blocking issue
+
     # Liveness
     liveness_pass: float = 0.70            # порог прохождения
     liveness_fail: float = 0.50            # порог провала

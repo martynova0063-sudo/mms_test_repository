@@ -2,7 +2,14 @@
 https://alice.yandex.ru/chat/01a0a40b-99f4-4ced-b110-e4dd34018483/
 
 # Работающее приложение
-https://is-ukz-healthid--mms1martynova.replit.app/health-results
+https://is-ukz-healthid-4-zip-1-zip--martynovams0063.replit.app
+
+# RestAPI
+https://is-ukz-healthid-4-zip-1-zip--martynovams0063.replit.app/api/docs
+
+# Презентация
+https://1drv.ms/p/c/97c49db36db22ffd/IQCA-wudMzlcRL1ScfG6f5yuAaj6IQfl0Qelk93Pam4kyUA?e=6xeKp2
+
 
 # Задание для replit
 Разверни у себя архив ИС УКЗ - Система биометрической верификации личности и исследовательский модуль HEALTH_ID для дистанционных периодических медицинских осмотров (ПрМО). Интерфейс должен быть на русском. Техническое задание так же во вложении. Допиши недостающий функционал. Backend должна быть на Python, база данных - Postgres, ОРМ - SQLAlchemy, миграции Alembic. RestAPI на FastAPI должен быть. frontend на React в jsx файлах. Не используй type script! 

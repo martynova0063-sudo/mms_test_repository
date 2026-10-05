@@ -30,7 +30,14 @@ def insert_verification(session, result):
     else:
         quality_val = float(quality_overall) if quality_overall is not None else 0.0
 
-    status_val = getattr(result, 'status', 'not_verified')
+    # ПРАВИЛЬНЫЙ способ: берём route из dataclass и мапим в статус
+    route = getattr(result, "route", "")
+    route_to_status = {
+        "verified": "verified",
+        "manual_review": "review_needed",
+        "rejected": "rejected",
+    }
+    status_val = route_to_status.get(route, "not_verified")
     match_score = result.face_match.get("match_score", 0)
 
     # Используем время из result, если есть, иначе текущее
