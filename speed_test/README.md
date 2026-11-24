@@ -21,9 +21,6 @@ python speed_test.py <URL> [--timeout 60]
 # внешний тяжёлый файл
 python speed_test.py https://icons8.ru/photos/photo/t-shirt-on-clothes-hanger--5db0c303f510fd0001e43c17
 
-# локальный сервер, поднятый вашим приложением
-python speed_test.py http://127.0.0.1:8088/static/some-large-file.bin
-
 # увеличить таймаут для медленного канала
 python speed_test.py https://icons8.ru/photos/photo/t-shirt-on-clothes-hanger--5db0c303f510fd0001e43c17 --timeout 120
 ```
